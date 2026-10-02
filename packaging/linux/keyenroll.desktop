@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=KeyEnroll
+Comment=Enroll FIDO2 security keys on behalf of users
+Comment[pl]=Rejestrowanie kluczy FIDO2 w imieniu użytkowników
+Exec=keyenroll
+Icon=keyenroll
+Terminal=false
+Categories=Utility;Security;System;

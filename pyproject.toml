@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "keyenroll"
+version = "0.2.0"
+description = "Cross-platform GUI for enrolling FIDO2 security keys on behalf of users (Entra ID, Okta, PingOne, PingOne AIC)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "PySide6-Essentials>=6.7",
+    "fido2>=2.0,<3",
+    "requests>=2.31",
+    "keyring>=24",
+]
+
+[project.optional-dependencies]
+nfc = ["pyscard>=2.0"]
+dev = ["pytest>=8", "pyinstaller>=6.10"]
+
+[project.gui-scripts]
+keyenroll = "keyenroll.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

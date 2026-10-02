@@ -1,0 +1,6 @@
+* text=auto
+# Shell scripts run on macOS and Linux build machines.
+*.sh text eol=lf
+*.desktop text eol=lf
+*.ico binary
+*.png binary
