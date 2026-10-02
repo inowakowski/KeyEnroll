@@ -177,7 +177,7 @@ Losowe PIN-y nigdy nie zaczynają się od zera, żeby arkusz kalkulacyjny ich ni
 
 - Rejestracja w **Okta kluczem USB na Windows ARM64** została potwierdzona na prawdziwym
   sprzęcie.
-- Pozostałe ścieżki sprawdza 271 testów automatycznych na programowym symulatorze klucza
+- Pozostałe ścieżki sprawdza 273 testy automatyczne na programowym symulatorze klucza
   i spreparowanych odpowiedziach dostawców: Entra ID, PingOne i PingOne AIC oraz tryb
   masowy **nie były jeszcze testowane na żywym tenancie**.
 - Testy przechodzą w GitHub Actions na Windows, macOS i Linuksie (x64 i ARM64), a

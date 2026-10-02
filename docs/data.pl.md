@@ -38,7 +38,8 @@ W Windows folder leży w profilu użytkownika, który jest prywatny z założeni
   wyczyszczenia listy lub zamknięcia aplikacji. Nigdy nie jest zapisywany
   w ustawieniach ani w logu.
 - Skopiowany PIN lub wiadomość znika ze schowka po minucie, chyba że w międzyczasie
-  skopiowano coś innego. Jest też oznaczany jako sekret — to prośba do historii
+  skopiowano coś innego, a także przy zamknięciu aplikacji. Jest też oznaczany
+  jako sekret — to prośba do historii
   schowka Windows i jej synchronizacji z chmurą, menedżerów schowka w macOS oraz
   Klippera w KDE, żeby go nie zapisywały.
 - Pliki, które eksportujesz lub zapisujesz, zawierają PIN jawnym tekstem. W macOS

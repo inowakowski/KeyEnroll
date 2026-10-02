@@ -37,7 +37,8 @@ On Windows the folder is inside your user profile, which is private already.
 - It is shown in the result window, and kept in the bulk list until you clear the
   list or close the application. It is never written to the settings or to the log.
 - A PIN or message you copy is removed from the clipboard after one minute, unless
-  you have copied something else in the meantime. It is also marked as a secret,
+  you have copied something else in the meantime, and also when the application
+  closes. It is marked as a secret,
   which asks the Windows clipboard history and its cloud sync, clipboard managers
   on macOS and KDE's Klipper not to record it.
 - Files you export or save contain the PIN in plain text. On macOS and Linux they are

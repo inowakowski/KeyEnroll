@@ -6,7 +6,9 @@ from __future__ import annotations
 import json
 import os
 import stat
+import subprocess
 import sys
+from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -20,6 +22,7 @@ from keyenroll.config import ConfigStore, Instance
 from keyenroll.providers.base import DirectoryUser
 from keyenroll.ui import common
 
+SRC = Path(__file__).parent.parent / "src"
 posix_only = pytest.mark.skipif(os.name != "posix", reason="POSIX file modes")
 PIN = "482915"
 
@@ -168,6 +171,34 @@ def test_copied_pin_is_marked_as_a_secret_for_clipboard_histories(app, platform,
     assert mime.text() == PIN
     for name, value in markers.items():
         assert mime.hasFormat(name) and bytes(mime.data(name)) == value, name
+
+
+def test_copied_pin_does_not_outlive_the_application(app):
+    clipboard = QGuiApplication.clipboard()
+    common.copy_sensitive(PIN)
+    common.forget_copied()  # what happens when the application quits
+    assert clipboard.text() == ""
+
+    common.copy_sensitive(PIN)
+    clipboard.setText("unrelated")  # the operator copied something else since
+    common.forget_copied()
+    assert clipboard.text() == "unrelated"
+
+
+def test_process_ends_cleanly_with_a_pin_still_on_the_clipboard():
+    """Qt destroys clipboard data when the process ends; data created in Python
+    must be gone by then, or the process crashes on its way out."""
+    code = (
+        "from PySide6.QtWidgets import QApplication\n"
+        "from keyenroll.ui import common\n"
+        "app = QApplication([])\n"
+        f"common.copy_sensitive('{PIN}')\n"
+        "app.processEvents()\n"
+        "print('copied')\n"
+    )
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen", PYTHONPATH=str(SRC))
+    done = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=60)
+    assert done.stdout.strip() == "copied" and done.returncode == 0, done.stderr
 
 
 def test_copying_goes_through_the_marked_form(app):
