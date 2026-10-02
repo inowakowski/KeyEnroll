@@ -6,15 +6,20 @@ Secrets (refresh tokens) are never written here, see secrets_store.py.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
+import time
 import uuid
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 from .i18n import N_
 
+logger = logging.getLogger(__name__)
+
 CONFIG_VERSION = 1
+DEFAULT_THEME = "yubico"
 MIN_PIN = 4
 MAX_PIN = 63
 
@@ -103,32 +108,68 @@ class ConfigStore:
         self.profiles: list[Profile] = []
         self.active_instance_id: str | None = None
         self.language: str = "auto"
-        self.theme: str = "auto"
+        self.theme: str = DEFAULT_THEME
         self.custom_base: str = "dark"
         self.custom_accent: str = "#4f5bd5"
         self.append_serial: bool = False
+        # Hand-over message templates; empty means the built-in text.
+        self.message_subject: str = ""
+        self.message_body: str = ""
+        # Window geometry and similar layout state.
+        self.ui: dict[str, str] = {}
+        # Set when an unreadable file was moved aside at start-up.
+        self.unreadable_backup: Path | None = None
         self.load()
 
-    def load(self) -> None:
-        data = {}
+    def _read(self) -> dict:
         # First start after the rename: carry over the old configuration.
         # It is read only; the next save writes to the new location.
         for candidate in (self.path, self._legacy_path):
             if candidate is None:
                 continue
             try:
-                data = json.loads(candidate.read_text(encoding="utf-8"))
-                break
+                text = candidate.read_text(encoding="utf-8")
             except FileNotFoundError:
                 continue
+            data = json.loads(text)
+            if not isinstance(data, dict):
+                raise ValueError("configuration is not a JSON object")
+            return data
+        return {}
+
+    def load(self) -> None:
+        try:
+            data = self._read()
+            self._apply(data)
+        except (ValueError, TypeError, KeyError, OSError) as e:
+            # A damaged file must not keep the application from starting.
+            logger.error("Configuration is unreadable (%s); starting with defaults", e)
+            self.unreadable_backup = self._set_aside()
+            self._apply({})
+
+    def _set_aside(self) -> Path | None:
+        backup = self.path.with_name(
+            f"{self.path.name}.unreadable-{time.strftime('%Y%m%d-%H%M%S')}"
+        )
+        try:
+            os.replace(self.path, backup)
+            return backup
+        except OSError:
+            return self.path  # could not be moved; it is replaced on the next save
+
+    def _apply(self, data: dict) -> None:
         self.instances = [Instance.from_dict(d) for d in data.get("instances", [])]
         self.profiles = [Profile.from_dict(d) for d in data.get("profiles", [])]
         self.active_instance_id = data.get("active_instance")
-        self.language = data.get("language", "auto")
-        self.theme = data.get("theme", "auto")
-        self.custom_base = data.get("custom_base", "dark")
-        self.custom_accent = data.get("custom_accent", "#4f5bd5")
+        self.language = str(data.get("language", "auto"))
+        self.theme = str(data.get("theme", DEFAULT_THEME))
+        self.custom_base = str(data.get("custom_base", "dark"))
+        self.custom_accent = str(data.get("custom_accent", "#4f5bd5"))
         self.append_serial = bool(data.get("append_serial", False))
+        self.message_subject = str(data.get("message_subject", ""))
+        self.message_body = str(data.get("message_body", ""))
+        ui = data.get("ui", {})
+        self.ui = {str(k): str(v) for k, v in ui.items()} if isinstance(ui, dict) else {}
         if not self.profiles:
             self.profiles = [Profile()]
         if self.instance(self.active_instance_id) is None:
@@ -142,6 +183,9 @@ class ConfigStore:
             "custom_base": self.custom_base,
             "custom_accent": self.custom_accent,
             "append_serial": self.append_serial,
+            "message_subject": self.message_subject,
+            "message_body": self.message_body,
+            "ui": self.ui,
             "active_instance": self.active_instance_id,
             "instances": [asdict(i) for i in self.instances],
             "profiles": [asdict(p) for p in self.profiles],

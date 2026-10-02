@@ -6,8 +6,8 @@ import logging
 import threading
 from typing import Callable
 
-from PySide6.QtCore import QObject, Qt, Signal
-from shiboken6 import isValid
+from PySide6.QtCore import QObject, Qt, QTimer, Signal
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from shiboken6 import isValid
 
 from ..config import ConfigStore, Instance
 from ..fido.devices import DeviceSource
@@ -174,7 +175,30 @@ def show_error(parent: QWidget, ctx: AppContext, exc: BaseException) -> None:
     QMessageBox.warning(parent, tr("Error"), error_text(exc))
 
 
-def make_table(headers: list[str]) -> QTableWidget:
+CLIPBOARD_CLEAR_MS = 60_000
+MAX_COLUMN_WIDTH = 900  # beyond this a cell is elided; the tooltip has the full text
+
+
+def copy_sensitive(text: str) -> None:
+    """Copies a PIN (or a message containing one) and removes it from the
+    clipboard after a minute, unless something else was copied meanwhile."""
+    clipboard = QGuiApplication.clipboard()
+    clipboard.setText(text)
+
+    def clear() -> None:
+        if clipboard.text() == text:
+            clipboard.clear()
+
+    QTimer.singleShot(CLIPBOARD_CLEAR_MS, clear)
+
+
+def make_table(headers: list[str], scrollable: bool = False) -> QTableWidget:
+    """A read-only, row-selecting table.
+
+    By default the columns share the available width. A ``scrollable`` table
+    sizes its columns to their contents instead (see ``fit_columns``), lets the
+    user resize them and scrolls sideways when they do not fit.
+    """
     table = QTableWidget(0, len(headers))
     table.setHorizontalHeaderLabels(headers)
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -186,8 +210,25 @@ def make_table(headers: list[str]) -> QTableWidget:
     header = table.horizontalHeader()
     header.setHighlightSections(False)
     header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-    header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    if scrollable:
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setStretchLastSection(True)
+        header.setMinimumSectionSize(90)
+        table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        table.setWordWrap(False)
+        fit_columns(table)
+    else:
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     return table
+
+
+def fit_columns(table: QTableWidget) -> None:
+    """Sizes the columns of a scrollable table to their contents."""
+    header = table.horizontalHeader()
+    table.resizeColumnsToContents()
+    for col in range(table.columnCount() - 1):
+        width = max(table.columnWidth(col) + 16, header.sectionSizeHint(col) + 16)
+        table.setColumnWidth(col, min(width, MAX_COLUMN_WIDTH))
 
 
 def fill_row(table: QTableWidget, values: list[str], data=None) -> None:
@@ -229,7 +270,9 @@ class UserPicker(QWidget):
         top.addWidget(self.query, 1)
         top.addWidget(self.button)
 
-        self.table = make_table([tr("Display name"), tr("Username"), tr("E-mail")])
+        self.table = make_table(
+            [tr("Display name"), tr("Username"), tr("E-mail")], scrollable=True
+        )
         self.table.itemSelectionChanged.connect(
             lambda: self.selection_changed.emit(self.selected())
         )
@@ -273,6 +316,7 @@ class UserPicker(QWidget):
             self.table.setRowCount(0)
             for u in users:
                 fill_row(self.table, [u.display_name, u.username, u.email], u)
+            fit_columns(self.table)
             self.hint.setText(tr("{count} user(s) found", count=len(users)))
             if len(users) == 1:
                 self.table.selectRow(0)

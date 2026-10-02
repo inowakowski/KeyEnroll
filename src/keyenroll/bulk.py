@@ -56,6 +56,7 @@ class BulkRow:
     serial: int | None = None
     key_name: str = ""
     pin: str | None = None
+    must_change_pin: bool = False
     finished: str = ""
 
     @property
@@ -119,44 +120,66 @@ def _safe_cell(value) -> str:
     return "'" + text if text.startswith(_FORMULA_PREFIXES) else text
 
 
-def results_csv(rows: list[BulkRow], delimiter: str = ",") -> str:
+def results_csv(
+    rows: list[BulkRow],
+    delimiter: str = ",",
+    include_pins: bool = True,
+    enrolled_only: bool = False,
+) -> str:
+    """The batch as CSV.
+
+    ``enrolled_only`` keeps just the users who received a key (a deployment
+    report); ``include_pins=False`` leaves the PIN column out so the file can
+    be shared or archived.
+    """
     out = io.StringIO()
     writer = csv.writer(out, delimiter=delimiter, lineterminator="\r\n")
-    writer.writerow(
-        [
-            tr("Username"),
-            tr("Display name"),
-            tr("E-mail"),
-            tr("Status"),
-            tr("Serial number"),
-            tr("Key name"),
-            tr("Temporary PIN"),
-            tr("Enrolled at"),
-            tr("Message"),
-        ]
-    )
+    header = [
+        tr("Username"),
+        tr("Display name"),
+        tr("E-mail"),
+        tr("Status"),
+        tr("Serial number"),
+        tr("Key name"),
+        tr("Temporary PIN"),
+        tr("Enrolled at"),
+        tr("Message"),
+    ]
+    pin_column = header.index(tr("Temporary PIN"))
+    if not include_pins:
+        del header[pin_column]
+    writer.writerow(header)
     for row in rows:
+        if enrolled_only and row.status != DONE:
+            continue
         user = row.user
-        writer.writerow(
-            _safe_cell(v)
-            for v in (
-                user.username if user else row.identifier,
-                user.display_name if user else "",
-                user.email if user else "",
-                tr(STATUS_LABELS[row.status]),
-                row.serial or "",
-                row.key_name,
-                row.pin or "",
-                row.finished,
-                row.message_text,
-            )
-        )
+        cells = [
+            user.username if user else row.identifier,
+            user.display_name if user else "",
+            user.email if user else "",
+            tr(STATUS_LABELS[row.status]),
+            row.serial or "",
+            row.key_name,
+            row.pin or "",
+            row.finished,
+            row.message_text,
+        ]
+        if not include_pins:
+            del cells[pin_column]
+        writer.writerow(_safe_cell(v) for v in cells)
     return out.getvalue()
 
 
-def write_results(path: str | Path, rows: list[BulkRow], delimiter: str = ",") -> None:
-    """Writes the result list, PINs included, readable by the owner only."""
-    data = results_csv(rows, delimiter).encode("utf-8-sig")  # BOM: Excel needs it
+def write_results(
+    path: str | Path,
+    rows: list[BulkRow],
+    delimiter: str = ",",
+    include_pins: bool = True,
+    enrolled_only: bool = False,
+) -> None:
+    """Writes the result list, readable by the owner only."""
+    text = results_csv(rows, delimiter, include_pins, enrolled_only)
+    data = text.encode("utf-8-sig")  # BOM: Excel needs it
     fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "wb") as f:
         f.write(data)
@@ -303,6 +326,7 @@ class BulkRunner:
             row.serial = result.key.serial
             row.key_name = result.display_name
             row.pin = result.pin
+            row.must_change_pin = result.key.force_pin_change
             row.finished = time.strftime("%Y-%m-%d %H:%M:%S")
             if result.warnings:
                 row.message, row.message_params = result.warnings[0]

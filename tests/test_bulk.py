@@ -10,13 +10,13 @@ import threading
 import pytest
 
 from fake_authenticator import FakeAuthenticator
-from test_enroll import FakeProvider, FakeSource, FakeUI
 from keyenroll import bulk
 from keyenroll.bulk import BulkRow, BulkRunner, parse_identifiers
 from keyenroll.config import Profile
 from keyenroll.fido import enroll
 from keyenroll.fido.enroll import EnrollCancelled, EnrollError
 from keyenroll.providers.base import AuthRequired, DirectoryUser, ProviderError
+from test_enroll import FakeProvider, FakeSource, FakeUI
 
 
 @pytest.fixture(autouse=True)
@@ -169,7 +169,7 @@ def test_batch_enrolls_one_key_per_user():
     assert [row.status for row in rows] == [bulk.DONE] * 3
     assert [row.serial for row in rows] == [1000, 1001, 1002]
     assert [row.key_name for row in rows] == ["Corp key 1000", "Corp key 1001", "Corp key 1002"]
-    for row, key in zip(rows, keys):
+    for row, key in zip(rows, keys, strict=True):
         assert row.pin == key.pin and len(row.pin) == 6
         assert len(key.credentials) == 1
         assert key.credentials[0]["user"]["id"] == row.user.id.encode()
@@ -245,7 +245,6 @@ def test_cancel_returns_the_row_to_ready():
     rows = ready_rows("alice")
     cancel = threading.Event()
     r, ui, provider, source = runner(rows, [], cancel=cancel)
-    original = ui.status
 
     def status(template, **params):
         ui.messages.append(template)
@@ -322,3 +321,25 @@ def test_written_file_opens_in_excel_and_is_private(tmp_path):
     bulk.write_results(fresh, finished_rows())
     if sys.platform != "win32":
         assert stat.S_IMODE(os.stat(fresh).st_mode) == 0o600
+
+
+def test_export_of_enrolled_users_only():
+    table = list(csv.reader(io.StringIO(bulk.results_csv(finished_rows(), enrolled_only=True))))
+    assert len(table) == 2 and table[1][0] == "alice@x.com" and table[1][6] == "482915"
+
+
+def test_export_without_pins_drops_the_column_entirely():
+    text = bulk.results_csv(finished_rows(), ";", include_pins=False)
+    table = list(csv.reader(io.StringIO(text), delimiter=";"))
+    assert "Temporary PIN" not in table[0] and len(table[0]) == 8
+    assert "482915" not in text
+    assert table[1][:6] == ["alice@x.com", "Alice", "alice@x.com", "Enrolled", "1000", "Corp key 1000"]
+    assert all(len(row) == 8 for row in table)
+
+
+def test_forced_pin_change_is_recorded_for_the_hand_over():
+    keys = make_keys(1)
+    rows = ready_rows("alice")
+    r, ui, provider, source = runner(rows, keys, profile=Profile(force_pin_change=True))
+    r.run()
+    assert rows[0].must_change_pin is True

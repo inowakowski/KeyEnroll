@@ -24,10 +24,12 @@ które opisuje [dokumentacja YubiEnroll](https://docs.yubico.com/software/yubike
   zmiany PIN-u, „zawsze wymagaj UV”, atestacja Enterprise.
 - Numer seryjny klucza widoczny przy rejestracji; opcjonalnie dopisywany do nazwy klucza.
 - **Wdrożenie masowe**: lista użytkowników z pliku, rejestracja klucz po kluczu,
-  eksport numerów seryjnych i tymczasowych PIN-ów do CSV.
+  eksport listy zarejestrowanych użytkowników (z PIN-ami lub bez) do CSV.
+- **Przekazanie klucza użytkownikowi**: gotowa wiadomość z PIN-em do skopiowania,
+  jako szkic e-maila albo plik tekstowy; treść wiadomości można zmienić w ustawieniach.
 - Lista i usuwanie poświadczeń użytkownika (Entra, Okta, PingOne).
-- Kolorystyka do wyboru: jasna, ciemna, Yubico albo własna (jasna lub ciemna baza
-  i dowolny kolor akcentu), zmieniana na żywo w *Instancje → Ustawienia*.
+- Kolorystyka do wyboru: Yubico (domyślna), jasna, ciemna, zgodna z systemem albo
+  własna (jasna lub ciemna baza i dowolny kolor akcentu), zmieniana na żywo.
 - Język polski i angielski.
 
 ## Instalacja
@@ -56,13 +58,31 @@ kodu (Windows) i konta Apple Developer z notaryzacją (macOS).
 ## Jak używać
 
 1. **Instancje** → *Dodaj instancję*: wybierz dostawcę i wpisz wartości z rejestracji
-   aplikacji. Tu także zmienisz język i motyw.
+   aplikacji.
 2. **Zaloguj** (prawy górny róg) — otworzy się przeglądarka.
 3. **Profile** — zestawy opcji rejestracji (domyślne wartości jak w YubiEnroll CLI).
 4. **Rejestracja** — wyszukaj użytkownika, wybierz klucz (widać jego numer seryjny
    i firmware), w razie potrzeby zmień opcje tylko dla tej rejestracji i kliknij
-   *Zarejestruj klucz*. Na końcu aplikacja pokaże numer seryjny i tymczasowy PIN.
+   *Zarejestruj klucz*. Granicę między listą użytkowników a opcjami można przeciągać,
+   a szerokości kolumn listy zmieniać; aplikacja pamięta układ okna.
 5. **Poświadczenia** — lista i usuwanie kluczy użytkownika.
+6. **Ustawienia** — kolorystyka, język, treść wiadomości dla użytkownika, informacje
+   o programie i folder z logami.
+
+### Przekazanie klucza użytkownikowi
+
+Po rejestracji okno wyniku pokazuje numer seryjny i tymczasowy PIN oraz trzy sposoby
+przekazania ich użytkownikowi:
+
+- *Kopiuj wiadomość* — gotowy tekst do wklejenia np. w komunikatorze,
+- *Szkic e-maila* — otwiera wiadomość w domyślnym programie pocztowym z adresem
+  użytkownika, tematem i treścią; wysyłasz ją sam po sprawdzeniu,
+- *Zapisz do pliku* — plik tekstowy z tą samą treścią.
+
+Treść i temat ustawisz w *Ustawienia → Wiadomość dla użytkownika*; dostępne pola to
+`{name}`, `{username}`, `{email}`, `{key_name}`, `{serial}`, `{pin}`, `{provider}`
+i `{change_note}`. Skopiowany PIN lub wiadomość znika ze schowka po minucie.
+Wiadomość zawiera PIN, więc wysyłaj ją innym kanałem niż sam klucz.
 
 ### Nazwa klucza i numer seryjny
 
@@ -83,7 +103,10 @@ pole. Klucze z serii Security Key nie udostępniają numeru seryjnego.
 3. Wybierz profil i nazwę klucza, kliknij *Start* i wkładaj kolejne klucze, gdy aplikacja
    o to poprosi. Świeżo włożony klucz jest resetowany od razu, bez ponownego wyjmowania.
 4. *Eksportuj wyniki* zapisuje CSV: użytkownik, status, numer seryjny, nazwa klucza,
-   tymczasowy PIN, data. Na podstawie numeru seryjnego dopasujesz klucz do osoby.
+   tymczasowy PIN, data. Możesz wyeksportować tylko zarejestrowanych użytkowników albo
+   całą listę ze statusami, z PIN-ami lub bez (raport do udostępnienia lub archiwum).
+5. *Wiadomość dla użytkownika* otwiera dla zaznaczonego, zarejestrowanego użytkownika
+   to samo okno przekazania co po pojedynczej rejestracji.
 
 Zabezpieczenia: przed kolejnym użytkownikiem trzeba wyjąć poprzedni klucz, a klucz
 o numerze seryjnym już użytym w tym wdrożeniu jest odrzucany przed resetem. Po błędzie
@@ -115,15 +138,36 @@ Losowe PIN-y nigdy nie zaczynają się od zera, żeby arkusz kalkulacyjny ich ni
   `~/Library/Application Support/KeyEnroll/` lub `~/.config/keyenroll/`.
 - Tokeny odświeżania: wyłącznie w systemowym magazynie poświadczeń.
 - Tymczasowe PIN-y żyją tylko w pamięci aplikacji, dopóki ich nie wyeksportujesz.
+- Log: podfolder `logs` obok konfiguracji (do 4 plików po 1 MB). Nie trafiają do niego
+  PIN-y ani tokeny. *Ustawienia → Otwórz folder z ustawieniami i logami*.
+- Uszkodzony plik konfiguracji jest odkładany na bok, a aplikacja startuje z ustawieniami
+  domyślnymi i o tym informuje.
 
 ## Stan projektu
 
 - Rejestracja w **Okta kluczem USB na Windows ARM64** została potwierdzona na prawdziwym
   sprzęcie.
-- Pozostałe ścieżki sprawdza 135 testów automatycznych na programowym symulatorze klucza
+- Pozostałe ścieżki sprawdza 167 testów automatycznych na programowym symulatorze klucza
   i spreparowanych odpowiedziach dostawców: Entra ID, PingOne i PingOne AIC oraz tryb
   masowy **nie były jeszcze testowane na żywym tenancie**.
-- Instalatory dla macOS i Linuksa oraz workflow GitHub Actions nie były jeszcze uruchamiane.
+- Testy przechodzą w GitHub Actions na Windows, macOS i Linuksie (x64 i ARM64), a
+  instalatory budują się na wszystkich sześciu platformach. Paczek dla macOS, Linuksa
+  i Windows x64 nikt jeszcze nie uruchamiał z fizycznym kluczem.
+
+### Czy to działa na macOS i Linuksie, skoro YubiEnroll CLI tam nie ma?
+
+KeyEnroll nie korzysta z YubiEnroll CLI. Z kluczem rozmawia biblioteka python-fido2 —
+ta sama, na której Yubico opiera swoje narzędzia dla macOS i Linuksa (YubiKey Manager,
+Yubico Authenticator) — a rejestracja u dostawcy tożsamości to zwykłe wywołania HTTPS.
+Protokół klucza (CTAP2) jest identyczny na każdym systemie; różni się tylko dostęp do
+urządzenia USB:
+
+- **macOS**: bez dodatkowej konfiguracji i bez uprawnień administratora,
+- **Linux**: potrzebne reguły udev dla kluczy FIDO (obecne w większości współczesnych
+  dystrybucji) i Secret Service do zapamiętania logowania.
+
+To uzasadnione oczekiwanie, nie potwierdzony fakt: na tych systemach nikt jeszcze nie
+zarejestrował klucza tą aplikacją.
 
 ## Praca ze źródłami
 
@@ -143,6 +187,10 @@ python -m venv .venv
 .venv\Scripts\python -m pytest -q
 ```
 
+```bash
+.venv\Scripts\python -m ruff check src tests packaging
+```
+
 Na macOS/Linuksie zamiast `.venv\Scripts\python` użyj `.venv/bin/python`.
 
 ### Budowanie instalatora lokalnie
@@ -158,8 +206,11 @@ Wynik trafia do `dist/installer/`. Każdą platformę trzeba budować na niej sa
 ### Wydawanie wersji
 
 1. Zmień numer wersji w `src/keyenroll/__init__.py` i `pyproject.toml`.
-2. Wypchnij tag, np. `v0.2.0`. Workflow `.github/workflows/build.yml` uruchomi testy,
+2. Wypchnij tag, np. `v0.3.0`. Workflow `.github/workflows/build.yml` uruchomi testy,
    zbuduje instalatory dla sześciu platform i dołączy je do wydania na GitHubie.
+
+Każdy push do `main` i każdy pull request uruchamia linter i testy na Windows, macOS
+i Linuksie (`.github/workflows/tests.yml`).
 
 ## Licencja
 

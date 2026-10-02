@@ -29,7 +29,7 @@ def test_instances_persist_and_switch(tmp_path):
 
     reloaded = ConfigStore(path)
     assert [i.name for i in reloaded.instances] == ["Prod Entra", "Okta dev"]
-    assert (reloaded.theme, reloaded.append_serial) == ("auto", False)
+    assert (reloaded.theme, reloaded.append_serial) == ("yubico", False)  # the default scheme
     reloaded.theme, reloaded.append_serial = "dark", True
     reloaded.save()
     again = ConfigStore(path)
@@ -137,3 +137,29 @@ def test_long_tokens_are_chunked_for_the_os_keyring():
 
     store.delete("inst")
     assert backend.items == {} and store.get("inst") is None
+
+
+def test_damaged_file_is_set_aside_and_the_app_still_starts(tmp_path):
+    path = tmp_path / "config.json"
+    for damaged in ('{"instances": [', '[1, 2, 3]', '{"instances": [{"kind": "okta"}]}', '{"profiles": 5}'):
+        path.write_text(damaged)
+        store = ConfigStore(path)
+        assert store.instances == [] and [p.name for p in store.profiles] == ["default"]
+        backup = store.unreadable_backup
+        assert backup is not None and backup != path and backup.read_text() == damaged
+        assert not path.exists()
+        backup.unlink()
+        store.upsert_instance(Instance(name="New", kind="okta"))
+        assert ConfigStore(path).unreadable_backup is None
+
+
+def test_message_templates_and_layout_state_persist(tmp_path):
+    path = tmp_path / "config.json"
+    store = ConfigStore(path)
+    assert (store.message_subject, store.message_body, store.ui) == ("", "", {})
+    store.message_subject, store.message_body = "Key for {name}", "PIN {pin}"
+    store.ui["enroll_splitter"] = "400,500"
+    store.save()
+    again = ConfigStore(path)
+    assert (again.message_subject, again.message_body) == ("Key for {name}", "PIN {pin}")
+    assert again.ui == {"enroll_splitter": "400,500"}

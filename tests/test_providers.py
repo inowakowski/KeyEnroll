@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import base64
 import json
+import time
 
 import pytest
 from fido2.webauthn import PublicKeyCredentialCreationOptions
 
+from keyenroll import oauth
 from keyenroll.providers import PROVIDERS, AuthRequired, ProviderError
 from keyenroll.providers.base import DirectoryUser, b64url_decode, to_b64url
 from keyenroll.providers.entra import EntraProvider
 from keyenroll.providers.okta import OktaProvider
 from keyenroll.providers.pingone import PingOneProvider
 from keyenroll.providers.pingone_aic import PingOneAicProvider, options_from_script
+from keyenroll.secrets_store import TokenStore
 
 USER = DirectoryUser(id="user-1", username="alice@example.com", display_name="Alice")
 
@@ -640,3 +643,53 @@ def test_aic_find_user(aic, http):
     assert http.calls[0].params["_queryFilter"] == 'userName eq "alice" or mail eq "alice"'
     http.add({"result": []})
     assert aic.find_user("ghost") is None
+
+
+# -- resilience -------------------------------------------------------------
+
+
+def test_rate_limited_request_is_repeated_after_the_advised_delay(okta, http, monkeypatch):
+    from keyenroll.providers import base
+
+    waits = []
+    monkeypatch.setattr(base.time, "sleep", waits.append)
+    throttled = http.add({"errorSummary": "API call exceeded rate limit"}, status=429).queue[-1]
+    throttled.headers = {"Retry-After": "7"}
+    http.add({"errorSummary": "API call exceeded rate limit"}, status=429)  # no header
+    http.add([])
+
+    assert okta.search_users("a") == []
+    assert waits == [7.0, 2.0] and len(http.calls) == 3
+
+
+def test_rate_limit_that_does_not_clear_is_reported(okta, http, monkeypatch):
+    from keyenroll.providers import base
+
+    monkeypatch.setattr(base.time, "sleep", lambda s: None)
+    for _ in range(base.MAX_THROTTLE_RETRIES + 1):
+        http.add({"errorSummary": "API call exceeded rate limit"}, status=429)
+    with pytest.raises(ProviderError, match="rate limit") as e:
+        okta.search_users("a")
+    assert e.value.status == 429 and http.queue == []
+
+
+def test_absurd_retry_after_is_capped(monkeypatch):
+    from keyenroll.providers import base
+
+    class R:
+        headers = {"Retry-After": "86400"}
+
+    assert base._retry_after(R()) == base.MAX_THROTTLE_WAIT
+    R.headers = {"Retry-After": "Wed, 21 Oct 2026 07:28:00 GMT"}
+    assert base._retry_after(R()) == 2.0
+
+
+def test_sign_in_works_even_if_the_keyring_refuses_to_store_it(http):
+    class BrokenStore(TokenStore):
+        def set(self, key, value):
+            raise OSError("credential store is locked")
+
+    p = OktaProvider("i1", {"domain": "x.okta.com", "client_id": "c"}, BrokenStore(), http)
+    p._set_tokens(oauth.TokenSet("ACCESS", time.time() + 3600, "REFRESH"))
+    http.add([])
+    assert p.search_users("") == [] and p.has_session()

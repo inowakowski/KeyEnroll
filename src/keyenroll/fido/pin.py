@@ -12,7 +12,7 @@ def is_trivial(pin: str) -> bool:
     too few distinct characters, or ascending/descending runs like 123456."""
     if len(set(pin)) < min(4, len(pin)):
         return True
-    steps = {(ord(b) - ord(a)) % 10 for a, b in zip(pin, pin[1:])}
+    steps = {(ord(b) - ord(a)) % 10 for a, b in zip(pin, pin[1:], strict=False)}
     return steps in ({1}, {9})
 
 

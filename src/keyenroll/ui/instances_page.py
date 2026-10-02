@@ -1,27 +1,21 @@
-"""Instances page: identity provider configurations and app settings."""
+"""Instances page: identity provider configurations."""
 
 from __future__ import annotations
 
-from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QApplication,
-    QColorDialog,
-    QComboBox,
     QDialog,
-    QFormLayout,
     QHBoxLayout,
-    QLabel,
     QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
-from ..i18n import LANGUAGES, tr
+from ..i18n import tr
 from ..providers import PROVIDERS
 from .common import AppContext, fill_row, make_table, selected_data
 from .dialogs import InstanceDialog
-from .theme import PRESETS, Card, apply_theme
+from .theme import Card
 
 
 class InstancesPage(QWidget):
@@ -60,57 +54,9 @@ class InstancesPage(QWidget):
         box.body.addWidget(self.table, 1)
         box.body.addLayout(buttons)
 
-        self.language = QComboBox()
-        self.language.addItem(tr("System default"), "auto")
-        for code, label in LANGUAGES.items():
-            self.language.addItem(label, code)
-        self.language.setCurrentIndex(max(0, self.language.findData(ctx.config.language)))
-        self.language.currentIndexChanged.connect(self._set_language)
-        labels = {"light": tr("Light"), "dark": tr("Dark"), "yubico": "Yubico"}
-        self.theme = QComboBox()
-        self.theme.addItem(tr("System default"), "auto")
-        for preset in PRESETS:
-            self.theme.addItem(labels[preset], preset)
-        self.theme.addItem(tr("Custom"), "custom")
-        self.theme.setCurrentIndex(max(0, self.theme.findData(ctx.config.theme)))
-        self.theme.currentIndexChanged.connect(self._set_theme)
-
-        # custom scheme: light or dark base plus any accent colour
-        self.custom_base = QComboBox()
-        self.custom_base.addItem(tr("Light"), "light")
-        self.custom_base.addItem(tr("Dark"), "dark")
-        self.custom_base.setCurrentIndex(
-            max(0, self.custom_base.findData(ctx.config.custom_base))
-        )
-        self.custom_base.currentIndexChanged.connect(self._set_theme)
-        self.accent_swatch = QLabel()
-        self.accent_swatch.setFixedSize(34, 34)
-        self.accent_button = QPushButton(tr("Accent colour…"))
-        self.accent_button.clicked.connect(self._pick_accent)
-        self.custom_row = QWidget()
-        custom = QHBoxLayout(self.custom_row)
-        custom.setContentsMargins(0, 0, 0, 0)
-        custom.addWidget(self.custom_base)
-        custom.addWidget(self.accent_swatch)
-        custom.addWidget(self.accent_button)
-        custom.addStretch(1)
-        self.custom_label = QLabel(tr("Custom colours"))
-        self.language_note = QLabel()
-        self.language_note.setObjectName("hint")
-        settings = Card(tr("Settings"))
-        settings_form = QFormLayout()
-        settings_form.addRow(tr("Language"), self.language)
-        settings_form.addRow(tr("Appearance"), self.theme)
-        settings_form.addRow(self.custom_label, self.custom_row)
-        self._show_custom()
-        settings.body.addLayout(settings_form)
-        settings.body.addWidget(self.language_note)
-
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(14)
         layout.addWidget(box, 1)
-        layout.addWidget(settings)
 
         for signal in (ctx.instances_changed, ctx.active_changed, ctx.session_changed,
                        ctx.profiles_changed):
@@ -205,37 +151,3 @@ class InstancesPage(QWidget):
         self.ctx.instances_changed.emit()
         if was_active:
             self.ctx.active_changed.emit()
-
-    def _set_language(self) -> None:
-        self.ctx.config.language = self.language.currentData()
-        self.ctx.config.save()
-        self.language_note.setText(tr("Restart the application to apply the change."))
-
-    def _show_custom(self) -> None:
-        custom = self.theme.currentData() == "custom"
-        self.custom_label.setVisible(custom)
-        self.custom_row.setVisible(custom)
-        accent = self.ctx.config.custom_accent
-        self.accent_swatch.setStyleSheet(
-            f"background: {accent}; border-radius: 8px; border: 1px solid palette(mid);"
-        )
-        self.accent_swatch.setToolTip(accent)
-
-    def _set_theme(self) -> None:
-        config = self.ctx.config
-        config.theme = self.theme.currentData()
-        config.custom_base = self.custom_base.currentData()
-        config.save()
-        self._show_custom()
-        app = QApplication.instance()
-        if app is not None:  # takes effect immediately
-            apply_theme(app, config.theme, config.custom_base, config.custom_accent)
-        self.ctx.theme_changed.emit()
-
-    def _pick_accent(self) -> None:
-        color = QColorDialog.getColor(
-            QColor(self.ctx.config.custom_accent), self, tr("Choose the accent colour")
-        )
-        if color.isValid():
-            self.ctx.config.custom_accent = color.name()
-            self._set_theme()

@@ -50,7 +50,7 @@ def write_ico(path: Path) -> None:
     header = struct.pack("<HHH", 0, 1, len(images))
     offset = len(header) + 16 * len(images)
     directory = b""
-    for size, data in zip(ICO_SIZES, images):
+    for size, data in zip(ICO_SIZES, images, strict=True):
         directory += struct.pack(
             "<BBBBHHII", size % 256, size % 256, 0, 0, 1, 32, len(data), offset
         )

@@ -84,7 +84,7 @@ def _rgb(color: str) -> tuple[int, int, int]:
 def _mix(color: str, other: str, amount: float) -> str:
     """Blends ``amount`` (0..1) of ``other`` into ``color``."""
     return "#" + "".join(
-        f"{round(a + (b - a) * amount):02x}" for a, b in zip(_rgb(color), _rgb(other))
+        f"{round(a + (b - a) * amount):02x}" for a, b in zip(_rgb(color), _rgb(other), strict=True)
     )
 
 
@@ -152,9 +152,15 @@ ICONS = {
         '<circle cx="15.5" cy="7" r="2.3"/><circle cx="9.5" cy="17" r="2.3"/>'
     ),
     "layers": '<path d="M12 3.5l8.5 4.5-8.5 4.5L3.5 8z"/><path d="M3.5 12.5l8.5 4.5 8.5-4.5M3.5 16.5 12 21l8.5-4.5"/>',
+    "gear": (
+        '<circle cx="12" cy="12" r="3.2"/>'
+        '<path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.9 1.9M16.6 16.6l1.9 1.9'
+        'M18.5 5.5l-1.9 1.9M7.4 16.6l-1.9 1.9"/>'
+    ),
     "chevron-down": '<path d="M6 9.5l6 6 6-6"/>',
     "chevron-up": '<path d="M6 14.5l6-6 6 6"/>',
     "check": '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    "grip": '<path d="M12 7v.01M12 12v.01M12 17v.01"/>',
 }
 
 APP_ICON_SVG = (
@@ -197,7 +203,11 @@ QLineEdit, QComboBox, QSpinBox {
     background: $input; border: 1px solid $border_strong; border-radius: 8px;
     padding: 6px 10px; min-height: 20px; selection-background-color: $accent; selection-color: $on_accent;
 }
-QLineEdit:focus, QComboBox:focus, QSpinBox:focus { border-color: $accent; }
+QPlainTextEdit {
+    background: $input; border: 1px solid $border_strong; border-radius: 8px; padding: 6px 8px;
+    selection-background-color: $accent; selection-color: $on_accent;
+}
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QPlainTextEdit:focus { border-color: $accent; }
 QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled { color: $disabled; border-color: $border; }
 QComboBox::drop-down { border: none; width: 30px; }
 QComboBox::down-arrow { image: url($chevron_down); width: 14px; height: 14px; }
@@ -219,6 +229,8 @@ QPushButton:disabled { color: $disabled; border-color: $border; }
 QPushButton#primary { background: $accent; border-color: $accent; color: $on_accent; font-weight: 600; }
 QPushButton#primary:hover { background: $accent_hover; border-color: $accent_hover; }
 QPushButton#primary:disabled { background: $accent_disabled; border-color: $accent_disabled; color: $card; }
+QPushButton#primary[big="true"] { padding: 13px 24px; font-size: ${title}pt; border-radius: 10px; }
+QPushButton[big="true"] { padding: 13px 20px; border-radius: 10px; }
 QPushButton#danger { color: $danger; }
 QPushButton#danger:hover { background: $danger_soft; border-color: $danger; }
 QPushButton#danger:disabled { color: $disabled; }
@@ -246,6 +258,19 @@ QHeaderView::section {
     padding: 8px 10px; color: $muted; font-weight: 600;
 }
 QTableCornerButton::section { background: transparent; border: none; }
+
+QSplitter::handle { background: transparent; }
+QSplitter::handle:horizontal { width: 14px; image: url($grip); }
+QSplitter::handle:horizontal:hover { background: $hover; border-radius: 4px; }
+
+QRadioButton { spacing: 10px; padding: 3px 0; }
+QRadioButton::indicator {
+    width: 16px; height: 16px; border: 1px solid $border_strong; border-radius: 9px; background: $input;
+}
+QRadioButton::indicator:hover { border-color: $accent; }
+QRadioButton::indicator:checked {
+    width: 8px; height: 8px; border: 5px solid $accent; background: $input;
+}
 
 QScrollArea#plain { background: transparent; border: none; }
 QScrollArea#plain > QWidget > QWidget { background: transparent; }
@@ -359,6 +384,7 @@ def apply_theme(
             chevron_down=_svg_file("chevron-down", t["muted"]),
             chevron_up=_svg_file("chevron-up", t["muted"]),
             check=_svg_file("check", t["on_accent"], 3),
+            grip=_svg_file("grip", t["muted"], 2.6),
         )
     )
     app.setWindowIcon(app_icon())

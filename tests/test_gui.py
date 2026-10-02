@@ -8,18 +8,28 @@ import time
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
-from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
+from PySide6.QtCore import QUrl
+from PySide6.QtGui import QDesktopServices, QGuiApplication
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QFileDialog,
+    QHeaderView,
+    QLabel,
+    QMessageBox,
+)
 
 from fake_authenticator import FakeAuthenticator
-from test_enroll import FakeProvider, FakeSource
-from keyenroll.config import ConfigStore, Instance, Profile
+from keyenroll import bulk
+from keyenroll.config import ConfigStore, Instance
 from keyenroll.fido import enroll
+from keyenroll.handover import Handover
 from keyenroll.providers.base import AuthRequired, Credential, DirectoryUser
 from keyenroll.secrets_store import TokenStore
-from keyenroll import bulk
-from keyenroll.ui import dialogs
+from keyenroll.ui import common, dialogs
 from keyenroll.ui.common import AppContext
-from keyenroll.ui.main_window import MainWindow
+from keyenroll.ui.main_window import PAGE_BULK, PAGE_INSTANCES, PAGE_SETTINGS, MainWindow
+from test_enroll import FakeProvider, FakeSource
 
 USERS = [
     DirectoryUser("u1", "alice@example.com", "Alice Example", "alice@example.com"),
@@ -151,6 +161,10 @@ def rescan(page):
     wait_until(lambda: not page._refreshing)
     page.refresh_keys()
     wait_until(lambda: not page._refreshing and page.key_combo.currentData() is not None)
+
+
+def labels_of(dialog):
+    return [w.text() for w in dialog.findChildren(QLabel)]
 
 
 def pick_user(page, name):
@@ -406,12 +420,32 @@ def test_bulk_page_imports_enrolls_and_exports(gui, tmp_path, monkeypatch):
 
     out = tmp_path / "out.csv"
     monkeypatch.setattr(
-        QFileDialog,
-        "getSaveFileName",
-        staticmethod(lambda *a, **k: (str(out), "CSV, semicolon separated (*.csv)")),
+        QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: (str(out), ""))
     )
+    choices = {"everyone": True, "pins": True}
+    seen = []
+
+    def choose(dialog):
+        seen.append(dialog)
+        assert dialog.enrolled.isChecked() and dialog.pins.isChecked()  # the defaults
+        assert not dialog.warning.isHidden()  # the operator is warned about plain-text PINs
+        dialog.everyone.setChecked(choices["everyone"])
+        dialog.pins.setChecked(choices["pins"])
+        dialog.format.setCurrentIndex(dialog.format.findData(";"))
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(dialogs.ExportDialog, "exec", choose)
+
+    # A report without PINs can be shared, but does not count as saving them.
+    choices.update(everyone=False, pins=False)
     page.export.click()
-    assert "plain text" in shown["boxes"][-1]  # the operator is warned first
+    report = out.read_text(encoding="utf-8-sig")
+    assert keys[0].pin not in report and "ghost@example.com" not in report
+    assert report.count("\n") == 3 and "alice@example.com" in report and "bob@example.com" in report
+    assert page.has_unexported_pins()
+
+    choices.update(everyone=True, pins=True)
+    page.export.click()
     lines = out.read_text(encoding="utf-8-sig").splitlines()
     assert lines[1].split(";")[:7] == [
         "alice@example.com", "Alice Example", "alice@example.com", "Enrolled", "501", "Corp 501",
@@ -465,3 +499,238 @@ def test_bulk_list_is_locked_to_its_instance(gui, tmp_path, monkeypatch):
     assert page.start.isEnabled()
     page.clear.click()
     assert page.table.rowCount() == 0 and not page.start.isEnabled()
+
+
+# -- hand-over after an enrollment ---------------------------------------
+
+
+def make_handover(**kw):
+    values = dict(
+        user=USERS[0], key_name="Finance 23456789", serial=23456789, pin="482915",
+        must_change_pin=True, provider="Okta",
+    )
+    values.update(kw)
+    return Handover(**values)
+
+
+def test_result_dialog_copies_emails_and_saves_the_message(gui, tmp_path, monkeypatch):
+    window, ctx, key, source, shown = gui
+    dialog = dialogs.ResultDialog(make_handover(), ctx.config, window)
+    clipboard = QGuiApplication.clipboard()
+
+    dialog.copy_pin.click()
+    assert clipboard.text() == "482915"
+    assert "cleared" in dialog.feedback.text()
+
+    dialog.copy_message.click()
+    text = clipboard.text()
+    assert "Alice Example" in text and "482915" in text and "23456789" in text
+    assert "set your own PIN" in text
+
+    opened = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", staticmethod(lambda url: opened.append(url) or True))
+    dialog.email.click()
+    url = opened[0]
+    assert isinstance(url, QUrl) and url.scheme() == "mailto" and url.path() == "alice@example.com"
+    assert "482915" in url.toString() and "draft" in dialog.feedback.text()
+
+    monkeypatch.setattr(QDesktopServices, "openUrl", staticmethod(lambda url: False))
+    dialog.email.click()
+    assert "No e-mail program" in dialog.feedback.text()
+
+    target = tmp_path / "alice.txt"
+    suggested = []
+
+    def save_as(parent, title, name, *a):
+        suggested.append(name)
+        return str(target), ""
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", staticmethod(save_as))
+    dialog.save.click()
+    assert suggested == ["keyenroll-alice@example.com.txt"]
+    saved = target.read_text(encoding="utf-8-sig")
+    assert saved.startswith("Your security key\n\nHello Alice Example") and "482915" in saved
+    assert str(target) in dialog.feedback.text()
+
+
+def test_result_dialog_without_a_generated_pin(gui):
+    window, ctx, key, source, shown = gui
+    dialog = dialogs.ResultDialog(
+        make_handover(pin=None, pin_changed=False, must_change_pin=False), ctx.config, window
+    )
+    assert not hasattr(dialog, "copy_pin")
+    assert "The PIN of the key was not changed." in labels_of(dialog)
+    dialog.copy_message.click()
+    assert "(provided separately)" in QGuiApplication.clipboard().text()
+
+
+def test_copied_pin_leaves_the_clipboard_after_a_while(gui, monkeypatch):
+    monkeypatch.setattr(common, "CLIPBOARD_CLEAR_MS", 30)
+    clipboard = QGuiApplication.clipboard()
+    common.copy_sensitive("482915")
+    assert clipboard.text() == "482915"
+    wait_until(lambda: clipboard.text() == "")
+
+    # Something the operator copied afterwards is not wiped.
+    common.copy_sensitive("135790")
+    clipboard.setText("unrelated")
+    time.sleep(0.08)
+    QApplication.processEvents()
+    assert clipboard.text() == "unrelated"
+
+
+def test_enrollment_result_reaches_the_dialog_with_provider_and_key_name(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 23456789
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    rescan(page)
+    pick_user(page, "Alice")
+    page.form.force_change.setChecked(True)
+    page.start.click()
+    wait_until(lambda: not page.is_running())
+
+    handed = shown["results"][0].handover
+    assert handed.user.username == "alice@example.com" and handed.pin == key.pin
+    assert handed.serial == 23456789 and handed.must_change_pin
+    assert handed.provider == ctx.provider.label
+    assert handed.key_name  # falls back to the product name when no name was typed
+
+
+# -- settings page ---------------------------------------------------------
+
+
+def test_settings_have_their_own_page(gui):
+    window, ctx, key, source, shown = gui
+    titles = [window.nav.item(i).text() for i in range(window.nav.count())]
+    assert titles == ["Enroll", "Bulk enrollment", "Credentials", "Profiles", "Instances", "Settings"]
+    window.nav.setCurrentRow(PAGE_INSTANCES)
+    assert not hasattr(window.pages.currentWidget(), "theme")
+    window.nav.setCurrentRow(PAGE_SETTINGS)
+    page = window.pages.currentWidget()
+    assert page.theme.currentData() == "yubico" and page.language.count() == 3
+    assert window.page_title.text() == "Settings"
+
+
+def test_message_template_can_be_customised_and_restored(gui):
+    window, ctx, key, source, shown = gui
+    window.nav.setCurrentRow(PAGE_SETTINGS)
+    page = window.pages.currentWidget()
+    assert page.subject.text() == "Your security key"
+    assert "{pin}" in page.body.toPlainText()
+
+    page.save_message.click()  # unchanged text is not frozen into the settings
+    assert (ctx.config.message_subject, ctx.config.message_body) == ("", "")
+
+    page.subject.setText("Key for {name}")
+    page.body.setPlainText("PIN: {pin}\nSerial: {serial}")
+    page.save_message.click()
+    stored = ConfigStore(ctx.config.path)
+    assert stored.message_subject == "Key for {name}"
+    assert stored.message_body == "PIN: {pin}\nSerial: {serial}\n"
+
+    dialog = dialogs.ResultDialog(make_handover(), ctx.config, window)
+    dialog.copy_message.click()
+    assert QGuiApplication.clipboard().text() == "PIN: 482915\nSerial: 23456789\n"
+
+    page.reset_message.click()
+    assert ConfigStore(ctx.config.path).message_body == ""
+    assert "Hello {name}" in page.body.toPlainText()
+
+
+# -- layout of the enrollment page ------------------------------------------
+
+
+def test_user_list_scrolls_sideways_instead_of_cutting_text(gui):
+    window, ctx, key, source, shown = gui
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    long_user = DirectoryUser(
+        "u9", "a.very.long.user.principal.name@subsidiary.example-corporation.com",
+        "Aleksandra Konstantynopolitańczykowianka-Brzęczyszczykiewicz",
+        "a.very.long.user.principal.name@subsidiary.example-corporation.com",
+    )
+    USERS.append(long_user)
+    try:
+        page.picker.query.setText("Aleksandra")
+        page.picker.search()
+        wait_until(lambda: page.picker.table.rowCount() == 1)
+    finally:
+        USERS.remove(long_user)
+    table = page.picker.table
+    header = table.horizontalHeader()
+    assert header.sectionResizeMode(0) == QHeaderView.ResizeMode.Interactive  # draggable
+    metrics = table.fontMetrics()
+    assert table.columnWidth(0) >= metrics.horizontalAdvance(long_user.display_name)
+    assert table.columnWidth(1) >= metrics.horizontalAdvance(long_user.username)
+    QApplication.processEvents()
+    assert header.length() > table.viewport().width()
+    assert table.horizontalScrollBar().maximum() > 0
+
+
+def test_panes_are_resizable_and_the_layout_is_remembered(gui):
+    window, ctx, key, source, shown = gui
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    QApplication.processEvents()
+    assert page.splitter.count() == 2 and not page.splitter.childrenCollapsible()
+    # The main action is large and sits with the options, not in the status bar.
+    assert page.splitter.widget(1).isAncestorOf(page.start)
+    assert page.start.minimumHeight() >= 48 and page.start.property("big") is True
+
+    total = sum(page.splitter.sizes())
+    page.splitter.setSizes([total - 460, 460])
+    QApplication.processEvents()
+    sizes = page.splitter.sizes()
+    window.close()
+
+    stored = ConfigStore(ctx.config.path)
+    assert stored.ui["enroll_splitter"] == ",".join(str(v) for v in sizes)
+    assert stored.ui["window_geometry"]
+
+    again = MainWindow(AppContext(stored, TokenStore(), source=FakeSource()))
+    again.show()
+    # The test screen is smaller than the window, so Qt shrinks the restored
+    # geometry; give the new window the old size before comparing the panes.
+    again.resize(window.size())
+    QApplication.processEvents()
+    again.enroll_page._restore_splitter()
+    QApplication.processEvents()
+    assert again.enroll_page.splitter.sizes() == sizes
+    again.close()
+
+    # Nonsense in the settings file is ignored rather than applied.
+    stored.ui["enroll_splitter"] = "abc,-5"
+    broken = MainWindow(AppContext(stored, TokenStore(), source=FakeSource()))
+    assert all(size >= 0 for size in broken.enroll_page.splitter.sizes())
+    broken.close()
+
+
+# -- bulk: hand-over for one user -------------------------------------------
+
+
+def test_bulk_message_button_opens_the_hand_over_for_an_enrolled_user(gui, tmp_path, monkeypatch):
+    window, ctx, key, source, shown = gui
+    window.nav.setCurrentRow(PAGE_BULK)
+    page = window.bulk_page
+    users_file = tmp_path / "users.txt"
+    users_file.write_text("alice@example.com\nghost@example.com\n")
+    monkeypatch.setattr(
+        QFileDialog, "getOpenFileName", staticmethod(lambda *a, **k: (str(users_file), ""))
+    )
+    page.load.click()
+    wait_until(lambda: not page.is_running() and page.table.rowCount() == 2)
+    key.serial, key.fresh = 777, True
+    page.start.click()
+    wait_until(lambda: not page.is_running())
+    assert page.rows[0].status == bulk.DONE
+
+    page.table.selectRow(1)  # not enrolled
+    assert not page.handover.isEnabled()
+    page.table.selectRow(0)
+    assert page.handover.isEnabled()
+    page.handover.click()
+
+    handed = shown["results"][-1].handover
+    assert (handed.user.username, handed.pin, handed.serial) == ("alice@example.com", key.pin, 777)
+    assert handed.provider == ctx.provider.label
