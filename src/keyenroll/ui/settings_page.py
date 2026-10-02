@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import APP_NAME, PROJECT_URL, __version__, handover, updates
+from .. import APP_NAME, DOCS_URL, PROJECT_URL, __version__, handover, updates
 from ..config import config_dir
 from ..i18n import LANGUAGES, tr
 from .common import AppContext, run_task
@@ -122,6 +122,10 @@ class SettingsPage(QWidget):
         link.setOpenExternalLinks(True)
         link.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         about_form.addRow(tr("Project page"), link)
+        docs_link = QLabel(f'<a href="{DOCS_URL}">{DOCS_URL}</a>')
+        docs_link.setOpenExternalLinks(True)
+        docs_link.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        about_form.addRow(tr("Documentation"), docs_link)
         about.body.addLayout(about_form)
         disclaimer = QLabel(
             tr(

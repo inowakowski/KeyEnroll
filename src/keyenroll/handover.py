@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import quote
 
+from .config import write_private
 from .i18n import N_, current_language, tr
 from .providers import DirectoryUser
 
@@ -25,6 +25,10 @@ PLACEHOLDERS = (
 
 DEFAULT_SUBJECT = {
     "en": "Your security key",
+    "de": "Ihr Sicherheitsschlüssel",
+    "es": "Su llave de seguridad",
+    "fr": "Votre clé de sécurité",
+    "it": "Chiave di sicurezza",
     "pl": "Twój klucz bezpieczeństwa",
 }
 
@@ -42,6 +46,62 @@ DEFAULT_BODY = {
         "\n"
         "Use the key and the PIN to sign in to {provider} as {username}. "
         "Do not share the PIN with anyone.\n"
+    ),
+    "de": (
+        "Guten Tag {name},\n"
+        "\n"
+        "Ihr Sicherheitsschlüssel ist bereit.\n"
+        "\n"
+        "Schlüssel: {key_name}\n"
+        "Seriennummer: {serial}\n"
+        "Temporäre PIN: {pin}\n"
+        "\n"
+        "{change_note}\n"
+        "\n"
+        "Melden Sie sich mit dem Schlüssel und der PIN bei {provider} als {username} an. "
+        "Geben Sie die PIN an niemanden weiter.\n"
+    ),
+    "es": (
+        "Hola, {name}:\n"
+        "\n"
+        "Su llave de seguridad está lista.\n"
+        "\n"
+        "Llave: {key_name}\n"
+        "Número de serie: {serial}\n"
+        "PIN temporal: {pin}\n"
+        "\n"
+        "{change_note}\n"
+        "\n"
+        "Use la llave y el PIN para iniciar sesión en {provider} como {username}. "
+        "No comparta el PIN con nadie.\n"
+    ),
+    "fr": (
+        "Bonjour {name},\n"
+        "\n"
+        "Votre clé de sécurité est prête.\n"
+        "\n"
+        "Clé : {key_name}\n"
+        "Numéro de série : {serial}\n"
+        "Code PIN temporaire : {pin}\n"
+        "\n"
+        "{change_note}\n"
+        "\n"
+        "Utilisez la clé et le code PIN pour vous connecter à {provider} en tant que "
+        "{username}. Ne communiquez le code PIN à personne.\n"
+    ),
+    "it": (
+        "Buongiorno {name},\n"
+        "\n"
+        "la chiave di sicurezza è pronta.\n"
+        "\n"
+        "Chiave: {key_name}\n"
+        "Numero di serie: {serial}\n"
+        "PIN temporaneo: {pin}\n"
+        "\n"
+        "{change_note}\n"
+        "\n"
+        "Usare la chiave e il PIN per accedere a {provider} come {username}. "
+        "Non comunicare il PIN a nessuno.\n"
     ),
     "pl": (
         "Dzień dobry {name},\n"
@@ -142,7 +202,4 @@ def default_filename(handover: Handover) -> str:
 
 def save_text(path: str | Path, subject: str, body: str) -> None:
     """Writes the message to a text file readable by the owner only."""
-    data = f"{subject}\n\n{body}".encode("utf-8-sig")
-    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "wb") as f:
-        f.write(data)
+    write_private(path, f"{subject}\n\n{body}".encode("utf-8-sig"))

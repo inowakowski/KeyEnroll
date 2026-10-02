@@ -7,12 +7,13 @@ import threading
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from PySide6.QtCore import QTimer
+import PySide6
+from PySide6.QtCore import QLibraryInfo, QTimer, QTranslator
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from . import APP_NAME, __version__
-from .config import ConfigStore, config_dir
-from .i18n import set_language, tr
+from .config import ConfigStore, config_dir, private_dir
+from .i18n import current_language, set_language, tr
 from .secrets_store import default_store
 from .ui.common import AppContext
 from .ui.main_window import MainWindow
@@ -36,6 +37,7 @@ def configure_logging(level: str, log_file: str | None) -> None:
             handler = logging.FileHandler(log_file, encoding="utf-8")
         else:
             path = log_path()
+            private_dir(config_dir())
             path.parent.mkdir(parents=True, exist_ok=True)
             handler = RotatingFileHandler(
                 path, maxBytes=1_000_000, backupCount=3, encoding="utf-8"
@@ -79,6 +81,26 @@ def install_excepthooks() -> None:
     )
 
 
+def install_qt_translation(app: QApplication, language: str) -> bool:
+    """Makes Qt's own texts (Yes/No buttons, the colour dialog) follow the
+    language of the application. Returns False if Qt has no such translation."""
+    if language == "en":
+        return True
+    translator = QTranslator(app)
+    # Where Qt says they are, and where a packaged build keeps them.
+    folders = [
+        QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
+        str(Path(PySide6.__file__).parent / "translations"),
+    ]
+    for folder in folders:
+        if translator.load(f"qtbase_{language}", folder):
+            logger.info("Qt translation for %s loaded from %s", language, folder)
+            return app.installTranslator(translator)
+    translator.deleteLater()
+    logger.warning("No Qt translation for %s in %s", language, " or ".join(folders))
+    return False
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="keyenroll")
     parser.add_argument("-v", "--version", action="version", version=__version__)
@@ -103,6 +125,7 @@ def main(argv: list[str] | None = None) -> int:
 
     config = ConfigStore()
     set_language(config.language)
+    install_qt_translation(app, current_language())
     theme = apply_theme(app, config.theme, config.custom_base, config.custom_accent)
     window = MainWindow(AppContext(config, default_store()))
     window.show()

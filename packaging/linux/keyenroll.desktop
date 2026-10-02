@@ -2,6 +2,10 @@
 Type=Application
 Name=KeyEnroll
 Comment=Enroll FIDO2 security keys on behalf of users
+Comment[de]=FIDO2-Sicherheitsschlüssel im Namen von Benutzern registrieren
+Comment[es]=Registrar llaves de seguridad FIDO2 en nombre de los usuarios
+Comment[fr]=Enregistrer des clés de sécurité FIDO2 pour le compte des utilisateurs
+Comment[it]=Registrare chiavi di sicurezza FIDO2 per conto degli utenti
 Comment[pl]=Rejestrowanie kluczy FIDO2 w imieniu użytkowników
 Exec=keyenroll
 Icon=keyenroll

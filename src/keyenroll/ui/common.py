@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import atexit
 import logging
 import re
+import sys
 import threading
 from contextlib import contextmanager
 from itertools import zip_longest
 from typing import Callable
 
-from PySide6.QtCore import QCollator, QObject, Qt, QTimer, Signal
+from PySide6.QtCore import QCollator, QMimeData, QObject, Qt, QTimer, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -182,17 +184,58 @@ CLIPBOARD_CLEAR_MS = 60_000
 MAX_COLUMN_WIDTH = 900  # beyond this a cell is elided; the tooltip has the full text
 
 
+def sensitive_mime(text: str, platform: str = sys.platform) -> QMimeData:
+    """Text marked as a secret for the programs that record the clipboard.
+
+    Clearing the clipboard does not remove what a clipboard history has
+    already kept, so the history is asked not to take it in the first place:
+    the Windows clipboard history and its cloud sync, clipboard managers on
+    macOS, and KDE's Klipper all honour these markers.
+    """
+    mime = QMimeData()
+    mime.setText(text)
+    if platform == "win32":
+        mime.setData("ExcludeClipboardContentFromMonitorProcessing", b"1")
+        mime.setData("CanIncludeInClipboardHistory", bytes(4))  # DWORD 0
+        mime.setData("CanUploadToCloudClipboard", bytes(4))  # DWORD 0
+    elif platform == "darwin":
+        mime.setData("application/x-nspasteboard-concealed-type", text.encode())
+    else:
+        mime.setData("x-kde-passwordManagerHint", b"secret")
+    return mime
+
+
+_copied: set[str] = set()  # secrets of ours that may still be on the clipboard
+_exit_hooks = False
+
+
+def forget_copied(only: str | None = None) -> None:
+    """Takes a copied secret off the clipboard again, unless something else
+    has been copied since. Without ``only``, any secret of ours is removed."""
+    wanted = _copied if only is None else _copied & {only}
+    if wanted and QGuiApplication.instance() is not None:
+        clipboard = QGuiApplication.clipboard()
+        if clipboard.text() in wanted:
+            clipboard.clear()
+    _copied.difference_update(set(wanted))
+
+
 def copy_sensitive(text: str) -> None:
     """Copies a PIN (or a message containing one) and removes it from the
-    clipboard after a minute, unless something else was copied meanwhile."""
-    clipboard = QGuiApplication.clipboard()
-    clipboard.setText(text)
-
-    def clear() -> None:
-        if clipboard.text() == text:
-            clipboard.clear()
-
-    QTimer.singleShot(CLIPBOARD_CLEAR_MS, clear)
+    clipboard after a minute, or when the application closes, unless
+    something else was copied meanwhile."""
+    global _exit_hooks
+    if not _exit_hooks:
+        # A PIN must not outlive the application on the clipboard. The
+        # interpreter-exit hook is for a process that ends without the event
+        # loop quitting: Qt would otherwise destroy our clipboard data after
+        # Python is gone, which crashes.
+        QGuiApplication.instance().aboutToQuit.connect(lambda: forget_copied())
+        atexit.register(forget_copied)
+        _exit_hooks = True
+    _copied.add(text)
+    QGuiApplication.clipboard().setMimeData(sensitive_mime(text))
+    QTimer.singleShot(CLIPBOARD_CLEAR_MS, lambda: forget_copied(text))
 
 
 _collator: QCollator | None = None

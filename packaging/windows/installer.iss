@@ -39,7 +39,12 @@ ArchitecturesInstallIn64BitMode=x64compatible
 #endif
 
 [Languages]
+; The languages of the application (src/keyenroll/i18n.py).
 Name: "en"; MessagesFile: "compiler:Default.isl"
+Name: "de"; MessagesFile: "compiler:Languages\German.isl"
+Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "fr"; MessagesFile: "compiler:Languages\French.isl"
+Name: "it"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "pl"; MessagesFile: "compiler:Languages\Polish.isl"
 
 [Tasks]

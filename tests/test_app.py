@@ -10,9 +10,11 @@ import threading
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
+from PySide6.QtCore import QTranslator
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from keyenroll import app as app_module
+from keyenroll import i18n
 
 
 @pytest.fixture(scope="module")
@@ -108,3 +110,24 @@ def test_ctrl_c_is_left_alone(qt, hooks, monkeypatch):
     app_module.install_excepthooks()
     sys.excepthook(KeyboardInterrupt, KeyboardInterrupt(), None)
     assert shown == [] and passed_on == [KeyboardInterrupt]
+
+
+@pytest.fixture
+def no_leftover_translators(qt):
+    yield
+    for translator in qt.findChildren(QTranslator):
+        qt.removeTranslator(translator)
+        translator.setParent(None)
+
+
+@pytest.mark.parametrize("lang", sorted(i18n.LANGUAGES))
+def test_qt_has_its_own_texts_in_every_offered_language(qt, lang, no_leftover_translators):
+    # Yes/No buttons and the colour dialog come from Qt, not from our catalogs.
+    assert app_module.install_qt_translation(qt, lang)
+    if lang != "en":
+        assert QApplication.translate("QPlatformTheme", "Cancel") == i18n.catalog(lang)["Cancel"]
+
+
+def test_missing_qt_translation_is_not_fatal(qt, caplog, no_leftover_translators):
+    assert not app_module.install_qt_translation(qt, "xx")
+    assert "No Qt translation" in caplog.text
