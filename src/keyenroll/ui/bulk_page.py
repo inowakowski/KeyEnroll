@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from collections import Counter
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
+    QDialog,
     QFileDialog,
     QHBoxLayout,
-    QHeaderView,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -24,9 +23,11 @@ from PySide6.QtWidgets import (
 from .. import bulk
 from ..bulk import BulkRow
 from ..fido.enroll import EnrollCancelled
-from ..i18n import current_language, tr
+from ..handover import Handover
+from ..i18n import tr
 from ..providers import AuthRequired
-from .common import AppContext, error_text, make_table
+from .common import AppContext, error_text, fit_columns, make_table
+from .dialogs import ExportDialog, ResultDialog
 from .profile_form import profile_summary
 from .theme import Card
 from .workers import BulkWorker, PinPrompt, ResolveWorker, answer_prompt
@@ -44,6 +45,7 @@ class BulkPage(QWidget):
         self._worker: BulkWorker | ResolveWorker | None = None
         self._running = False
         self._unexported = False
+        self._provider_label = ""
 
         # user list
         self.load = QPushButton(tr("Load from file…"))
@@ -69,12 +71,10 @@ class BulkPage(QWidget):
                 tr("Serial number"),
                 tr("Temporary PIN"),
                 tr("Message"),
-            ]
+            ],
+            scrollable=True,
         )
-        header = self.table.horizontalHeader()
-        header.setMinimumSectionSize(110)
-        for col in (COL_STATUS, COL_SERIAL, COL_PIN):
-            header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.itemSelectionChanged.connect(self._update_state)
         list_card = Card(
             tr("User list"),
             tr(
@@ -120,6 +120,11 @@ class BulkPage(QWidget):
         self.retry.clicked.connect(self._retry_failed)
         self.export = QPushButton(tr("Export results…"))
         self.export.clicked.connect(self._export)
+        self.handover = QPushButton(tr("Message for the user…"))
+        self.handover.setToolTip(
+            tr("Select an enrolled user to copy, e-mail or save the hand-over message.")
+        )
+        self.handover.clicked.connect(self._hand_over)
         self.step = QLabel()
         self.step.setObjectName("step")
         self.step.setWordWrap(True)
@@ -129,6 +134,7 @@ class BulkPage(QWidget):
         for b in (self.start, self.stop, self.retry):
             buttons.addWidget(b)
         buttons.addStretch(1)
+        buttons.addWidget(self.handover)
         buttons.addWidget(self.export)
         action_card = Card()
         action_card.body.addLayout(buttons)
@@ -173,6 +179,8 @@ class BulkPage(QWidget):
         self.stop.setEnabled(self._running)
         self.retry.setEnabled(idle and counts[bulk.FAILED] > 0 and not foreign)
         self.export.setEnabled(bool(self.rows) and not self._running)
+        selected = self._selected_row()
+        self.handover.setEnabled(selected is not None and selected.status == bulk.DONE)
         for widget in (self.profile_combo, self.key_name, self.append_serial):
             widget.setEnabled(idle)
 
@@ -248,6 +256,7 @@ class BulkPage(QWidget):
         self.table.setRowCount(len(self.rows))
         for index in range(len(self.rows)):
             self._refresh_row(index)
+        fit_columns(self.table)
         self._update_state()
 
     def _on_row_changed(self, index: int) -> None:
@@ -255,7 +264,14 @@ class BulkPage(QWidget):
         if row.status == bulk.DONE and row.pin:
             self._unexported = True
         self._refresh_row(index)
+        fit_columns(self.table)
         self._update_state()
+
+    def _selected_row(self) -> BulkRow | None:
+        rows = self.table.selectionModel().selectedRows()
+        if not rows or rows[0].row() >= len(self.rows):
+            return None
+        return self.rows[rows[0].row()]
 
     # -- import ------------------------------------------------------------
 
@@ -300,6 +316,7 @@ class BulkPage(QWidget):
             return
         self.rows = [BulkRow(identifier) for identifier in identifiers]
         self._instance_id = self.ctx.config.active_instance_id
+        self._provider_label = provider.label
         self._unexported = False
         self._refresh_all()
         self._resolve()
@@ -421,39 +438,45 @@ class BulkPage(QWidget):
         if not isinstance(exc, EnrollCancelled):
             QMessageBox.warning(self, tr("Bulk enrollment paused"), text)
 
-    # -- export ------------------------------------------------------------
+    # -- export and hand-over ----------------------------------------------
 
     def _export(self) -> None:
-        box = QMessageBox(self)
-        box.setIcon(QMessageBox.Icon.Warning)
-        box.setWindowTitle(tr("Export results"))
-        box.setText(
-            tr(
-                "The file will contain the temporary PINs in plain text. Store it "
-                "securely and delete it once the keys have been handed out."
-            )
-        )
-        proceed = box.addButton(tr("Export"), QMessageBox.ButtonRole.AcceptRole)
-        box.addButton(tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
-        box.exec()
-        if box.clickedButton() is not proceed:
+        dialog = ExportDialog(self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
-        filters = [tr("CSV, semicolon separated (*.csv)"), tr("CSV, comma separated (*.csv)")]
-        if current_language() != "pl":  # Excel expects semicolons in Polish locale
-            filters.reverse()
-        path, chosen = QFileDialog.getSaveFileName(
-            self, tr("Export results"), "keyenroll-results.csv", ";;".join(filters)
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            tr("Export results"),
+            "keyenroll-enrolled.csv" if dialog.enrolled_only else "keyenroll-results.csv",
+            tr("CSV files (*.csv)"),
         )
         if not path:
             return
-        delimiter = ";" if chosen == tr("CSV, semicolon separated (*.csv)") else ","
         try:
-            bulk.write_results(path, self.rows, delimiter)
+            bulk.write_results(
+                path, self.rows, dialog.delimiter, dialog.include_pins, dialog.enrolled_only
+            )
         except OSError as e:
             QMessageBox.warning(self, tr("Error"), str(e))
             return
-        self._unexported = False
+        if dialog.include_pins:  # every enrolled user is in both kinds of export
+            self._unexported = False
         self.step.setText(tr("Results exported to {path}", path=path))
+
+    def _hand_over(self) -> None:
+        row = self._selected_row()
+        if row is None or row.status != bulk.DONE or row.user is None:
+            return
+        handover = Handover(
+            user=row.user,
+            key_name=row.key_name,
+            serial=row.serial,
+            pin=row.pin,
+            pin_changed=True,
+            must_change_pin=row.must_change_pin,
+            provider=self._provider_label,
+        )
+        ResultDialog(handover, self.ctx.config, self).exec()
 
     def shutdown(self) -> None:
         if self._worker:

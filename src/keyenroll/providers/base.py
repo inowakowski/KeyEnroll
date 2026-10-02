@@ -18,6 +18,19 @@ from ..secrets_store import TokenStore
 logger = logging.getLogger(__name__)
 
 
+MAX_THROTTLE_RETRIES = 3
+MAX_THROTTLE_WAIT = 30.0
+
+
+def _retry_after(resp) -> float:
+    """Seconds to wait before repeating a rate-limited request."""
+    headers = getattr(resp, "headers", None) or {}
+    try:
+        return min(MAX_THROTTLE_WAIT, max(1.0, float(headers.get("Retry-After", 2))))
+    except (TypeError, ValueError):
+        return 2.0
+
+
 class ProviderError(Exception):
     def __init__(self, message: str, status: int | None = None):
         super().__init__(message)
@@ -157,7 +170,11 @@ class Provider:
         with self._lock:
             self._tokens = tokens
             if tokens.refresh_token:
-                self._store.set(self.instance_id, tokens.refresh_token)
+                try:
+                    self._store.set(self.instance_id, tokens.refresh_token)
+                except Exception:
+                    # The session still works; it just will not survive a restart.
+                    logger.warning("Could not save the sign-in to the OS keyring", exc_info=True)
 
     def has_session(self) -> bool:
         """Cheap check without network access."""
@@ -213,8 +230,10 @@ class Provider:
     ) -> requests.Response:
         hdrs = {"Accept": "application/json", **(headers or {})}
         resp = None
-        for attempt in (0, 1) if retry_auth else (0,):
-            hdrs["Authorization"] = f"Bearer {self.access_token(force_refresh=attempt == 1)}"
+        refreshed = False
+        throttled = 0
+        while True:
+            hdrs["Authorization"] = f"Bearer {self.access_token(force_refresh=refreshed)}"
             try:
                 resp = self._http.request(
                     method,
@@ -227,9 +246,16 @@ class Provider:
                 )
             except requests.RequestException as e:
                 raise ProviderError(f"{self.label}: {e}") from e
-            if resp.status_code != 401:
-                break
-        assert resp is not None
+            if resp.status_code == 401 and retry_auth and not refreshed:
+                refreshed = True  # the token may have been revoked early
+                continue
+            if resp.status_code == 429 and throttled < MAX_THROTTLE_RETRIES:
+                throttled += 1
+                delay = _retry_after(resp)
+                logger.info("%s is rate limiting requests; waiting %.0f s", self.label, delay)
+                time.sleep(delay)
+                continue
+            break
         if resp.status_code not in ok:
             raise ProviderError(
                 f"{self.label}: {self._error_message(resp)}", resp.status_code

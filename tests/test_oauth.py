@@ -69,7 +69,9 @@ def test_state_mismatch_is_rejected(http):
 
 
 def test_provider_error_is_reported(http):
-    reply = lambda q: {"error": "access_denied", "error_description": "User declined", "state": q["state"]}
+    def reply(q):
+        return {"error": "access_denied", "error_description": "User declined", "state": q["state"]}
+
     with pytest.raises(oauth.OAuthError, match="User declined"):
         oauth.authorize(cfg(), browser(reply, {}), http=http)
 

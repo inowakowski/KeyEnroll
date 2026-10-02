@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 import webbrowser
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QByteArray, QSize, Qt
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -34,9 +34,18 @@ from .credentials_page import CredentialsPage
 from .enroll_page import EnrollPage
 from .instances_page import InstancesPage
 from .profiles_page import ProfilesPage
+from .settings_page import SettingsPage
 from .theme import app_icon, nav_icon
 
-PAGE_ENROLL, PAGE_BULK, PAGE_CREDENTIALS, PAGE_PROFILES, PAGE_INSTANCES = range(5)
+(
+    PAGE_ENROLL,
+    PAGE_BULK,
+    PAGE_CREDENTIALS,
+    PAGE_PROFILES,
+    PAGE_INSTANCES,
+    PAGE_SETTINGS,
+) = range(6)
+WINDOW_STATE = "window_geometry"
 
 
 class MainWindow(QMainWindow):
@@ -73,6 +82,7 @@ class MainWindow(QMainWindow):
             (tr("Credentials"), "shield", CredentialsPage(ctx)),
             (tr("Profiles"), "sliders", ProfilesPage(ctx)),
             (tr("Instances"), "layers", InstancesPage(ctx)),
+            (tr("Settings"), "gear", SettingsPage(ctx)),
         ):
             self.nav.addItem(QListWidgetItem(nav_icon(icon), title))
             self.pages.addWidget(page)
@@ -135,6 +145,9 @@ class MainWindow(QMainWindow):
         ctx.busy_changed.connect(self._on_busy)
         ctx.theme_changed.connect(self._retint_icons)
         self._reload_instances()
+        geometry = ctx.config.ui.get(WINDOW_STATE)
+        if geometry:
+            self.restoreGeometry(QByteArray.fromBase64(geometry.encode()))
         # First run: nothing to enroll against yet, start on the instances page.
         self.nav.setCurrentRow(PAGE_ENROLL if ctx.config.instances else PAGE_INSTANCES)
 
@@ -285,4 +298,14 @@ class MainWindow(QMainWindow):
                 return
         self.enroll_page.shutdown()
         self.bulk_page.shutdown()
+        self._save_state()
         event.accept()
+
+    def _save_state(self) -> None:
+        config = self.ctx.config
+        config.ui[WINDOW_STATE] = bytes(self.saveGeometry().toBase64()).decode()
+        self.enroll_page.save_state()
+        try:
+            config.save()
+        except OSError:  # a read-only profile must not block closing
+            pass

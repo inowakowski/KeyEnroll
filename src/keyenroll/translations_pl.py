@@ -36,7 +36,6 @@ PL = {
     "Delete": "Usuń",
     "Edit": "Edytuj",
     "Close": "Zamknij",
-    "Copy": "Kopiuj",
     "Refresh": "Odśwież",
     "Search": "Szukaj",
     "Searching…": "Wyszukiwanie…",
@@ -165,7 +164,6 @@ PL = {
     ),
     "Settings": "Ustawienia",
     "Language": "Język",
-    "System default": "Zgodny z systemem",
     # -- provider settings
     "Directory (tenant) ID": "Identyfikator katalogu (tenant ID)",
     "Application (client) ID": "Identyfikator aplikacji (client ID)",
@@ -217,13 +215,8 @@ PL = {
     # -- result dialog
     "Enrollment complete": "Rejestracja zakończona",
     "The security key has been enrolled.": "Klucz bezpieczeństwa został zarejestrowany.",
-    "Security key": "Klucz bezpieczeństwa",
     "Serial number": "Numer seryjny",
     "Temporary PIN:": "Tymczasowy PIN:",
-    "The PIN is shown only once. Hand it over to the user together with the security "
-    "key.": (
-        "PIN jest wyświetlany tylko raz. Przekaż go użytkownikowi razem z kluczem."
-    ),
     "The PIN you entered has been set on the key.": "Podany przez Ciebie PIN został ustawiony na kluczu.",
     "The PIN of the key was not changed.": "PIN klucza nie został zmieniony.",
     "The user must change the PIN before first use.": (
@@ -340,8 +333,6 @@ PL = {
         "Plik będzie zawierał tymczasowe PIN-y zapisane jawnym tekstem. Przechowuj go "
         "bezpiecznie i usuń po wydaniu kluczy."
     ),
-    "CSV, semicolon separated (*.csv)": "CSV rozdzielany średnikami (*.csv)",
-    "CSV, comma separated (*.csv)": "CSV rozdzielany przecinkami (*.csv)",
     "Results exported to {path}": "Wyniki wyeksportowano do {path}",
     "Unsaved PINs": "Niezapisane PIN-y",
     "The temporary PINs have not been exported and will be lost. Continue?": (
@@ -408,4 +399,80 @@ PL = {
         "Uruchom aplikację ponownie, aby zastosować zmianę."
     ),
     "Version {version}": "Wersja {version}",
+    # -- hand-over to the user
+    "Pass it on to the user": "Przekaż użytkownikowi",
+    "The message contains the PIN. Send it through a different channel than the key "
+    "itself.": (
+        "Wiadomość zawiera PIN. Wyślij ją innym kanałem niż sam klucz."
+    ),
+    "Copy PIN": "Kopiuj PIN",
+    "Copy message": "Kopiuj wiadomość",
+    "E-mail draft…": "Szkic e-maila…",
+    "Save to file…": "Zapisz do pliku…",
+    "Save message": "Zapisz wiadomość",
+    "Text files (*.txt)": "Pliki tekstowe (*.txt)",
+    "Copied. The clipboard will be cleared in one minute.": (
+        "Skopiowano. Schowek zostanie wyczyszczony za minutę."
+    ),
+    "Saved to {path}. The file contains the PIN.": "Zapisano w {path}. Plik zawiera PIN.",
+    "The PIN is not stored anywhere. It is shown only in this window.": (
+        "PIN nie jest nigdzie zapisywany. Widać go tylko w tym oknie."
+    ),
+    "No e-mail address is known for this user.": "Brak adresu e-mail tego użytkownika.",
+    "A draft was opened in your e-mail program. Review it and send it.": (
+        "W programie pocztowym otwarto szkic wiadomości. Sprawdź go i wyślij."
+    ),
+    "No e-mail program is available. Copy the message instead.": (
+        "Brak programu pocztowego. Skopiuj wiadomość."
+    ),
+    "security key": "klucz bezpieczeństwa",
+    "(provided separately)": "(przekazany osobno)",
+    "You will be asked to set your own PIN the first time you use the key.": (
+        "Przy pierwszym użyciu klucza pojawi się prośba o ustawienie własnego PIN-u."
+    ),
+    "Message for the user…": "Wiadomość dla użytkownika…",
+    "Select an enrolled user to copy, e-mail or save the hand-over message.": (
+        "Zaznacz zarejestrowanego użytkownika, aby skopiować, wysłać lub zapisać wiadomość."
+    ),
+    # -- export options
+    "CSV files (*.csv)": "Pliki CSV (*.csv)",
+    "Enrolled users only": "Tylko zarejestrowani użytkownicy",
+    "All users on the list, with their status": "Wszyscy użytkownicy z listy, ze statusem",
+    "Include temporary PINs": "Dołącz tymczasowe PIN-y",
+    "CSV, semicolon separated": "CSV rozdzielany średnikami",
+    "CSV, comma separated": "CSV rozdzielany przecinkami",
+    "Format": "Format",
+    # -- settings page
+    "Colour scheme": "Kolorystyka",
+    "Same as the system (light or dark)": "Zgodna z systemem (jasna lub ciemna)",
+    "Same as the system": "Zgodny z systemem",
+    "Message for the user": "Wiadomość dla użytkownika",
+    "Used after an enrollment for the e-mail draft, the copied message and the saved "
+    "file. Placeholders: {placeholders}.": (
+        "Używana po rejestracji w szkicu e-maila, kopiowanej wiadomości i zapisywanym "
+        "pliku. Pola do podstawienia: {placeholders}."
+    ),
+    "Subject": "Temat",
+    "Text": "Treść",
+    "Restore the default text": "Przywróć tekst domyślny",
+    "Saved.": "Zapisano.",
+    "The default text has been restored.": "Przywrócono tekst domyślny.",
+    "About": "O programie",
+    "Version": "Wersja",
+    "License": "Licencja",
+    "Project page": "Strona projektu",
+    "KeyEnroll is an independent open-source project. It is not affiliated with or "
+    "endorsed by Yubico, Microsoft, Okta or Ping Identity.": (
+        "KeyEnroll jest niezależnym projektem open source. Nie jest powiązany z firmami "
+        "Yubico, Microsoft, Okta ani Ping Identity, ani przez nie wspierany."
+    ),
+    "Open the folder with settings and logs": "Otwórz folder z ustawieniami i logami",
+    # -- unexpected errors
+    "An unexpected error occurred:": "Wystąpił nieoczekiwany błąd:",
+    "Details were written to the log: {path}": "Szczegóły zapisano w logu: {path}",
+    "The settings file could not be read and was set aside as {path}. KeyEnroll started "
+    "with default settings.": (
+        "Nie udało się odczytać pliku ustawień; odłożono go jako {path}. KeyEnroll "
+        "uruchomił się z ustawieniami domyślnymi."
+    ),
 }

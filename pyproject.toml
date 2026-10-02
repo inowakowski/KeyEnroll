@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "keyenroll"
-version = "0.2.0"
+version = "0.3.0"
 description = "Cross-platform GUI for enrolling FIDO2 security keys on behalf of users (Entra ID, Okta, PingOne, PingOne AIC)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
+authors = [{ name = "Ignacy Nowakowski" }]
 dependencies = [
     "PySide6-Essentials>=6.7",
     "fido2>=2.0,<3",
@@ -16,9 +17,12 @@ dependencies = [
     "keyring>=24",
 ]
 
+[project.urls]
+Homepage = "https://github.com/inowakowski/KeyEnroll"
+
 [project.optional-dependencies]
 nfc = ["pyscard>=2.0"]
-dev = ["pytest>=8", "pyinstaller>=6.10"]
+dev = ["pytest>=8", "pyinstaller>=6.10", "ruff>=0.6"]
 
 [project.gui-scripts]
 keyenroll = "keyenroll.__main__:main"
@@ -29,3 +33,20 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+# Dump every thread's stack if a test hangs instead of blocking CI forever.
+faulthandler_timeout = 120
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = [
+    "E501",  # long user-facing strings and test fixtures are kept on one line
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Qt has to be told to run headless before it is imported.
+"tests/*" = ["E402"]
+"packaging/*" = ["E402"]

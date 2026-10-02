@@ -12,7 +12,16 @@ from PySide6.QtWidgets import (
 )
 
 from ..i18n import tr
-from .common import AppContext, UserPicker, fill_row, make_table, run_task, selected_data, show_error
+from .common import (
+    AppContext,
+    UserPicker,
+    fill_row,
+    fit_columns,
+    make_table,
+    run_task,
+    selected_data,
+    show_error,
+)
 from .theme import Card
 
 
@@ -27,7 +36,9 @@ class CredentialsPage(QWidget):
         user_card = Card(tr("User"))
         user_card.body.addWidget(self.picker, 1)
 
-        self.table = make_table([tr("Name"), tr("Created"), tr("Details"), tr("ID")])
+        self.table = make_table(
+            [tr("Name"), tr("Created"), tr("Details"), tr("ID")], scrollable=True
+        )
         self.table.itemSelectionChanged.connect(self._update_buttons)
         self.notice = QLabel()
         self.notice.setObjectName("hint")
@@ -101,6 +112,7 @@ class CredentialsPage(QWidget):
                 return
             for c in creds:
                 fill_row(self.table, [c.name, c.created, c.detail, c.id], c)
+            fit_columns(self.table)
             self._update_buttons()
 
         def failed(exc):

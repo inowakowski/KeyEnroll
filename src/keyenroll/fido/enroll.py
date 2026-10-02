@@ -354,11 +354,11 @@ class Enroller:
                 elif e.code == ERR.PIN_AUTH_BLOCKED:
                     raise EnrollError(
                         N_("Too many wrong PIN attempts. Re-insert the key and try again.")
-                    )
+                    ) from e
                 elif e.code == ERR.PIN_BLOCKED:
                     raise EnrollError(
                         N_("The PIN is blocked. The key must be factory reset.")
-                    )
+                    ) from e
                 else:
                     raise
 
@@ -424,8 +424,8 @@ class Enroller:
         try:
             try:
                 ctap = Ctap2(dev)
-            except (ValueError, CtapError):
-                raise EnrollError(N_("This security key does not support FIDO2."))
+            except (ValueError, CtapError) as e:
+                raise EnrollError(N_("This security key does not support FIDO2.")) from e
             self._precheck(ctap.info)
             result = EnrollResult(user=self.user, key=self.source.describe(dev))
             self.ui.status(N_("Security key: {key}"), key=result.key.label)

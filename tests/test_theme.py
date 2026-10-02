@@ -8,12 +8,12 @@ import pytest
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QColorDialog
 
-from test_enroll import FakeSource
 from keyenroll.config import ConfigStore, Instance
 from keyenroll.secrets_store import TokenStore
 from keyenroll.ui import theme
 from keyenroll.ui.common import AppContext
-from keyenroll.ui.main_window import MainWindow, PAGE_INSTANCES
+from keyenroll.ui.main_window import PAGE_SETTINGS, MainWindow
+from test_enroll import FakeSource
 
 
 @pytest.fixture(scope="module")
@@ -87,12 +87,17 @@ def test_settings_switch_the_scheme_live_and_remember_it(app, tmp_path, monkeypa
     config.upsert_instance(Instance(name="Prod", kind="okta"))
     ctx = AppContext(config, TokenStore(), source=FakeSource())
     window = MainWindow(ctx)
-    window.nav.setCurrentRow(PAGE_INSTANCES)
+    window.nav.setCurrentRow(PAGE_SETTINGS)
     page = window.pages.currentWidget()
     labels = [page.theme.itemText(i) for i in range(page.theme.count())]
-    assert labels == ["System default", "Light", "Dark", "Yubico", "Custom"]
+    assert labels == [
+        "Light", "Dark", "Yubico", "Same as the system (light or dark)", "Custom"
+    ]
+    assert page.theme.currentData() == "yubico"  # the default for a new installation
     assert page.custom_row.isHidden()
 
+    page.theme.setCurrentIndex(page.theme.findData("dark"))
+    assert theme.token("accent") == theme.THEMES["dark"]["accent"]
     page.theme.setCurrentIndex(page.theme.findData("yubico"))
     assert theme.token("accent") == "#9aca3c" and "#9aca3c" in app.styleSheet()
     assert ConfigStore(config.path).theme == "yubico"

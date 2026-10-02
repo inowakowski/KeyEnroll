@@ -26,7 +26,7 @@ def create_provider(instance: Instance, token_store: TokenStore) -> Provider:
     try:
         cls = PROVIDERS[instance.kind]
     except KeyError:
-        raise ProviderError(f"Unknown identity provider type: {instance.kind}")
+        raise ProviderError(f"Unknown identity provider type: {instance.kind}") from None
     return cls(instance.id, instance.settings, token_store)
 
 

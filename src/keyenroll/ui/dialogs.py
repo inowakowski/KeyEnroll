@@ -1,28 +1,32 @@
-"""Dialogs: provider instance editor, PIN prompts, enrollment result."""
+"""Dialogs: provider instance editor, PIN prompts, enrollment result, export options."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices, QFont, QFontDatabase
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QRadioButton,
     QVBoxLayout,
     QWidget,
 )
 
+from .. import handover as handover_text
 from ..config import ConfigStore, Instance
-from ..fido.enroll import EnrollResult
-from ..i18n import tr
+from ..handover import Handover
+from ..i18n import current_language, tr
 from ..providers import PROVIDERS
+from .common import copy_sensitive
 
 
 class InstanceDialog(QDialog):
@@ -245,34 +249,39 @@ class NewPinDialog(QDialog):
 
 
 class ResultDialog(QDialog):
-    def __init__(self, result: EnrollResult, parent: QWidget):
+    """Shows the outcome of an enrollment and helps passing the key and the
+    temporary PIN on to the user: copy, e-mail draft or text file."""
+
+    def __init__(self, handover: Handover, config: ConfigStore, parent: QWidget):
         super().__init__(parent)
+        self.handover = handover
+        self.config = config
         self.setWindowTitle(tr("Enrollment complete"))
-        self.setMinimumWidth(440)
+        self.setMinimumWidth(500)
         layout = QVBoxLayout(self)
+        layout.setSpacing(10)
 
         title = QLabel(tr("The security key has been enrolled."))
         title.setObjectName("title")
         layout.addWidget(title)
 
         form = QFormLayout()
-        user = result.user
+        user = handover.user
         form.addRow(tr("User"), QLabel(user.display_name or user.username))
         if user.display_name and user.username:
             form.addRow(tr("Username"), QLabel(user.username))
-        form.addRow(tr("Security key"), QLabel(result.key.name))
-        if result.key.serial:
-            serial = QLabel(str(result.key.serial))
+        if handover.serial:
+            serial = QLabel(str(handover.serial))
             serial.setObjectName("value")
             serial.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             form.addRow(tr("Serial number"), serial)
-        if result.display_name:
-            form.addRow(tr("Key name"), QLabel(result.display_name))
+        if handover.key_name:
+            form.addRow(tr("Key name"), QLabel(handover.key_name))
         layout.addLayout(form)
 
-        if result.pin:
+        if handover.pin:
             layout.addWidget(QLabel(tr("Temporary PIN:")))
-            pin = QLabel(result.pin)
+            pin = QLabel(handover.pin)
             font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
             font.setPointSize(22)
             font.setWeight(QFont.Weight.Bold)
@@ -280,35 +289,164 @@ class ResultDialog(QDialog):
             pin.setFont(font)
             pin.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             pin.setObjectName("pin")
-            copy = QPushButton(tr("Copy"))
-            copy.clicked.connect(lambda: QGuiApplication.clipboard().setText(result.pin))
+            self.copy_pin = QPushButton(tr("Copy PIN"))
+            self.copy_pin.clicked.connect(lambda: self._copy(handover.pin))
             row = QHBoxLayout()
             row.addWidget(pin, 1)
-            row.addWidget(copy)
+            row.addWidget(self.copy_pin)
             layout.addLayout(row)
-            note = QLabel(
-                tr(
-                    "The PIN is shown only once. Hand it over to the user together "
-                    "with the security key."
-                )
-            )
+            note = QLabel(tr("The PIN is not stored anywhere. It is shown only in this window."))
+            note.setObjectName("hint")
             note.setWordWrap(True)
             layout.addWidget(note)
-        elif result.pin_changed:
+        elif handover.pin_changed:
             layout.addWidget(QLabel(tr("The PIN you entered has been set on the key.")))
         else:
             layout.addWidget(QLabel(tr("The PIN of the key was not changed.")))
 
-        if result.key.force_pin_change:
+        if handover.must_change_pin:
             layout.addWidget(QLabel(tr("The user must change the PIN before first use.")))
 
-        for template, params in result.warnings:
+        for template, params in handover.warnings:
             warning = QLabel(tr(template, **params))
             warning.setWordWrap(True)
             warning.setObjectName("error")
             layout.addWidget(warning)
 
+        # hand-over
+        section = QLabel(tr("Pass it on to the user"))
+        section.setObjectName("cardTitle")
+        layout.addSpacing(6)
+        layout.addWidget(section)
+        advice = QLabel(
+            tr(
+                "The message contains the PIN. Send it through a different channel "
+                "than the key itself."
+            )
+        )
+        advice.setObjectName("hint")
+        advice.setWordWrap(True)
+        layout.addWidget(advice)
+
+        self.copy_message = QPushButton(tr("Copy message"))
+        self.copy_message.clicked.connect(self._copy_message)
+        self.email = QPushButton(tr("E-mail draft…"))
+        self.email.setToolTip(handover.recipient or tr("No e-mail address is known for this user."))
+        self.email.clicked.connect(self._email)
+        self.save = QPushButton(tr("Save to file…"))
+        self.save.clicked.connect(self._save)
+        actions = QHBoxLayout()
+        for button in (self.copy_message, self.email, self.save):
+            actions.addWidget(button)
+        actions.addStretch(1)
+        layout.addLayout(actions)
+        self.feedback = QLabel()
+        self.feedback.setObjectName("hint")
+        self.feedback.setWordWrap(True)
+        layout.addWidget(self.feedback)
+
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         buttons.button(QDialogButtonBox.StandardButton.Close).setText(tr("Close"))
         buttons.rejected.connect(self.accept)
         layout.addWidget(buttons)
+
+    def _message(self) -> tuple[str, str]:
+        return handover_text.message(
+            self.handover, self.config.message_subject, self.config.message_body
+        )
+
+    def _copy(self, text: str) -> None:
+        copy_sensitive(text)
+        self.feedback.setText(tr("Copied. The clipboard will be cleared in one minute."))
+
+    def _copy_message(self) -> None:
+        self._copy(self._message()[1])
+
+    def _email(self) -> None:
+        subject, body = self._message()
+        url = handover_text.mailto_url(self.handover.recipient, subject, body)
+        if QDesktopServices.openUrl(QUrl(url)):
+            self.feedback.setText(tr("A draft was opened in your e-mail program. Review it and send it."))
+        else:
+            self.feedback.setText(tr("No e-mail program is available. Copy the message instead."))
+
+    def _save(self) -> None:
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            tr("Save message"),
+            handover_text.default_filename(self.handover),
+            tr("Text files (*.txt)"),
+        )
+        if not path:
+            return
+        subject, body = self._message()
+        try:
+            handover_text.save_text(path, subject, body)
+        except OSError as e:
+            QMessageBox.warning(self, tr("Error"), str(e))
+            return
+        self.feedback.setText(tr("Saved to {path}. The file contains the PIN.", path=path))
+
+
+class ExportDialog(QDialog):
+    """Options for exporting the bulk enrollment results."""
+
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
+        self.setWindowTitle(tr("Export results"))
+        self.setMinimumWidth(460)
+
+        self.enrolled = QRadioButton(tr("Enrolled users only"))
+        self.everyone = QRadioButton(tr("All users on the list, with their status"))
+        self.enrolled.setChecked(True)
+        self.pins = QCheckBox(tr("Include temporary PINs"))
+        self.pins.setChecked(True)
+        self.warning = QLabel(
+            tr(
+                "The file will contain the temporary PINs in plain text. Store it "
+                "securely and delete it once the keys have been handed out."
+            )
+        )
+        self.warning.setObjectName("error")
+        self.warning.setWordWrap(True)
+        self.pins.toggled.connect(self.warning.setVisible)
+
+        self.format = QComboBox()
+        self.format.addItem(tr("CSV, semicolon separated"), ";")
+        self.format.addItem(tr("CSV, comma separated"), ",")
+        # Excel in a Polish locale expects semicolons.
+        self.format.setCurrentIndex(0 if current_language() == "pl" else 1)
+        form = QFormLayout()
+        form.addRow(tr("Format"), self.format)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        export = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        export.setText(tr("Export"))
+        export.setObjectName("primary")
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Cancel"))
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        layout.addWidget(self.enrolled)
+        layout.addWidget(self.everyone)
+        layout.addSpacing(6)
+        layout.addWidget(self.pins)
+        layout.addWidget(self.warning)
+        layout.addLayout(form)
+        layout.addWidget(buttons)
+
+    @property
+    def enrolled_only(self) -> bool:
+        return self.enrolled.isChecked()
+
+    @property
+    def include_pins(self) -> bool:
+        return self.pins.isChecked()
+
+    @property
+    def delimiter(self) -> str:
+        return self.format.currentData()

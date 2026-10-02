@@ -17,13 +17,15 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QScrollArea,
+    QSplitter,
     QVBoxLayout,
     QWidget,
 )
 
 from ..config import Profile
 from ..fido.devices import KeyInfo, close
-from ..fido.enroll import EnrollCancelled, compose_key_name
+from ..fido.enroll import EnrollCancelled, EnrollResult, compose_key_name
+from ..handover import Handover
 from ..i18n import tr
 from ..providers import AuthRequired
 from .common import AppContext, UserPicker, error_text, run_task
@@ -33,6 +35,20 @@ from .theme import Card
 from .workers import EnrollWorker, PinPrompt, answer_prompt
 
 KEY_POLL_MS = 2000
+SPLITTER_STATE = "enroll_splitter"
+
+
+def handover_from_result(result: EnrollResult, provider_label: str) -> Handover:
+    return Handover(
+        user=result.user,
+        key_name=result.display_name or result.key.name,
+        serial=result.key.serial,
+        pin=result.pin,
+        pin_changed=result.pin_changed,
+        must_change_pin=result.key.force_pin_change,
+        provider=provider_label,
+        warnings=result.warnings,
+    )
 
 
 class EnrollPage(QWidget):
@@ -43,11 +59,13 @@ class EnrollPage(QWidget):
         self._keys: list[KeyInfo] = []
         self._refreshing = False
         self._last_paths: set | None = None
+        self._provider_label = ""
 
         # 1. user
         self.picker = UserPicker(ctx)
         user_card = Card(tr("1. User"))
         user_card.body.addWidget(self.picker, 1)
+        user_card.setMinimumWidth(300)
 
         # 2. key
         self.key_combo = QComboBox()
@@ -108,11 +126,16 @@ class EnrollPage(QWidget):
         options_card.body.addWidget(self.name_preview)
         options_card.body.addWidget(self.form)
 
-        # action and progress
+        # The main action closes the 1-2-3 flow: large, under the options.
         self.start = QPushButton(tr("Enroll security key"))
         self.start.setObjectName("primary")
+        self.start.setProperty("big", True)
+        self.start.setMinimumHeight(50)
+        self.start.setCursor(Qt.CursorShape.PointingHandCursor)
         self.start.clicked.connect(self._start)
         self.cancel = QPushButton(tr("Cancel"))
+        self.cancel.setProperty("big", True)
+        self.cancel.setMinimumHeight(50)
         self.cancel.clicked.connect(self._cancel)
         self.cancel.setVisible(False)
         self.progress = QProgressBar()
@@ -125,16 +148,16 @@ class EnrollPage(QWidget):
         self.log = QListWidget()
         self.log.setObjectName("log")
         self.log.setFixedHeight(64)
+        self.log.setVisible(False)  # appears with the first progress message
 
         action_row = QHBoxLayout()
-        action_row.addWidget(self.start)
+        action_row.setSpacing(10)
+        action_row.addWidget(self.start, 1)
         action_row.addWidget(self.cancel)
-        action_row.addSpacing(8)
-        action_row.addWidget(self.step, 1)
-        action_card = Card()
-        action_card.body.addLayout(action_row)
-        action_card.body.addWidget(self.progress)
-        action_card.body.addWidget(self.log)
+        status_card = Card()
+        status_card.body.addWidget(self.step)
+        status_card.body.addWidget(self.progress)
+        status_card.body.addWidget(self.log)
 
         # The options can be taller than a small screen: let them scroll
         # instead of forcing a minimum window height.
@@ -150,18 +173,30 @@ class EnrollPage(QWidget):
         right_scroll.setWidgetResizable(True)
         right_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         right_scroll.setWidget(right_host)
-        right_scroll.setMinimumWidth(480)
 
-        columns = QHBoxLayout()
-        columns.setSpacing(14)
-        columns.addWidget(user_card, 1)
-        columns.addWidget(right_scroll, 1)
+        right_panel = QWidget()
+        right_panel.setMinimumWidth(440)
+        right_column = QVBoxLayout(right_panel)
+        right_column.setContentsMargins(0, 0, 0, 0)
+        right_column.setSpacing(12)
+        right_column.addWidget(right_scroll, 1)
+        right_column.addLayout(action_row)
+
+        # The divider between the user list and the options can be dragged.
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.setHandleWidth(14)
+        self.splitter.addWidget(user_card)
+        self.splitter.addWidget(right_panel)
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 1)
+        self._restore_splitter()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(14)
-        layout.addLayout(columns, 1)
-        layout.addWidget(action_card)
+        layout.addWidget(self.splitter, 1)
+        layout.addWidget(status_card)
 
         ctx.profiles_changed.connect(self._reload_profiles)
         ctx.active_changed.connect(self._reload_profiles)
@@ -184,6 +219,18 @@ class EnrollPage(QWidget):
     def hideEvent(self, event) -> None:
         super().hideEvent(event)
         self._timer.stop()
+
+    def _restore_splitter(self) -> None:
+        try:
+            sizes = [int(v) for v in self.ctx.config.ui.get(SPLITTER_STATE, "").split(",")]
+        except ValueError:
+            return
+        if len(sizes) == 2 and all(size > 0 for size in sizes):
+            self.splitter.setSizes(sizes)
+
+    def save_state(self) -> None:
+        """Remembers the divider position (written with the window geometry)."""
+        self.ctx.config.ui[SPLITTER_STATE] = ",".join(str(s) for s in self.splitter.sizes())
 
     def _on_busy(self, busy: bool) -> None:
         # Another page (bulk enrollment) owns the security key while busy.
@@ -375,6 +422,7 @@ class EnrollPage(QWidget):
             return
 
         self.log.clear()
+        self._provider_label = provider.label
         worker = EnrollWorker(
             self.ctx.source,
             provider,
@@ -409,6 +457,7 @@ class EnrollPage(QWidget):
         self.ctx.set_busy(running)
 
     def _add_log(self, text: str) -> None:
+        self.log.setVisible(True)
         self.log.addItem(f"{time.strftime('%H:%M:%S')}  {text}")
         self.log.scrollToBottom()
 
@@ -428,7 +477,8 @@ class EnrollPage(QWidget):
     def _on_done(self, result) -> None:
         self._finish()
         self.step.setText(tr("The security key has been enrolled."))
-        ResultDialog(result, self).exec()
+        handover = handover_from_result(result, self._provider_label)
+        ResultDialog(handover, self.ctx.config, self).exec()
         self.refresh_keys()
 
     def _on_failed(self, exc) -> None:
