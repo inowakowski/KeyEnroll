@@ -79,10 +79,25 @@ class KeyringTokenStore(TokenStore):
             pass
 
 
+def protected_by_os(backend) -> bool:
+    """True for the credential stores of the operating system.
+
+    The keyring library also accepts third-party backends, among them ones
+    that keep secrets in a plain or weakly protected file (keyrings.alt).
+    A refresh token must never end up there: better not to remember the
+    sign-in at all.
+    """
+    members = getattr(backend, "backends", None) or [backend]
+    return all(type(b).__module__.startswith("keyring.backends.") for b in members)
+
+
 def default_store() -> TokenStore:
     """Returns the OS keyring store, or an in-memory store if none works."""
     try:
         store = KeyringTokenStore()
+        backend = store._kr.get_keyring()
+        if not protected_by_os(backend):
+            raise RuntimeError(f"{type(backend).__name__} is not an OS credential store")
         store._kr.get_password(SERVICE, "probe")
         return store
     except Exception as e:

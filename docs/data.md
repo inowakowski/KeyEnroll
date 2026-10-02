@@ -22,7 +22,11 @@ The settings folder:
 *Settings → Open the folder with settings and logs* opens it.
 
 The credential store is the Windows Credential Manager, the macOS Keychain, or the
-Secret Service (GNOME Keyring, KWallet) on Linux.
+Secret Service (GNOME Keyring, KWallet) on Linux. If none of them is available,
+KeyEnroll does not fall back to a file: the sign-in is simply not remembered.
+
+On macOS and Linux the settings folder is closed to other accounts on the computer.
+On Windows the folder is inside your user profile, which is private already.
 
 ## PINs
 
@@ -33,9 +37,31 @@ Secret Service (GNOME Keyring, KWallet) on Linux.
 - It is shown in the result window, and kept in the bulk list until you clear the
   list or close the application. It is never written to the settings or to the log.
 - A PIN or message you copy is removed from the clipboard after one minute, unless
-  you have copied something else in the meantime.
+  you have copied something else in the meantime. It is also marked as a secret,
+  which asks the Windows clipboard history and its cloud sync, clipboard managers
+  on macOS and KDE's Klipper not to record it.
 - Files you export or save contain the PIN in plain text. On macOS and Linux they are
-  created readable by your user only. Delete them when the keys have been handed out.
+  readable by your user only, even if they replace an older file. On Windows they
+  get the permissions of the folder you save them in, so choose a folder that only
+  you can open. Delete them when the keys have been handed out.
+
+## What this does not protect against
+
+No desktop application can protect its data from the account it runs under:
+
+- **Software running as you** — malware, or anyone using your unlocked session —
+  can read the stored sign-in from the credential store, read PINs while they are
+  on screen or in the bulk list, and read files you exported.
+- **PINs in memory** cannot be reliably wiped from a running program. They are gone
+  when the application closes; do not leave a finished bulk list open.
+- **A clipboard manager that ignores the secret marker** keeps a copied PIN.
+- **The e-mail draft** hands the PIN to your mail program, which stores drafts and
+  sent messages by its own rules.
+
+What limits the damage: a temporary PIN is useless without the physical key, and
+with *Force PIN change before use* it stops working the first time the user signs
+in. Use an administrator workstation you trust, lock it when you leave, and sign
+out of KeyEnroll on a computer you share.
 
 ## What KeyEnroll communicates with
 

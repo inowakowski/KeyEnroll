@@ -5,14 +5,13 @@ from __future__ import annotations
 import csv
 import io
 import logging
-import os
 import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
 
-from .config import Profile
+from .config import Profile, write_private
 from .fido import enroll
 from .fido.devices import DeviceSource, close, device_key
 from .fido.enroll import EnrollCancelled, Enroller, EnrollError, EnrollUI
@@ -183,10 +182,7 @@ def write_results(
 ) -> None:
     """Writes the result list, readable by the owner only."""
     text = results_csv(rows, delimiter, include_pins, enrolled_only)
-    data = text.encode("utf-8-sig")  # BOM: Excel needs it
-    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "wb") as f:
-        f.write(data)
+    write_private(path, text.encode("utf-8-sig"))  # BOM: Excel needs it
 
 
 def resolve_rows(

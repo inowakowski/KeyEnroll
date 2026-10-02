@@ -4,10 +4,6 @@ Graficzna aplikacja do rejestrowania kluczy FIDO2 (YubiKey) w imieniu użytkowni
 otwartoźródłowy odpowiednik `yubienroll` CLI firmy Yubico, działający na Windows
 (x64 i ARM64), macOS i Linuksie. Licencja: [MIT](LICENSE).
 
-**Dokumentacja dla użytkowników** (co do czego służy, instalacja, konfiguracja
-dostawców, rozwiązywanie problemów): <https://inowakowski.github.io/KeyEnroll/pl/> ·
-[English](https://inowakowski.github.io/KeyEnroll/)
-
 > KeyEnroll jest niezależnym projektem. Nie jest powiązany z Yubico, Microsoftem, Oktą
 > ani Ping Identity, ani przez nie wspierany. YubiKey i YubiEnroll są znakami towarowymi
 > Yubico AB; pozostałe nazwy należą do ich właścicieli i służą wyłącznie opisaniu
@@ -18,6 +14,20 @@ kod). Aplikacja ma własny silnik: z kluczem rozmawia przez
 bibliotekę [python-fido2](https://github.com/Yubico/python-fido2), a z dostawcami
 tożsamości przez ich publiczne API. Używa tych samych rejestracji aplikacji u dostawcy,
 które opisuje [dokumentacja YubiEnroll](https://docs.yubico.com/software/yubikey/tools/yubienroll/index-idp.html).
+
+## Dokumentacja
+
+Dokumentacja dla użytkowników — do czego służy każda część okna, instalacja,
+konfiguracja dostawców tożsamości, rozwiązywanie problemów — jest dostępna po polsku
+i po angielsku:
+
+- jako strona internetowa: jej aktualny adres jest w polu **Website** w opisie tego
+  repozytorium (panel *About* po prawej stronie),
+- jako pliki w folderze `docs/`: [Wprowadzenie](docs/index.pl.md) ·
+  [Overview](docs/index.md).
+
+Odnośnik *Dokumentacja* w ustawieniach aplikacji prowadzi do tej sekcji, dzięki czemu
+strona może zmienić adres lub domenę bez wydawania nowej wersji programu.
 
 ## Funkcje
 
@@ -167,7 +177,7 @@ Losowe PIN-y nigdy nie zaczynają się od zera, żeby arkusz kalkulacyjny ich ni
 
 - Rejestracja w **Okta kluczem USB na Windows ARM64** została potwierdzona na prawdziwym
   sprzęcie.
-- Pozostałe ścieżki sprawdza 259 testów automatycznych na programowym symulatorze klucza
+- Pozostałe ścieżki sprawdza 271 testów automatycznych na programowym symulatorze klucza
   i spreparowanych odpowiedziach dostawców: Entra ID, PingOne i PingOne AIC oraz tryb
   masowy **nie były jeszcze testowane na żywym tenancie**.
 - Testy przechodzą w GitHub Actions na Windows, macOS i Linuksie (x64 i ARM64), a
@@ -213,7 +223,7 @@ python -m venv .venv
 
 Na macOS/Linuksie zamiast `.venv\Scripts\python` użyj `.venv/bin/python`.
 
-### Dokumentacja
+### Budowanie dokumentacji
 
 Strona dokumentacji powstaje z folderu `docs/` (MkDocs Material, konfiguracja
 w `mkdocs.yml`). Każda strona ma dwie wersje: `nazwa.md` (angielska)
@@ -235,10 +245,22 @@ interfejsu uruchom go ponownie:
 .venv\Scripts\python tools/docs_screenshots.py
 ```
 
-Workflow `.github/workflows/docs.yml` buduje stronę przy każdej zmianie w `docs/`
-(niedziałający odnośnik przerywa budowanie), a po scaleniu do `main` publikuje ją
-w GitHub Pages. W ustawieniach repozytorium (*Settings → Pages*) źródłem musi być
-*GitHub Actions*.
+Stronę buduje i publikuje **Cloudflare Pages** prosto z repozytorium (po każdym
+pushu do `main`; pull requesty dostają podgląd). Ustawienia projektu w Cloudflare:
+
+| Ustawienie | Wartość |
+|---|---|
+| Build command | `pip install -r docs/requirements.txt && mkdocs build --strict` |
+| Build output directory | `site` |
+| Zmienna `SITE_URL` (opcjonalna) | pełny adres strony, np. `https://docs.example.com/` — dodaje mapę strony i odnośniki kanoniczne |
+
+W repozytorium nie ma zaszytego żadnego adresu strony: wszystkie odnośniki są
+względne, więc strona działa pod adresem `*.pages.dev` i pod własną domeną bez zmian
+w kodzie. Po zmianie adresu wystarczy poprawić pole *Website* w opisie repozytorium
+i ewentualnie zmienną `SITE_URL`.
+
+Workflow `.github/workflows/docs.yml` niczego nie publikuje — sprawdza tylko, czy
+strona nadal się buduje (niedziałający odnośnik przerywa budowanie).
 
 ### Nowy język interfejsu
 
@@ -265,7 +287,7 @@ Wynik trafia do `dist/installer/`. Każdą platformę trzeba budować na niej sa
 2. Wypchnij tag, np. `v0.3.0`. Workflow `.github/workflows/build.yml` uruchomi testy,
    zbuduje instalatory dla sześciu platform i dołączy je do wydania na GitHubie.
 
-Dokumentacja publikuje się osobno, przy każdym scaleniu zmian w `docs/` do `main`.
+Dokumentację publikuje osobno Cloudflare Pages, po każdym pushu do `main`.
 
 Każdy push do `main` i każdy pull request uruchamia linter i testy na Windows, macOS
 i Linuksie (`.github/workflows/tests.yml`).

@@ -63,6 +63,6 @@ raz sprawdzić gotową wiadomość.
 |---|---|
 | **Wersja**, **Licencja** | Używana wersja. Podaj ją, zgłaszając problem. |
 | **Strona projektu** | Kod źródłowy i zgłoszenia na GitHubie. |
-| **Dokumentacja** | Otwiera tę dokumentację. |
+| **Dokumentacja** | Otwiera sekcję strony projektu, w której podany jest adres tej dokumentacji. |
 | **Sprawdź aktualizacje** | Pyta GitHuba, czy opublikowano nowsze wydanie. Jeśli tak, pojawia się **Otwórz stronę pobierania**. Nic nie jest pobierane ani instalowane automatycznie, a aplikacja nigdy nie sprawdza aktualizacji sama. |
 | **Otwórz folder z ustawieniami i logami** | Otwiera folder z plikiem ustawień i podfolderem `logs`. Zobacz [Dane i bezpieczeństwo](data.md). |

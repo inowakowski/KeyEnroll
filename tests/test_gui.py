@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from fake_authenticator import FakeAuthenticator
-from keyenroll import DOCS_URL, bulk, docs_url, i18n
+from keyenroll import DOCS_URL, PROJECT_URL, bulk, i18n
 from keyenroll.config import ConfigStore, Instance
 from keyenroll.fido import enroll
 from keyenroll.handover import Handover
@@ -648,9 +648,8 @@ def test_about_links_to_the_documentation(gui):
     window.nav.setCurrentRow(PAGE_SETTINGS)
     links = [text for text in labels_of(window.pages.currentWidget()) if "href" in text]
     assert any(f'href="{DOCS_URL}"' in text for text in links)
-    # The documentation exists in English and Polish; other languages get English.
-    assert docs_url("pl") == DOCS_URL + "pl/"
-    assert docs_url("de") == docs_url("en") == DOCS_URL
+    # No host of the site is built in: the project page says where it is.
+    assert DOCS_URL.startswith(PROJECT_URL)
 
 
 @pytest.mark.parametrize("lang", sorted(i18n.LANGUAGES))

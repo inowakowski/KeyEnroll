@@ -37,6 +37,37 @@ def config_dir() -> Path:
     return base / "keyenroll"
 
 
+def private_dir(path: Path) -> Path:
+    """Creates a folder of ours that only the owner can enter.
+
+    The settings and the log name tenants and users; on a shared macOS or
+    Linux machine other accounts have no business reading them. Windows keeps
+    %APPDATA% private already. A folder chosen through KEYENROLL_HOME is the
+    operator's own and keeps the permissions it was given.
+    """
+    path.mkdir(parents=True, exist_ok=True)
+    if os.name == "posix" and not os.environ.get("KEYENROLL_HOME"):
+        try:
+            os.chmod(path, 0o700)
+        except OSError:
+            logger.warning("Could not restrict access to %s", path)
+    return path
+
+
+def write_private(path: str | Path, data: bytes) -> None:
+    """Writes a file that only the owner can read, replacing what was there.
+
+    Used for everything that contains a PIN. The mode is set on the open file
+    as well, because an existing file keeps its old, possibly wider, mode.
+    Windows has no such mode: there the file gets the permissions of its folder.
+    """
+    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as f:
+        if hasattr(os, "fchmod"):
+            os.fchmod(f.fileno(), 0o600)
+        f.write(data)
+
+
 def legacy_config_dir() -> Path | None:
     """Where the app kept its configuration under its former name."""
     if os.environ.get("KEYENROLL_HOME"):
@@ -190,7 +221,10 @@ class ConfigStore:
             "instances": [asdict(i) for i in self.instances],
             "profiles": [asdict(p) for p in self.profiles],
         }
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        if self.path.parent == config_dir():
+            private_dir(self.path.parent)
+        else:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
         os.replace(tmp, self.path)

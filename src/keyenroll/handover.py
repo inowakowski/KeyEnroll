@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import quote
 
+from .config import write_private
 from .i18n import N_, current_language, tr
 from .providers import DirectoryUser
 
@@ -202,7 +202,4 @@ def default_filename(handover: Handover) -> str:
 
 def save_text(path: str | Path, subject: str, body: str) -> None:
     """Writes the message to a text file readable by the owner only."""
-    data = f"{subject}\n\n{body}".encode("utf-8-sig")
-    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "wb") as f:
-        f.write(data)
+    write_private(path, f"{subject}\n\n{body}".encode("utf-8-sig"))

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from keyenroll import DOCS_LANGUAGES, DOCS_URL, docs_url, i18n
+from keyenroll import DOCS_LANGUAGES, DOCS_URL, PROJECT_URL, i18n
 
 ROOT = Path(__file__).parent.parent
 DOCS = ROOT / "docs"
@@ -28,10 +28,19 @@ def pages(lang: str) -> dict[str, Path]:
 
 def test_documentation_languages_are_application_languages():
     assert DOCS_LANGUAGES[0] == "en" and set(DOCS_LANGUAGES) <= set(i18n.LANGUAGES)
-    assert DOCS_URL.endswith("/")
-    assert [docs_url(lang) for lang in ("en", "pl", "fr", "xx")] == [
-        DOCS_URL, DOCS_URL + "pl/", DOCS_URL, DOCS_URL
-    ]
+
+
+def test_no_host_of_the_site_is_built_in():
+    """The site may move to another host or domain; the application and the
+    site configuration must keep working when it does."""
+    assert DOCS_URL.startswith(PROJECT_URL + "#")
+    anchor = DOCS_URL.split("#")[1]
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    headings = [h.lower() for h in re.findall(r"^#+ (.+)$", readme, flags=re.M)]
+    assert headings.count(anchor) == 1, "the README section the application links to"
+    config = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
+    assert re.search(r"^site_url: !ENV", config, flags=re.M)
+    assert "github.io" not in config and "pages.dev" not in config
 
 
 @pytest.mark.parametrize("lang", TRANSLATED)

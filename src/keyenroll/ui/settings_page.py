@@ -19,9 +19,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import APP_NAME, PROJECT_URL, __version__, docs_url, handover, updates
+from .. import APP_NAME, DOCS_URL, PROJECT_URL, __version__, handover, updates
 from ..config import config_dir
-from ..i18n import LANGUAGES, current_language, tr
+from ..i18n import LANGUAGES, tr
 from .common import AppContext, run_task
 from .theme import PRESETS, Card, apply_theme
 
@@ -122,8 +122,7 @@ class SettingsPage(QWidget):
         link.setOpenExternalLinks(True)
         link.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         about_form.addRow(tr("Project page"), link)
-        docs = docs_url(current_language())
-        docs_link = QLabel(f'<a href="{docs}">{docs}</a>')
+        docs_link = QLabel(f'<a href="{DOCS_URL}">{DOCS_URL}</a>')
         docs_link.setOpenExternalLinks(True)
         docs_link.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         about_form.addRow(tr("Documentation"), docs_link)

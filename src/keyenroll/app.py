@@ -12,7 +12,7 @@ from PySide6.QtCore import QLibraryInfo, QTimer, QTranslator
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from . import APP_NAME, __version__
-from .config import ConfigStore, config_dir
+from .config import ConfigStore, config_dir, private_dir
 from .i18n import current_language, set_language, tr
 from .secrets_store import default_store
 from .ui.common import AppContext
@@ -37,6 +37,7 @@ def configure_logging(level: str, log_file: str | None) -> None:
             handler = logging.FileHandler(log_file, encoding="utf-8")
         else:
             path = log_path()
+            private_dir(config_dir())
             path.parent.mkdir(parents=True, exist_ok=True)
             handler = RotatingFileHandler(
                 path, maxBytes=1_000_000, backupCount=3, encoding="utf-8"

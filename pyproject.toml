@@ -19,7 +19,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/inowakowski/KeyEnroll"
-Documentation = "https://inowakowski.github.io/KeyEnroll/"
+Documentation = "https://github.com/inowakowski/KeyEnroll#dokumentacja"
 
 [project.optional-dependencies]
 nfc = ["pyscard>=2.0"]

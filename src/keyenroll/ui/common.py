@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import logging
 import re
+import sys
 import threading
 from contextlib import contextmanager
 from itertools import zip_longest
 from typing import Callable
 
-from PySide6.QtCore import QCollator, QObject, Qt, QTimer, Signal
+from PySide6.QtCore import QCollator, QMimeData, QObject, Qt, QTimer, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -182,11 +183,32 @@ CLIPBOARD_CLEAR_MS = 60_000
 MAX_COLUMN_WIDTH = 900  # beyond this a cell is elided; the tooltip has the full text
 
 
+def sensitive_mime(text: str, platform: str = sys.platform) -> QMimeData:
+    """Text marked as a secret for the programs that record the clipboard.
+
+    Clearing the clipboard does not remove what a clipboard history has
+    already kept, so the history is asked not to take it in the first place:
+    the Windows clipboard history and its cloud sync, clipboard managers on
+    macOS, and KDE's Klipper all honour these markers.
+    """
+    mime = QMimeData()
+    mime.setText(text)
+    if platform == "win32":
+        mime.setData("ExcludeClipboardContentFromMonitorProcessing", b"1")
+        mime.setData("CanIncludeInClipboardHistory", bytes(4))  # DWORD 0
+        mime.setData("CanUploadToCloudClipboard", bytes(4))  # DWORD 0
+    elif platform == "darwin":
+        mime.setData("application/x-nspasteboard-concealed-type", text.encode())
+    else:
+        mime.setData("x-kde-passwordManagerHint", b"secret")
+    return mime
+
+
 def copy_sensitive(text: str) -> None:
     """Copies a PIN (or a message containing one) and removes it from the
     clipboard after a minute, unless something else was copied meanwhile."""
     clipboard = QGuiApplication.clipboard()
-    clipboard.setText(text)
+    clipboard.setMimeData(sensitive_mime(text))
 
     def clear() -> None:
         if clipboard.text() == text:

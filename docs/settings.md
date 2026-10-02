@@ -63,6 +63,6 @@ after changing the template.
 |---|---|
 | **Version**, **License** | The version you are running. Quote it when you report a problem. |
 | **Project page** | The source code and the issue tracker on GitHub. |
-| **Documentation** | Opens this documentation. |
+| **Documentation** | Opens the section of the project page that says where this documentation is published. |
 | **Check for updates** | Asks GitHub whether a newer release has been published. If so, **Open the download page** appears. Nothing is downloaded or installed automatically, and the application never checks by itself. |
 | **Open the folder with settings and logs** | Opens the folder that holds the settings file and the `logs` folder. See [Data and security](data.md). |
