@@ -22,7 +22,7 @@ cat > "$STAGE/DEBIAN/control" <<EOF
 Package: keyenroll
 Version: $VERSION
 Architecture: $DEB_ARCH
-Maintainer: KeyEnroll maintainers
+Maintainer: Ignacy Nowakowski <15818597+inowakowski@users.noreply.github.com>
 Section: admin
 Priority: optional
 Depends: libxcb-cursor0, libegl1, libxkbcommon-x11-0, libfontconfig1, libdbus-1-3

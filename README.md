@@ -163,8 +163,7 @@ Wynik trafia do `dist/installer/`. Każdą platformę trzeba budować na niej sa
 
 ## Licencja
 
-Kod KeyEnroll jest udostępniony na licencji [MIT](LICENSE). Jako właściciel praw wpisani
-są „KeyEnroll contributors” — jeśli wolisz, zastąp to swoim imieniem i nazwiskiem.
+Kod KeyEnroll jest udostępniony na licencji [MIT](LICENSE), © 2026 Ignacy Nowakowski.
 
 Instalatory zawierają biblioteki na własnych licencjach (m.in. Qt/PySide6 na LGPLv3,
 python-fido2 na BSD-2-Clause). Ich wykaz jest w [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md),
