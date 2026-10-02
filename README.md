@@ -28,6 +28,9 @@ które opisuje [dokumentacja YubiEnroll](https://docs.yubico.com/software/yubike
 - **Przekazanie klucza użytkownikowi**: gotowa wiadomość z PIN-em do skopiowania,
   jako szkic e-maila albo plik tekstowy; treść wiadomości można zmienić w ustawieniach.
 - Lista i usuwanie poświadczeń użytkownika (Entra, Okta, PingOne).
+- Tabele użytkowników, poświadczeń i instancji sortuje się kliknięciem nagłówka kolumny
+  (bez rozróżniania wielkości liter, liczby w nazwach porównywane jak liczby).
+- Sprawdzanie aktualizacji na żądanie.
 - Kolorystyka do wyboru: Yubico (domyślna), jasna, ciemna, zgodna z systemem albo
   własna (jasna lub ciemna baza i dowolny kolor akcentu), zmieniana na żywo.
 - Język polski i angielski.
@@ -67,7 +70,17 @@ kodu (Windows) i konta Apple Developer z notaryzacją (macOS).
    a szerokości kolumn listy zmieniać; aplikacja pamięta układ okna.
 5. **Poświadczenia** — lista i usuwanie kluczy użytkownika.
 6. **Ustawienia** — kolorystyka, język, treść wiadomości dla użytkownika, informacje
-   o programie i folder z logami.
+   o programie, sprawdzanie aktualizacji i folder z logami.
+
+### Aktualizacje
+
+*Ustawienia → Sprawdź aktualizacje* pyta GitHuba o najnowsze opublikowane wydanie
+i, jeśli jest nowsze, pokazuje przycisk otwierający stronę pobierania. Aplikacja sama
+niczego nie pobiera ani nie instaluje i nie sprawdza aktualizacji w tle.
+
+Sprawdzanie działa tylko wtedy, gdy wydania projektu są **publicznie dostępne**: dopóki
+repozytorium jest prywatne, GitHub odpowiada „nie znaleziono” i aplikacja zgłasza brak
+opublikowanego wydania.
 
 ### Przekazanie klucza użytkownikowi
 
@@ -147,7 +160,7 @@ Losowe PIN-y nigdy nie zaczynają się od zera, żeby arkusz kalkulacyjny ich ni
 
 - Rejestracja w **Okta kluczem USB na Windows ARM64** została potwierdzona na prawdziwym
   sprzęcie.
-- Pozostałe ścieżki sprawdza 167 testów automatycznych na programowym symulatorze klucza
+- Pozostałe ścieżki sprawdza 188 testów automatycznych na programowym symulatorze klucza
   i spreparowanych odpowiedziach dostawców: Entra ID, PingOne i PingOne AIC oraz tryb
   masowy **nie były jeszcze testowane na żywym tenancie**.
 - Testy przechodzą w GitHub Actions na Windows, macOS i Linuksie (x64 i ARM64), a

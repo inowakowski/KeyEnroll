@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import logging
+import re
 import threading
+from contextlib import contextmanager
+from itertools import zip_longest
 from typing import Callable
 
-from PySide6.QtCore import QObject, Qt, QTimer, Signal
+from PySide6.QtCore import QCollator, QObject, Qt, QTimer, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -192,8 +195,57 @@ def copy_sensitive(text: str) -> None:
     QTimer.singleShot(CLIPBOARD_CLEAR_MS, clear)
 
 
+_collator: QCollator | None = None
+_DIGITS = re.compile(r"(\d+)")
+
+
+def natural_compare(a: str, b: str) -> int:
+    """Three-way comparison for sorting text the way people read it.
+
+    Case is ignored and runs of digits compare as numbers; both are done here
+    rather than by QCollator, whose support for them depends on how Qt was
+    built. The collator only supplies the alphabet order of the system
+    language.
+    """
+    global _collator
+    if _collator is None:
+        _collator = QCollator()
+    for x, y in zip_longest(_DIGITS.split(a.casefold()), _DIGITS.split(b.casefold())):
+        if x is None or y is None:
+            return -1 if x is None else 1
+        if x.isdigit() and y.isdigit():
+            if int(x) != int(y):
+                return -1 if int(x) < int(y) else 1
+            continue
+        order = _collator.compare(x, y)
+        if order:
+            return order
+    return 0
+
+
+class SortItem(QTableWidgetItem):
+    """A cell that sorts the way people read: ignoring case, with the rules
+    of the system language (ą after a, not after z) and digit runs compared
+    as numbers (user2 before user10)."""
+
+    def __lt__(self, other: QTableWidgetItem) -> bool:
+        return natural_compare(self.text(), other.text()) < 0
+
+
+@contextmanager
+def paused_sorting(table: QTableWidget):
+    """Rows are addressed by position while a table is being filled; with
+    sorting switched on Qt would move them as soon as a cell changes."""
+    enabled = table.isSortingEnabled()
+    table.setSortingEnabled(False)
+    try:
+        yield
+    finally:
+        table.setSortingEnabled(enabled)
+
+
 def make_table(headers: list[str], scrollable: bool = False) -> QTableWidget:
-    """A read-only, row-selecting table.
+    """A read-only, row-selecting table, sortable by clicking a column header.
 
     By default the columns share the available width. A ``scrollable`` table
     sizes its columns to their contents instead (see ``fit_columns``), lets the
@@ -219,6 +271,11 @@ def make_table(headers: list[str], scrollable: bool = False) -> QTableWidget:
         fit_columns(table)
     else:
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    # Unsorted until a header is clicked, so the provider's order is kept;
+    # a third click on the same header clears the sorting again.
+    header.setSortIndicator(-1, Qt.SortOrder.AscendingOrder)
+    header.setSortIndicatorClearable(True)
+    table.setSortingEnabled(True)
     return table
 
 
@@ -232,14 +289,15 @@ def fit_columns(table: QTableWidget) -> None:
 
 
 def fill_row(table: QTableWidget, values: list[str], data=None) -> None:
-    row = table.rowCount()
-    table.insertRow(row)
-    for col, value in enumerate(values):
-        item = QTableWidgetItem(value)
-        item.setToolTip(value)
-        if col == 0:
-            item.setData(Qt.ItemDataRole.UserRole, data)
-        table.setItem(row, col, item)
+    with paused_sorting(table):
+        row = table.rowCount()
+        table.insertRow(row)
+        for col, value in enumerate(values):
+            item = SortItem(value)
+            item.setToolTip(value)
+            if col == 0:
+                item.setData(Qt.ItemDataRole.UserRole, data)
+            table.setItem(row, col, item)
 
 
 def selected_data(table: QTableWidget):

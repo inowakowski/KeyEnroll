@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -15,7 +16,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -26,7 +26,7 @@ from ..fido.enroll import EnrollCancelled
 from ..handover import Handover
 from ..i18n import tr
 from ..providers import AuthRequired
-from .common import AppContext, error_text, fit_columns, make_table
+from .common import AppContext, SortItem, error_text, fit_columns, make_table, paused_sorting
 from .dialogs import ExportDialog, ResultDialog
 from .profile_form import profile_summary
 from .theme import Card
@@ -227,7 +227,17 @@ class BulkPage(QWidget):
 
     # -- table -------------------------------------------------------------
 
-    def _refresh_row(self, index: int) -> None:
+    # The table can be sorted, so a row's position says nothing about which
+    # user it shows: every row carries the index of its entry in self.rows.
+
+    def _table_row(self, index: int) -> int:
+        for position in range(self.table.rowCount()):
+            item = self.table.item(position, COL_USER)
+            if item is not None and item.data(Qt.ItemDataRole.UserRole) == index:
+                return position
+        return -1
+
+    def _write_row(self, position: int, index: int) -> None:
         row = self.rows[index]
         user = row.user
         pin = row.pin or ""
@@ -242,20 +252,34 @@ class BulkPage(QWidget):
             row.message_text,
         ]
         for col, value in enumerate(values):
-            item = self.table.item(index, col)
+            item = self.table.item(position, col)
             if item is None:
-                item = QTableWidgetItem()
-                self.table.setItem(index, col, item)
+                item = SortItem()
+                self.table.setItem(position, col, item)
             item.setText(value)
             item.setToolTip(value if col != COL_PIN else "")
-        if row.status == bulk.RUNNING:
-            self.table.scrollToItem(self.table.item(index, COL_USER))
-            self.table.selectRow(index)
+        self.table.item(position, COL_USER).setData(Qt.ItemDataRole.UserRole, index)
+
+    def _refresh_row(self, index: int) -> None:
+        with paused_sorting(self.table):
+            position = self._table_row(index)
+            if position < 0:
+                return
+            self._write_row(position, index)
+        if self.rows[index].status == bulk.RUNNING:
+            position = self._table_row(index)  # sorting may have moved it
+            self.table.scrollToItem(self.table.item(position, COL_USER))
+            self.table.selectRow(position)
 
     def _refresh_all(self) -> None:
-        self.table.setRowCount(len(self.rows))
-        for index in range(len(self.rows)):
-            self._refresh_row(index)
+        selected = self._selected_index()
+        with paused_sorting(self.table):
+            self.table.setRowCount(0)
+            self.table.setRowCount(len(self.rows))
+            for index in range(len(self.rows)):
+                self._write_row(index, index)
+        if selected is not None and selected < len(self.rows):
+            self.table.selectRow(self._table_row(selected))
         fit_columns(self.table)
         self._update_state()
 
@@ -267,11 +291,17 @@ class BulkPage(QWidget):
         fit_columns(self.table)
         self._update_state()
 
-    def _selected_row(self) -> BulkRow | None:
-        rows = self.table.selectionModel().selectedRows()
-        if not rows or rows[0].row() >= len(self.rows):
+    def _selected_index(self) -> int | None:
+        selected = self.table.selectionModel().selectedRows()
+        if not selected:
             return None
-        return self.rows[rows[0].row()]
+        item = self.table.item(selected[0].row(), COL_USER)
+        index = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+        return index if isinstance(index, int) and index < len(self.rows) else None
+
+    def _selected_row(self) -> BulkRow | None:
+        index = self._selected_index()
+        return self.rows[index] if index is not None else None
 
     # -- import ------------------------------------------------------------
 
