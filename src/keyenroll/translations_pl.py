@@ -461,6 +461,7 @@ PL = {
     "Version": "Wersja",
     "License": "Licencja",
     "Project page": "Strona projektu",
+    "Documentation": "Dokumentacja",
     "KeyEnroll is an independent open-source project. It is not affiliated with or "
     "endorsed by Yubico, Microsoft, Okta or Ping Identity.": (
         "KeyEnroll jest niezależnym projektem open source. Nie jest powiązany z firmami "

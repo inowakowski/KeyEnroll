@@ -1,0 +1,76 @@
+/* Colours of the application's default (Yubico) theme. */
+:root,
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #1b1f27;
+  --md-primary-fg-color--light: #2a303b;
+  --md-primary-fg-color--dark: #12151b;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: #ffffffb3;
+  --md-accent-fg-color: #5f8a12;
+  --md-accent-fg-color--transparent: #5f8a121a;
+  --md-typeset-a-color: #4d7310;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #1b1f27;
+  --md-primary-fg-color--light: #2a303b;
+  --md-primary-fg-color--dark: #12151b;
+  --md-accent-fg-color: #9aca3c;
+  --md-accent-fg-color--transparent: #9aca3c1a;
+  --md-typeset-a-color: #a9d64f;
+}
+
+/* Screenshots: a frame, so that the dark window stands out on both schemes. */
+.md-typeset img.shot {
+  display: block;
+  margin: 1.2em auto;
+  border-radius: 10px;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  box-shadow: 0 6px 24px #0000002e;
+}
+
+.md-typeset img.shot.dialog {
+  max-width: min(100%, 520px);
+}
+
+.md-typeset figure figcaption {
+  font-size: 0.8em;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Reference tables: keep the first column (the name of a control) on one line. */
+.md-typeset table:not([class]) td:first-child {
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 44.9em) {
+  .md-typeset table:not([class]) td:first-child {
+    white-space: normal;
+  }
+}
+
+/* Buttons. The header colour is nearly black, so the outline button takes the
+   link colour instead: it has to stay readable on the dark scheme too. */
+.md-typeset .md-button {
+  color: var(--md-typeset-a-color);
+  border-color: currentcolor;
+}
+
+.md-typeset .md-button:hover,
+.md-typeset .md-button:focus {
+  color: #12151b;
+  background-color: #9aca3c;
+  border-color: #9aca3c;
+}
+
+.md-typeset .md-button--primary {
+  color: #12151b;
+  background-color: #9aca3c;
+  border-color: #9aca3c;
+}
+
+.md-typeset .md-button--primary:hover {
+  color: #12151b;
+  background-color: #add654;
+  border-color: #add654;
+}

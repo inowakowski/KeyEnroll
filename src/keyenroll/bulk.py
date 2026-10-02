@@ -42,6 +42,10 @@ STATUS_LABELS = {
 _HEADER_NAMES = {
     "username", "user", "login", "upn", "userprincipalname", "email", "e-mail", "mail",
     "nazwa użytkownika", "nazwa uzytkownika", "użytkownik", "uzytkownik",
+    "benutzername", "benutzer", "anmeldename",
+    "nombre de usuario", "usuario", "correo electrónico", "correo",
+    "nom d’utilisateur", "nom d'utilisateur", "utilisateur", "identifiant", "courriel",
+    "nome utente", "utente",
 }  # fmt: skip
 _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 

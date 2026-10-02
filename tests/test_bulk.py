@@ -10,7 +10,7 @@ import threading
 import pytest
 
 from fake_authenticator import FakeAuthenticator
-from keyenroll import bulk
+from keyenroll import bulk, i18n
 from keyenroll.bulk import BulkRow, BulkRunner, parse_identifiers
 from keyenroll.config import Profile
 from keyenroll.fido import enroll
@@ -335,6 +335,19 @@ def test_export_without_pins_drops_the_column_entirely():
     assert "482915" not in text
     assert table[1][:6] == ["alice@x.com", "Alice", "alice@x.com", "Enrolled", "1000", "Corp key 1000"]
     assert all(len(row) == 8 for row in table)
+
+
+@pytest.mark.parametrize("lang", sorted(i18n.LANGUAGES))
+def test_exported_list_can_be_loaded_again_in_every_language(lang):
+    try:
+        i18n.set_language(lang)
+        text = bulk.results_csv(finished_rows(), ";")
+        header = text.splitlines()[0].split(";")
+        assert header[0] == i18n.tr("Username") and len(set(header)) == len(header)
+        # The translated header is recognised, not taken for a user.
+        assert parse_identifiers(text) == ["alice@x.com", "bob@x.com", "ghost@x.com"]
+    finally:
+        i18n.set_language("en")
 
 
 def test_forced_pin_change_is_recorded_for_the_hand_over():

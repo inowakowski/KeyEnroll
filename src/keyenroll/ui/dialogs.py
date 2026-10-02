@@ -414,8 +414,9 @@ class ExportDialog(QDialog):
         self.format = QComboBox()
         self.format.addItem(tr("CSV, semicolon separated"), ";")
         self.format.addItem(tr("CSV, comma separated"), ",")
-        # Excel in a Polish locale expects semicolons.
-        self.format.setCurrentIndex(0 if current_language() == "pl" else 1)
+        # Spreadsheets in countries that write decimals with a comma expect
+        # semicolons; that is every language offered except English.
+        self.format.setCurrentIndex(1 if current_language() == "en" else 0)
         form = QFormLayout()
         form.addRow(tr("Format"), self.format)
 

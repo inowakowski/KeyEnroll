@@ -17,10 +17,11 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QLabel,
     QMessageBox,
+    QPushButton,
 )
 
 from fake_authenticator import FakeAuthenticator
-from keyenroll import bulk
+from keyenroll import DOCS_URL, bulk, docs_url, i18n
 from keyenroll.config import ConfigStore, Instance
 from keyenroll.fido import enroll
 from keyenroll.handover import Handover
@@ -608,7 +609,11 @@ def test_settings_have_their_own_page(gui):
     assert not hasattr(window.pages.currentWidget(), "theme")
     window.nav.setCurrentRow(PAGE_SETTINGS)
     page = window.pages.currentWidget()
-    assert page.theme.currentData() == "yubico" and page.language.count() == 3
+    assert page.theme.currentData() == "yubico"
+    # "Same as the system" and every offered language, each named in itself.
+    offered = [page.language.itemText(i) for i in range(1, page.language.count())]
+    assert offered == list(i18n.LANGUAGES.values())
+    assert {"Deutsch", "Español", "Français", "Italiano", "Polski"} <= set(offered)
     assert window.page_title.text() == "Settings"
 
 
@@ -636,6 +641,49 @@ def test_message_template_can_be_customised_and_restored(gui):
     page.reset_message.click()
     assert ConfigStore(ctx.config.path).message_body == ""
     assert "Hello {name}" in page.body.toPlainText()
+
+
+def test_about_links_to_the_documentation(gui):
+    window, ctx, key, source, shown = gui
+    window.nav.setCurrentRow(PAGE_SETTINGS)
+    links = [text for text in labels_of(window.pages.currentWidget()) if "href" in text]
+    assert any(f'href="{DOCS_URL}"' in text for text in links)
+    # The documentation exists in English and Polish; other languages get English.
+    assert docs_url("pl") == DOCS_URL + "pl/"
+    assert docs_url("de") == docs_url("en") == DOCS_URL
+
+
+@pytest.mark.parametrize("lang", sorted(i18n.LANGUAGES))
+def test_window_builds_in_every_language(app, tmp_path, lang):
+    config = ConfigStore(tmp_path / "config.json")
+    config.upsert_instance(Instance(name="Prod", kind="entra"))
+    ctx = AppContext(
+        config,
+        TokenStore(),
+        source=FakeSource(FakeAuthenticator("Fake Key")),
+        provider_factory=lambda instance, tokens: GuiProvider(instance),
+    )
+    try:
+        i18n.set_language(lang)
+        window = MainWindow(ctx)
+        titles = []
+        for row in range(window.nav.count()):
+            window.nav.setCurrentRow(row)
+            QApplication.processEvents()
+            titles.append(window.page_title.text())
+        assert titles[PAGE_SETTINGS] == i18n.tr("Settings")
+        assert len(set(titles)) == len(titles) and all(titles)
+        if lang != "en":
+            assert "Settings" not in titles and "Enroll" not in titles
+        # Semicolons are what a spreadsheet expects wherever decimals use a comma.
+        assert dialogs.ExportDialog(window).format.currentData() == ("," if lang == "en" else ";")
+        handed = dialogs.ResultDialog(make_handover(), config, window)
+        assert i18n.tr("Copy PIN") in [b.text() for b in handed.findChildren(QPushButton)]
+        window.enroll_page.shutdown()
+        window.bulk_page.shutdown()
+        window.close()
+    finally:
+        i18n.set_language("en")
 
 
 # -- layout of the enrollment page ------------------------------------------

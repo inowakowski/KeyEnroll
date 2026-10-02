@@ -4,6 +4,10 @@ Graficzna aplikacja do rejestrowania kluczy FIDO2 (YubiKey) w imieniu użytkowni
 otwartoźródłowy odpowiednik `yubienroll` CLI firmy Yubico, działający na Windows
 (x64 i ARM64), macOS i Linuksie. Licencja: [MIT](LICENSE).
 
+**Dokumentacja dla użytkowników** (co do czego służy, instalacja, konfiguracja
+dostawców, rozwiązywanie problemów): <https://inowakowski.github.io/KeyEnroll/pl/> ·
+[English](https://inowakowski.github.io/KeyEnroll/)
+
 > KeyEnroll jest niezależnym projektem. Nie jest powiązany z Yubico, Microsoftem, Oktą
 > ani Ping Identity, ani przez nie wspierany. YubiKey i YubiEnroll są znakami towarowymi
 > Yubico AB; pozostałe nazwy należą do ich właścicieli i służą wyłącznie opisaniu
@@ -33,7 +37,10 @@ które opisuje [dokumentacja YubiEnroll](https://docs.yubico.com/software/yubike
 - Sprawdzanie aktualizacji na żądanie.
 - Kolorystyka do wyboru: Yubico (domyślna), jasna, ciemna, zgodna z systemem albo
   własna (jasna lub ciemna baza i dowolny kolor akcentu), zmieniana na żywo.
-- Język polski i angielski.
+- Sześć języków interfejsu: polski, angielski, niemiecki, hiszpański, francuski
+  i włoski (wybór w ustawieniach albo zgodnie z językiem systemu). Tłumaczeń
+  niemieckiego, hiszpańskiego, francuskiego i włoskiego nie sprawdzały jeszcze
+  osoby, dla których to język ojczysty.
 
 ## Instalacja
 
@@ -160,7 +167,7 @@ Losowe PIN-y nigdy nie zaczynają się od zera, żeby arkusz kalkulacyjny ich ni
 
 - Rejestracja w **Okta kluczem USB na Windows ARM64** została potwierdzona na prawdziwym
   sprzęcie.
-- Pozostałe ścieżki sprawdza 188 testów automatycznych na programowym symulatorze klucza
+- Pozostałe ścieżki sprawdza 259 testów automatycznych na programowym symulatorze klucza
   i spreparowanych odpowiedziach dostawców: Entra ID, PingOne i PingOne AIC oraz tryb
   masowy **nie były jeszcze testowane na żywym tenancie**.
 - Testy przechodzą w GitHub Actions na Windows, macOS i Linuksie (x64 i ARM64), a
@@ -201,10 +208,46 @@ python -m venv .venv
 ```
 
 ```bash
-.venv\Scripts\python -m ruff check src tests packaging
+.venv\Scripts\python -m ruff check src tests packaging tools
 ```
 
 Na macOS/Linuksie zamiast `.venv\Scripts\python` użyj `.venv/bin/python`.
+
+### Dokumentacja
+
+Strona dokumentacji powstaje z folderu `docs/` (MkDocs Material, konfiguracja
+w `mkdocs.yml`). Każda strona ma dwie wersje: `nazwa.md` (angielska)
+i `nazwa.pl.md` (polska).
+
+```bash
+.venv\Scripts\python -m pip install -r docs/requirements.txt
+```
+
+```bash
+.venv\Scripts\python -m mkdocs serve
+```
+
+Zrzuty ekranu generuje `tools/docs_screenshots.py` — uruchamia aplikację na
+programowym kluczu i fikcyjnych danych, niczego nie pokazując na ekranie. Po zmianie
+interfejsu uruchom go ponownie:
+
+```bash
+.venv\Scripts\python tools/docs_screenshots.py
+```
+
+Workflow `.github/workflows/docs.yml` buduje stronę przy każdej zmianie w `docs/`
+(niedziałający odnośnik przerywa budowanie), a po scaleniu do `main` publikuje ją
+w GitHub Pages. W ustawieniach repozytorium (*Settings → Pages*) źródłem musi być
+*GitHub Actions*.
+
+### Nowy język interfejsu
+
+1. Skopiuj `src/keyenroll/translations_pl.py` jako `translations_<kod>.py`
+   i przetłumacz wartości.
+2. Dopisz język w `LANGUAGES` i w funkcji `catalog()` w `src/keyenroll/i18n.py`
+   oraz domyślną wiadomość dla użytkownika w `src/keyenroll/handover.py`.
+3. Testy sprawdzą, czy każdy tekst ma tłumaczenie, czy zachowano pola `{…}`
+   i czy Qt ma własne tłumaczenie dla tego języka.
 
 ### Budowanie instalatora lokalnie
 
@@ -221,6 +264,8 @@ Wynik trafia do `dist/installer/`. Każdą platformę trzeba budować na niej sa
 1. Zmień numer wersji w `src/keyenroll/__init__.py` i `pyproject.toml`.
 2. Wypchnij tag, np. `v0.3.0`. Workflow `.github/workflows/build.yml` uruchomi testy,
    zbuduje instalatory dla sześciu platform i dołączy je do wydania na GitHubie.
+
+Dokumentacja publikuje się osobno, przy każdym scaleniu zmian w `docs/` do `main`.
 
 Każdy push do `main` i każdy pull request uruchamia linter i testy na Windows, macOS
 i Linuksie (`.github/workflows/tests.yml`).
