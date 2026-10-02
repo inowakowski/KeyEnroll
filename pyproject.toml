@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "keyenroll"
-version = "0.3.0"
+version = "0.4.0"
 description = "Cross-platform GUI for enrolling FIDO2 security keys on behalf of users (Entra ID, Okta, PingOne, PingOne AIC)"
 readme = "README.md"
 requires-python = ">=3.10"

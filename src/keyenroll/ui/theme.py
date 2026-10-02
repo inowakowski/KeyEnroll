@@ -257,6 +257,11 @@ QHeaderView::section {
     background: transparent; border: none; border-bottom: 1px solid $border;
     padding: 8px 10px; color: $muted; font-weight: 600;
 }
+QHeaderView::up-arrow, QHeaderView::down-arrow {
+    width: 12px; height: 12px; subcontrol-origin: padding; subcontrol-position: center right; right: 6px;
+}
+QHeaderView::up-arrow { image: url($chevron_up); }
+QHeaderView::down-arrow { image: url($chevron_down); }
 QTableCornerButton::section { background: transparent; border: none; }
 
 QSplitter::handle { background: transparent; }

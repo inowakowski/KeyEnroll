@@ -8,7 +8,7 @@ import time
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 from PySide6.QtWidgets import (
     QApplication,
@@ -734,3 +734,185 @@ def test_bulk_message_button_opens_the_hand_over_for_an_enrolled_user(gui, tmp_p
     handed = shown["results"][-1].handover
     assert (handed.user.username, handed.pin, handed.serial) == ("alice@example.com", key.pin, 777)
     assert handed.provider == ctx.provider.label
+
+
+# -- sortable tables --------------------------------------------------------
+
+
+def column(table, col):
+    return [table.item(r, col).text() for r in range(table.rowCount())]
+
+
+def test_natural_compare_reads_like_a_person():
+    names = ["user10", "Bob", "user2", "alice", "User1", "", "bob2"]
+    import functools
+
+    ordered = sorted(names, key=functools.cmp_to_key(common.natural_compare))
+    assert ordered == ["", "alice", "Bob", "bob2", "User1", "user2", "user10"]
+    assert common.natural_compare("Key 9", "key 10") < 0
+    assert common.natural_compare("ALICE", "alice") == 0
+    assert common.natural_compare("a", "a1") < 0 < common.natural_compare("a1", "a")
+
+
+def test_user_list_sorts_by_clicking_a_column(gui):
+    window, ctx, key, source, shown = gui
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    extra = [
+        DirectoryUser("s1", "user10@example.com", "zoe Example", "z@example.com"),
+        DirectoryUser("s2", "user2@example.com", "Adam Example", "m@example.com"),
+        DirectoryUser("s3", "User1@example.com", "bartek Example", "a@example.com"),
+    ]
+    USERS.extend(extra)
+    try:
+        page.picker.query.setText("Example")
+        page.picker.search()
+        wait_until(lambda: page.picker.table.rowCount() == 5)
+        table = page.picker.table
+        header = table.horizontalHeader()
+        assert table.isSortingEnabled() and header.sortIndicatorSection() == -1
+        # Until a header is clicked the provider's order is kept.
+        assert column(table, 0)[:2] == ["Alice Example", "Bob Example"]
+
+        table.sortItems(0, Qt.SortOrder.AscendingOrder)
+        assert column(table, 0) == [
+            "Adam Example", "Alice Example", "bartek Example", "Bob Example", "zoe Example"
+        ]
+        table.sortItems(1, Qt.SortOrder.AscendingOrder)  # numbers inside names count as numbers
+        assert column(table, 1)[-3:] == [
+            "User1@example.com", "user2@example.com", "user10@example.com"
+        ]
+        table.sortItems(1, Qt.SortOrder.DescendingOrder)
+        assert column(table, 1)[0] == "user10@example.com"
+
+        # The row still belongs to the same user after sorting.
+        table.selectRow(0)
+        assert page.picker.selected().id == "s1"
+
+        # A new search keeps the chosen order.
+        header.setSortIndicator(0, Qt.SortOrder.DescendingOrder)
+        page.picker.search()
+        wait_until(lambda: page.picker.table.rowCount() == 5 and page.picker.button.isEnabled())
+        assert column(table, 0)[0] == "zoe Example" and column(table, 0)[-1] == "Adam Example"
+    finally:
+        for user in extra:
+            USERS.remove(user)
+
+
+def test_credentials_list_is_sortable(gui):
+    window, ctx, key, source, shown = gui
+    ctx.provider.credentials = [
+        Credential("c2", "Spare key", "2026-03-01", "YubiKey 5C"),
+        Credential("c1", "main key", "2026-01-15", "YubiKey 5 NFC"),
+        Credential("c3", "Backup", "2026-02-10", "Security Key"),
+    ]
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    pick_user(page, "Alice")
+    wait_until(lambda: page.table.rowCount() == 3)
+    assert column(page.table, 0) == ["Spare key", "main key", "Backup"]
+    page.table.sortItems(0, Qt.SortOrder.AscendingOrder)
+    assert column(page.table, 0) == ["Backup", "main key", "Spare key"]
+    page.table.sortItems(1, Qt.SortOrder.DescendingOrder)  # newest first
+    assert column(page.table, 1) == ["2026-03-01", "2026-02-10", "2026-01-15"]
+
+    page.table.selectRow(2)  # the oldest one, "main key"
+    page.delete.click()
+    wait_until(lambda: page.table.rowCount() == 2)
+    assert sorted(c.id for c in ctx.provider.credentials) == ["c2", "c3"]
+
+
+def test_sorted_bulk_list_keeps_rows_tied_to_their_users(gui, tmp_path, monkeypatch):
+    window, ctx, key, source, shown = gui
+    window.nav.setCurrentRow(PAGE_BULK)
+    page = window.bulk_page
+    users_file = tmp_path / "users.txt"
+    users_file.write_text("alice@example.com\nghost@example.com\nbob@example.com\n")
+    monkeypatch.setattr(
+        QFileDialog, "getOpenFileName", staticmethod(lambda *a, **k: (str(users_file), ""))
+    )
+    page.load.click()
+    wait_until(lambda: not page.is_running() and page.table.rowCount() == 3)
+
+    # Sorted Z to A: bob is not on top of the list but is still enrolled second.
+    page.table.sortItems(0, Qt.SortOrder.DescendingOrder)
+    assert column(page.table, 0) == ["ghost@example.com", "bob@example.com", "alice@example.com"]
+
+    keys = [FakeAuthenticator("k1"), FakeAuthenticator("k2")]
+    keys[0].serial, keys[1].serial = 501, 502
+    pile = list(keys)
+    source.devices = []
+    original = page._on_status
+
+    def operator(template, params):
+        original(template, params)
+        if template.startswith("Remove the previous key"):
+            source.devices = []
+        elif template.startswith("Insert the security key for"):
+            nxt = pile.pop(0)
+            nxt.fresh = True
+            source.devices = [nxt]
+
+    page._on_status = operator
+    page.start.click()
+    wait_until(lambda: not page.is_running())
+
+    by_user = {
+        page.table.item(r, 0).text(): (page.table.item(r, 2).text(), page.table.item(r, 3).text())
+        for r in range(3)
+    }
+    assert by_user == {
+        "alice@example.com": ("Enrolled", "501"),
+        "bob@example.com": ("Enrolled", "502"),
+        "ghost@example.com": ("Not found", ""),
+    }
+    assert column(page.table, 0) == ["ghost@example.com", "bob@example.com", "alice@example.com"]
+
+    page.table.selectRow(1)  # bob, wherever sorting put him
+    page.handover.click()
+    assert shown["results"][-1].handover.user.username == "bob@example.com"
+    assert shown["results"][-1].handover.pin == keys[1].pin
+
+    # Sorting by status regroups the rows; the data follows.
+    page.table.sortItems(3, Qt.SortOrder.DescendingOrder)
+    assert column(page.table, 3) == ["502", "501", ""]
+    page.show_pins.setChecked(True)
+    assert column(page.table, 4) == [keys[1].pin, keys[0].pin, ""]
+
+
+# -- update check -----------------------------------------------------------
+
+
+def test_update_check_button(gui, monkeypatch):
+    from keyenroll import updates
+
+    window, ctx, key, source, shown = gui
+    window.nav.setCurrentRow(PAGE_SETTINGS)
+    page = window.pages.currentWidget()
+    assert page.download_update.isHidden() and page.update_note.isHidden()
+
+    newer = updates.UpdateInfo("0.3.0", "0.4.0", "https://github.com/inowakowski/KeyEnroll/releases/tag/v0.4.0")
+    monkeypatch.setattr(updates, "check", lambda: newer)
+    page.check_updates.click()
+    assert not page.check_updates.isEnabled()  # no double clicks while it runs
+    wait_until(lambda: page.check_updates.isEnabled())
+    assert "0.4.0" in page.update_note.text() and not page.download_update.isHidden()
+
+    opened = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", staticmethod(lambda url: opened.append(url.toString()) or True))
+    page.download_update.click()
+    assert opened == ["https://github.com/inowakowski/KeyEnroll/releases/tag/v0.4.0"]
+
+    monkeypatch.setattr(updates, "check", lambda: updates.UpdateInfo("0.3.0", "0.3.0", "x"))
+    page.check_updates.click()
+    wait_until(lambda: page.check_updates.isEnabled())
+    assert "latest version" in page.update_note.text() and page.download_update.isHidden()
+
+    def unavailable():
+        raise updates.UpdateError("No published release was found.")
+
+    monkeypatch.setattr(updates, "check", unavailable)
+    page.check_updates.click()
+    wait_until(lambda: page.check_updates.isEnabled())
+    assert page.update_note.text() == "No published release was found."
+    assert page.download_update.isHidden()

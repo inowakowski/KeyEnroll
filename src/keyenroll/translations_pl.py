@@ -475,4 +475,22 @@ PL = {
         "Nie udało się odczytać pliku ustawień; odłożono go jako {path}. KeyEnroll "
         "uruchomił się z ustawieniami domyślnymi."
     ),
+    # -- updates
+    "Check for updates": "Sprawdź aktualizacje",
+    "Checking for updates…": "Sprawdzanie aktualizacji…",
+    "Open the download page": "Otwórz stronę pobierania",
+    "Version {latest} is available (you have {current}).": (
+        "Dostępna jest wersja {latest} (masz {current})."
+    ),
+    "You have the latest version ({current}).": "Masz najnowszą wersję ({current}).",
+    "Could not reach the update server. Check the connection.": (
+        "Nie udało się połączyć z serwerem aktualizacji. Sprawdź połączenie."
+    ),
+    "No published release was found.": "Nie znaleziono opublikowanego wydania.",
+    "The update server is busy. Try again in a few minutes.": (
+        "Serwer aktualizacji jest zajęty. Spróbuj ponownie za kilka minut."
+    ),
+    "The update server returned an unexpected answer.": (
+        "Serwer aktualizacji zwrócił nieoczekiwaną odpowiedź."
+    ),
 }

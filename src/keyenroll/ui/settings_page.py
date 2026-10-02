@@ -19,10 +19,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import APP_NAME, PROJECT_URL, __version__, handover
+from .. import APP_NAME, PROJECT_URL, __version__, handover, updates
 from ..config import config_dir
 from ..i18n import LANGUAGES, tr
-from .common import AppContext
+from .common import AppContext, run_task
 from .theme import PRESETS, Card, apply_theme
 
 
@@ -132,12 +132,26 @@ class SettingsPage(QWidget):
         disclaimer.setObjectName("hint")
         disclaimer.setWordWrap(True)
         about.body.addWidget(disclaimer)
+        self.check_updates = QPushButton(tr("Check for updates"))
+        self.check_updates.clicked.connect(self._check_updates)
+        self.download_update = QPushButton(tr("Open the download page"))
+        self.download_update.setObjectName("primary")
+        self.download_update.setVisible(False)
+        self.download_update.clicked.connect(self._open_release)
+        self.update_note = QLabel()
+        self.update_note.setObjectName("hint")
+        self.update_note.setWordWrap(True)
+        self.update_note.setVisible(False)
+        self._release_url = ""
         self.open_logs = QPushButton(tr("Open the folder with settings and logs"))
         self.open_logs.clicked.connect(self._open_data_folder)
         about_buttons = QHBoxLayout()
+        about_buttons.addWidget(self.check_updates)
+        about_buttons.addWidget(self.download_update)
         about_buttons.addWidget(self.open_logs)
         about_buttons.addStretch(1)
         about.body.addLayout(about_buttons)
+        about.body.addWidget(self.update_note)
 
         host = QWidget()
         column = QVBoxLayout(host)
@@ -222,6 +236,44 @@ class SettingsPage(QWidget):
         self.message_note.setText(tr("The default text has been restored."))
 
     # -- about -------------------------------------------------------------
+
+    def _check_updates(self) -> None:
+        self.check_updates.setEnabled(False)
+        self.download_update.setVisible(False)
+        self._show_update_note(tr("Checking for updates…"))
+        run_task(self, updates.check, self._update_checked, self._update_failed)
+
+    def _show_update_note(self, text: str) -> None:
+        self.update_note.setText(text)
+        self.update_note.setVisible(True)
+
+    def _update_checked(self, info: updates.UpdateInfo) -> None:
+        self.check_updates.setEnabled(True)
+        if info.newer:
+            self._release_url = info.url
+            self.download_update.setVisible(True)
+            self._show_update_note(
+                tr(
+                    "Version {latest} is available (you have {current}).",
+                    latest=info.latest,
+                    current=info.current,
+                )
+            )
+        else:
+            self._show_update_note(
+                tr("You have the latest version ({current}).", current=info.current)
+            )
+
+    def _update_failed(self, exc: Exception) -> None:
+        self.check_updates.setEnabled(True)
+        if isinstance(exc, updates.UpdateError):
+            self._show_update_note(tr(str(exc)))
+        else:
+            self._show_update_note(tr("The update server returned an unexpected answer."))
+
+    def _open_release(self) -> None:
+        if self._release_url:
+            QDesktopServices.openUrl(QUrl(self._release_url))
 
     def _open_data_folder(self) -> None:
         folder = config_dir()
