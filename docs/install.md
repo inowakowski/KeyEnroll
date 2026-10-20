@@ -84,6 +84,11 @@ installs anything by itself and does not check in the background.
 To update, install the new version over the old one. Settings, instances and
 profiles are kept.
 
+!!! info "This documentation follows the development version"
+    The site is updated with every change to the project, so it can describe
+    features that are not in a published release yet. Such features are marked
+    *Since version …*; compare with the version shown in *Settings → About*.
+
 ## Running from source
 
 Developers can run the application directly; see the
