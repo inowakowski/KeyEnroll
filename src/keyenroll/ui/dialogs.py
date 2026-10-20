@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from .. import handover as handover_text
-from ..config import ConfigStore, Instance
+from ..config import ConfigImport, ConfigStore, Instance
 from ..handover import Handover
 from ..i18n import current_language, tr
 from ..providers import PROVIDERS
@@ -463,3 +463,100 @@ class ExportDialog(QDialog):
     @property
     def delimiter(self) -> str:
         return self.format.currentData()
+
+
+class ExportConfigDialog(QDialog):
+    """What to put into an exported configuration file."""
+
+    def __init__(self, config: ConfigStore, parent: QWidget):
+        super().__init__(parent)
+        self.setWindowTitle(tr("Export configuration"))
+        self.setMinimumWidth(460)
+        self.instances = QCheckBox(
+            tr("Instances ({count})", count=len(config.instances))
+        )
+        self.instances.setChecked(bool(config.instances))
+        self.instances.setEnabled(bool(config.instances))
+        self.profiles = QCheckBox(tr("Profiles ({count})", count=len(config.profiles)))
+        self.profiles.setChecked(True)
+        has_message = bool(config.message_subject or config.message_body)
+        self.message = QCheckBox(tr("Message for the user"))
+        self.message.setChecked(has_message)
+        self.message.setEnabled(has_message)
+        note = QLabel(
+            tr(
+                "The file contains no sign-ins and no secrets: on the other computer, "
+                "sign in to each instance again."
+            )
+        )
+        note.setObjectName("hint")
+        note.setWordWrap(True)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        export = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        export.setText(tr("Export"))
+        export.setObjectName("primary")
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Cancel"))
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        for widget in (self.instances, self.profiles, self.message, note):
+            layout.addWidget(widget)
+        layout.addWidget(buttons)
+
+
+class ImportConfigDialog(QDialog):
+    """What to take over from an exported configuration file."""
+
+    def __init__(self, imported: ConfigImport, parent: QWidget):
+        super().__init__(parent)
+        self.setWindowTitle(tr("Import configuration"))
+        self.setMinimumWidth(480)
+        self.instances = QCheckBox(
+            tr("Instances ({count})", count=len(imported.instances))
+        )
+        self.instances.setChecked(bool(imported.instances))
+        self.instances.setEnabled(bool(imported.instances))
+        self.profiles = QCheckBox(tr("Profiles ({count})", count=len(imported.profiles)))
+        self.profiles.setChecked(bool(imported.profiles))
+        self.profiles.setEnabled(bool(imported.profiles))
+        self.message = QCheckBox(tr("Message for the user"))
+        self.message.setChecked(imported.message is not None)
+        self.message.setEnabled(imported.message is not None)
+        self.clash = QComboBox()
+        self.clash.addItem(tr("Add them with a new name"), "rename")
+        self.clash.addItem(tr("Replace the existing ones"), "replace")
+        self.clash.addItem(tr("Keep the existing ones"), "skip")
+        form = QFormLayout()
+        form.addRow(tr("Names that exist already"), self.clash)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        for widget in (self.instances, self.profiles, self.message):
+            layout.addWidget(widget)
+        if imported.skipped:
+            skipped = QLabel(
+                tr(
+                    "Not usable and left out: {names}",
+                    names=", ".join(imported.skipped),
+                )
+            )
+            skipped.setObjectName("error")
+            skipped.setWordWrap(True)
+            layout.addWidget(skipped)
+        layout.addLayout(form)
+        note = QLabel(tr("Sign in to each imported instance before you use it."))
+        note.setObjectName("hint")
+        note.setWordWrap(True)
+        layout.addWidget(note)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        ok = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        ok.setText(tr("Import"))
+        ok.setObjectName("primary")
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Cancel"))
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)

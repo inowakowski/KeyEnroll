@@ -624,4 +624,74 @@ IT = {
     "Open the deployment log folder": (
         "Apri la cartella del registro delle distribuzioni"
     ),
+    # -- moving the configuration (0.6.0)
+    "Add them with a new name": (
+        "Aggiungerli con un nuovo nome"
+    ),
+    "Added: {added} · replaced: {replaced} · kept as they were: {skipped}.": (
+        "Aggiunti: {added} · sostituiti: {replaced} · lasciati invariati: {skipped}."
+    ),
+    "Adds instances and profiles exported on another computer.": (
+        "Aggiunge istanze e profili esportati su un altro computer."
+    ),
+    "Export configuration": (
+        "Esporta configurazione"
+    ),
+    "Export…": (
+        "Esporta…"
+    ),
+    "Import": (
+        "Importa"
+    ),
+    "Import configuration": (
+        "Importa configurazione"
+    ),
+    "Import…": (
+        "Importa…"
+    ),
+    "Instances ({count})": (
+        "Istanze ({count})"
+    ),
+    "Keep the existing ones": (
+        "Mantenere quelli esistenti"
+    ),
+    "KeyEnroll configuration (*.json)": (
+        "Configurazione di KeyEnroll (*.json)"
+    ),
+    "KeyEnroll configuration (*.json);;All files (*)": (
+        "Configurazione di KeyEnroll (*.json);;Tutti i file (*)"
+    ),
+    "Names that exist already": (
+        "Nomi già esistenti"
+    ),
+    "Not usable and left out: {names}": (
+        "Non utilizzabili e tralasciati: {names}"
+    ),
+    "Profiles ({count})": (
+        "Profili ({count})"
+    ),
+    "Replace the existing ones": (
+        "Sostituire quelli esistenti"
+    ),
+    "Saved to {path}.": (
+        "Salvato in {path}."
+    ),
+    "Saves instances and profiles for another computer.": (
+        "Salva istanze e profili per un altro computer."
+    ),
+    "Sign in to each imported instance before you use it.": (
+        "Accedere a ogni istanza importata prima di usarla."
+    ),
+    "The file contains no sign-ins and no secrets: on the other computer, sign in to each instance again.": (
+        "Il file non contiene accessi né segreti: sull’altro computer, accedere di nuovo a ogni istanza."
+    ),
+    "The file is not a KeyEnroll configuration.": (
+        "Il file non è una configurazione di KeyEnroll."
+    ),
+    "The file is too large to be a KeyEnroll configuration.": (
+        "Il file è troppo grande per essere una configurazione di KeyEnroll."
+    ),
+    "The file was made by a newer version of KeyEnroll. Update the application first.": (
+        "Il file è stato creato da una versione più recente di KeyEnroll. Aggiornare prima l’applicazione."
+    ),
 }

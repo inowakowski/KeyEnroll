@@ -637,4 +637,74 @@ FR = {
     "Open the deployment log folder": (
         "Ouvrir le dossier du journal des déploiements"
     ),
+    # -- moving the configuration (0.6.0)
+    "Add them with a new name": (
+        "Les ajouter sous un nouveau nom"
+    ),
+    "Added: {added} · replaced: {replaced} · kept as they were: {skipped}.": (
+        "Ajoutés\u00a0: {added} · remplacés\u00a0: {replaced} · laissés tels quels\u00a0: {skipped}."
+    ),
+    "Adds instances and profiles exported on another computer.": (
+        "Ajoute des instances et des profils exportés sur un autre ordinateur."
+    ),
+    "Export configuration": (
+        "Exporter la configuration"
+    ),
+    "Export…": (
+        "Exporter…"
+    ),
+    "Import": (
+        "Importer"
+    ),
+    "Import configuration": (
+        "Importer la configuration"
+    ),
+    "Import…": (
+        "Importer…"
+    ),
+    "Instances ({count})": (
+        "Instances ({count})"
+    ),
+    "Keep the existing ones": (
+        "Garder les existants"
+    ),
+    "KeyEnroll configuration (*.json)": (
+        "Configuration KeyEnroll (*.json)"
+    ),
+    "KeyEnroll configuration (*.json);;All files (*)": (
+        "Configuration KeyEnroll (*.json);;Tous les fichiers (*)"
+    ),
+    "Names that exist already": (
+        "Noms déjà existants"
+    ),
+    "Not usable and left out: {names}": (
+        "Inutilisables et ignorés\u00a0: {names}"
+    ),
+    "Profiles ({count})": (
+        "Profils ({count})"
+    ),
+    "Replace the existing ones": (
+        "Remplacer les existants"
+    ),
+    "Saved to {path}.": (
+        "Enregistré dans {path}."
+    ),
+    "Saves instances and profiles for another computer.": (
+        "Enregistre les instances et les profils pour un autre ordinateur."
+    ),
+    "Sign in to each imported instance before you use it.": (
+        "Connectez-vous à chaque instance importée avant de l’utiliser."
+    ),
+    "The file contains no sign-ins and no secrets: on the other computer, sign in to each instance again.": (
+        "Le fichier ne contient ni connexion ni secret\u00a0: sur l’autre ordinateur, reconnectez-vous à chaque instance."
+    ),
+    "The file is not a KeyEnroll configuration.": (
+        "Le fichier n’est pas une configuration KeyEnroll."
+    ),
+    "The file is too large to be a KeyEnroll configuration.": (
+        "Le fichier est trop volumineux pour être une configuration KeyEnroll."
+    ),
+    "The file was made by a newer version of KeyEnroll. Update the application first.": (
+        "Le fichier a été créé par une version plus récente de KeyEnroll. Mettez d’abord l’application à jour."
+    ),
 }

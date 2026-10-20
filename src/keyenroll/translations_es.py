@@ -621,4 +621,74 @@ ES = {
     "Open the deployment log folder": (
         "Abrir la carpeta del registro de implantaciones"
     ),
+    # -- moving the configuration (0.6.0)
+    "Add them with a new name": (
+        "Añadirlos con un nombre nuevo"
+    ),
+    "Added: {added} · replaced: {replaced} · kept as they were: {skipped}.": (
+        "Añadidos: {added} · sustituidos: {replaced} · sin cambios: {skipped}."
+    ),
+    "Adds instances and profiles exported on another computer.": (
+        "Añade instancias y perfiles exportados en otro equipo."
+    ),
+    "Export configuration": (
+        "Exportar la configuración"
+    ),
+    "Export…": (
+        "Exportar…"
+    ),
+    "Import": (
+        "Importar"
+    ),
+    "Import configuration": (
+        "Importar la configuración"
+    ),
+    "Import…": (
+        "Importar…"
+    ),
+    "Instances ({count})": (
+        "Instancias ({count})"
+    ),
+    "Keep the existing ones": (
+        "Conservar los existentes"
+    ),
+    "KeyEnroll configuration (*.json)": (
+        "Configuración de KeyEnroll (*.json)"
+    ),
+    "KeyEnroll configuration (*.json);;All files (*)": (
+        "Configuración de KeyEnroll (*.json);;Todos los archivos (*)"
+    ),
+    "Names that exist already": (
+        "Nombres que ya existen"
+    ),
+    "Not usable and left out: {names}": (
+        "No utilizables y omitidos: {names}"
+    ),
+    "Profiles ({count})": (
+        "Perfiles ({count})"
+    ),
+    "Replace the existing ones": (
+        "Sustituir los existentes"
+    ),
+    "Saved to {path}.": (
+        "Guardado en {path}."
+    ),
+    "Saves instances and profiles for another computer.": (
+        "Guarda instancias y perfiles para otro equipo."
+    ),
+    "Sign in to each imported instance before you use it.": (
+        "Inicie sesión en cada instancia importada antes de usarla."
+    ),
+    "The file contains no sign-ins and no secrets: on the other computer, sign in to each instance again.": (
+        "El archivo no contiene inicios de sesión ni secretos: en el otro equipo, vuelva a iniciar sesión en cada instancia."
+    ),
+    "The file is not a KeyEnroll configuration.": (
+        "El archivo no es una configuración de KeyEnroll."
+    ),
+    "The file is too large to be a KeyEnroll configuration.": (
+        "El archivo es demasiado grande para ser una configuración de KeyEnroll."
+    ),
+    "The file was made by a newer version of KeyEnroll. Update the application first.": (
+        "El archivo se creó con una versión más reciente de KeyEnroll. Actualice primero la aplicación."
+    ),
 }

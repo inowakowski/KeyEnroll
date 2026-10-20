@@ -22,6 +22,7 @@ leaving the application.
 | **Edit** | Changes the selected instance. Double-clicking a row does the same. The identity provider of an existing instance cannot be changed. |
 | **Set as active** | Makes the selected instance the one you work with. The selector at the top of the window does the same. |
 | **Delete** | Removes the instance **and its stored sign-in** from this computer. Nothing is changed at the identity provider. |
+| **Export…**, **Import…** | Move instances and profiles to another computer, see [below](#moving-the-configuration). |
 
 ## Adding an instance
 
@@ -39,6 +40,34 @@ leaving the application.
     in the application registration at the identity provider — for Okta and Ping
     including the port number. It always starts with `http://localhost`. A mismatch is
     the most common reason for a failed sign-in.
+
+## Moving the configuration
+
+!!! info "Since version 0.6.0"
+
+Several administrators, or a new workstation, can work with the same instances and
+profiles without typing them in again.
+
+1. On the computer that has them: **Export…**, choose what to include (instances,
+   profiles, the [message for the user](settings.md#message-for-the-user)) and save
+   the `.json` file.
+2. On the other computer: **Import…** and pick the file. Choose what to take over
+   and what to do with **names that exist already**:
+
+    | Choice | Result |
+    |---|---|
+    | **Add them with a new name** (default) | The imported entry is added as, for example, *Production (2)*. Nothing existing changes. |
+    | **Replace the existing ones** | The existing instance or profile takes the imported settings. An instance keeps its sign-in, unless its identity provider changed. |
+    | **Keep the existing ones** | The imported entry is left out. |
+
+3. **Sign in** to each imported instance. The file contains no sign-ins and no
+   secrets, only the values you typed into the instance form, so it does not have
+   to be treated like a password. Still, it names your tenants: send it through a
+   channel you trust.
+
+Entries the application cannot use, such as an instance of an identity provider this
+version does not know, are listed in the import window and left out. A file made by
+a newer version of KeyEnroll is refused; update the application first.
 
 ## Switching instances
 

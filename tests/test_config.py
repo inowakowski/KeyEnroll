@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from keyenroll.config import ConfigStore, Instance, Profile
 from keyenroll.fido.pin import generate_pin, is_trivial
 from keyenroll.secrets_store import KeyringTokenStore
@@ -187,3 +189,107 @@ def test_allowed_key_models_are_stored_and_cleaned(tmp_path):
         {"aaguid": "cb69481e-8ff7-4039-93ec-0a2729a154a8", "name": "YubiKey 5"}
     ]
     assert (loaded.min_firmware, loaded.unknown_firmware) == ("5.7", "refuse")
+
+
+# -- moving the configuration to another workstation ---------------------------
+
+from keyenroll.config import (  # noqa: E402
+    ImportProblem,
+    apply_import,
+    export_config,
+    parse_import,
+)
+
+KINDS = {"entra", "okta", "pingone", "pingone_aic"}
+
+
+def exported_store(tmp_path):
+    store = ConfigStore(tmp_path / "a" / "config.json")
+    store.upsert_profile(Profile(name="strict", min_pin_length=8, random_pin_length=8))
+    store.upsert_instance(
+        Instance(name="Prod", kind="entra", settings={"tenant_id": "t", "client_id": "c"},
+                 default_profile="strict")
+    )  # fmt: skip
+    store.ui["window_geometry"] = "xyz"
+    store.message_subject = "Your key"
+    store.save()
+    return store
+
+
+def test_export_holds_no_ids_layout_or_secrets_and_imports_with_new_ids(tmp_path):
+    source = exported_store(tmp_path)
+    data = export_config(source)
+    text = json.dumps(data)
+    assert data["format"] == "keyenroll-config" and data["version"] == 1
+    assert source.instances[0].id not in text and "window_geometry" not in text
+    assert "token" not in text.lower()
+
+    target = ConfigStore(tmp_path / "b" / "config.json")
+    imported = parse_import(json.dumps(data).encode(), KINDS)
+    outcome = apply_import(target, imported)
+
+    assert (outcome.added, outcome.replaced, outcome.skipped) == (3, 0, 0)  # 2 profiles + 1
+    reloaded = ConfigStore(target.path)
+    prod = reloaded.instances[0]
+    assert prod.name == "Prod" and prod.id != source.instances[0].id
+    assert reloaded.active_instance_id == prod.id
+    # "default" existed on both sides and was added under a new name; the
+    # instance still points at the profile it had.
+    assert [p.name for p in reloaded.profiles] == ["default", "default (2)", "strict"]
+    assert prod.default_profile == "strict"
+    assert reloaded.message_subject == "Your key"
+
+
+def test_name_clashes_are_kept_replaced_or_renamed(tmp_path):
+    data = json.dumps(export_config(exported_store(tmp_path))).encode()
+
+    def target(name):
+        store = ConfigStore(tmp_path / name / "config.json")
+        store.upsert_instance(Instance(name="Prod", kind="okta", settings={"domain": "old"}))
+        return store
+
+    kept = target("skip")
+    old_id = kept.instances[0].id
+    apply_import(kept, parse_import(data, KINDS), clash="skip", profiles=False)
+    assert [(i.name, i.kind) for i in kept.instances] == [("Prod", "okta")]
+
+    replaced = target("replace")
+    old_id = replaced.instances[0].id
+    outcome = apply_import(replaced, parse_import(data, KINDS), clash="replace")
+    (prod,) = replaced.instances
+    assert (prod.id, prod.kind, prod.settings["tenant_id"]) == (old_id, "entra", "t")
+    assert outcome.replaced_instances == [(old_id, True)]  # provider type changed
+
+    renamed = target("rename")
+    apply_import(renamed, parse_import(data, KINDS), clash="rename")
+    assert [i.name for i in renamed.instances] == ["Prod", "Prod (2)"]
+
+
+@pytest.mark.parametrize(
+    "raw, message",
+    [
+        (b"not json", "not a KeyEnroll configuration"),
+        (b'{"format": "something-else", "version": 1}', "not a KeyEnroll configuration"),
+        (b'{"format": "keyenroll-config", "version": 99}', "newer version"),
+        (b"{" + b" " * 1_000_001 + b"}", "too large"),
+    ],
+    ids=["not-json", "other-format", "newer-version", "too-large"],
+)
+def test_files_that_are_not_an_export_are_refused(raw, message):
+    with pytest.raises(ImportProblem, match=message):
+        parse_import(raw, KINDS)
+
+
+def test_unusable_entries_are_left_out_and_named(tmp_path):
+    raw = json.dumps({
+        "format": "keyenroll-config", "version": 1,
+        "instances": [
+            {"name": "Ok", "kind": "okta", "settings": {"domain": "x"}},
+            {"name": "Odd", "kind": "unknown-idp", "settings": {}},
+            {"name": "Broken", "kind": "okta", "settings": "no"},
+        ],
+        "profiles": [{"name": "bad", "min_pin_length": "eight"}, {"name": "", "reset": True}],
+    }).encode()  # fmt: skip
+    imported = parse_import(raw, KINDS)
+    assert [i.name for i in imported.instances] == ["Ok"]
+    assert imported.skipped == ["Odd", "Broken", "bad", "?"]

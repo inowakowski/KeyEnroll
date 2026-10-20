@@ -642,4 +642,74 @@ DE = {
     "Open the deployment log folder": (
         "Ordner des Bereitstellungsprotokolls öffnen"
     ),
+    # -- moving the configuration (0.6.0)
+    "Add them with a new name": (
+        "Unter neuem Namen hinzufügen"
+    ),
+    "Added: {added} · replaced: {replaced} · kept as they were: {skipped}.": (
+        "Hinzugefügt: {added} · ersetzt: {replaced} · unverändert gelassen: {skipped}."
+    ),
+    "Adds instances and profiles exported on another computer.": (
+        "Fügt Instanzen und Profile hinzu, die auf einem anderen Computer exportiert wurden."
+    ),
+    "Export configuration": (
+        "Konfiguration exportieren"
+    ),
+    "Export…": (
+        "Exportieren…"
+    ),
+    "Import": (
+        "Importieren"
+    ),
+    "Import configuration": (
+        "Konfiguration importieren"
+    ),
+    "Import…": (
+        "Importieren…"
+    ),
+    "Instances ({count})": (
+        "Instanzen ({count})"
+    ),
+    "Keep the existing ones": (
+        "Vorhandene behalten"
+    ),
+    "KeyEnroll configuration (*.json)": (
+        "KeyEnroll-Konfiguration (*.json)"
+    ),
+    "KeyEnroll configuration (*.json);;All files (*)": (
+        "KeyEnroll-Konfiguration (*.json);;Alle Dateien (*)"
+    ),
+    "Names that exist already": (
+        "Bereits vorhandene Namen"
+    ),
+    "Not usable and left out: {names}": (
+        "Nicht verwendbar und ausgelassen: {names}"
+    ),
+    "Profiles ({count})": (
+        "Profile ({count})"
+    ),
+    "Replace the existing ones": (
+        "Vorhandene ersetzen"
+    ),
+    "Saved to {path}.": (
+        "Gespeichert unter {path}."
+    ),
+    "Saves instances and profiles for another computer.": (
+        "Speichert Instanzen und Profile für einen anderen Computer."
+    ),
+    "Sign in to each imported instance before you use it.": (
+        "Melden Sie sich bei jeder importierten Instanz an, bevor Sie sie verwenden."
+    ),
+    "The file contains no sign-ins and no secrets: on the other computer, sign in to each instance again.": (
+        "Die Datei enthält keine Anmeldungen und keine Geheimnisse: Melden Sie sich auf dem anderen Computer bei jeder Instanz erneut an."
+    ),
+    "The file is not a KeyEnroll configuration.": (
+        "Die Datei ist keine KeyEnroll-Konfiguration."
+    ),
+    "The file is too large to be a KeyEnroll configuration.": (
+        "Die Datei ist zu groß für eine KeyEnroll-Konfiguration."
+    ),
+    "The file was made by a newer version of KeyEnroll. Update the application first.": (
+        "Die Datei wurde mit einer neueren Version von KeyEnroll erstellt. Aktualisieren Sie zuerst die Anwendung."
+    ),
 }

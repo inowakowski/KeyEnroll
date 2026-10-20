@@ -1053,3 +1053,32 @@ def test_enrollments_are_written_to_the_deployment_log(gui):
     page.start.click()
     wait_until(lambda: not page.is_running())
     assert len(log_file.read_text(encoding="utf-8-sig").splitlines()) == 2  # header + 1
+
+
+def test_configuration_moves_to_another_workstation(gui, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QFileDialog
+
+    window, ctx, key, source, shown = gui
+    path = tmp_path / "keyenroll-config.json"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: (str(path), "")))
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", staticmethod(lambda *a, **k: (str(path), "")))
+    accepted = lambda self: QDialog.DialogCode.Accepted  # noqa: E731
+    monkeypatch.setattr(dialogs.ExportConfigDialog, "exec", accepted)
+    monkeypatch.setattr(dialogs.ImportConfigDialog, "exec", accepted)
+
+    window.nav.setCurrentRow(PAGE_INSTANCES)
+    page = window.pages.currentWidget()
+    page.export.click()
+    assert path.is_file() and "Saved to" in shown["boxes"][-1]
+
+    # Importing the same file again: by default clashing names get a new one.
+    page.import_.click()
+    names = [i.name for i in ConfigStore(ctx.config.path).instances]
+    assert names == ["Prod", "Lab", "Prod (2)", "Lab (2)"]
+    assert page.table.rowCount() == 4
+    assert window.instance_combo.count() == 4
+    assert "Added: 3" in shown["boxes"][-1]  # two instances and a "default (2)" profile
+
+    path.write_text("{}", encoding="utf-8")
+    page.import_.click()
+    assert "not a KeyEnroll configuration" in shown["boxes"][-1]

@@ -587,4 +587,74 @@ PL = {
     "Open the deployment log folder": (
         "Otwórz folder dziennika wdrożeń"
     ),
+    # -- moving the configuration (0.6.0)
+    "Add them with a new name": (
+        "Dodaj je pod nową nazwą"
+    ),
+    "Added: {added} · replaced: {replaced} · kept as they were: {skipped}.": (
+        "Dodano: {added} · zastąpiono: {replaced} · pozostawiono bez zmian: {skipped}."
+    ),
+    "Adds instances and profiles exported on another computer.": (
+        "Dodaje instancje i profile wyeksportowane na innym komputerze."
+    ),
+    "Export configuration": (
+        "Eksport konfiguracji"
+    ),
+    "Export…": (
+        "Eksportuj…"
+    ),
+    "Import": (
+        "Importuj"
+    ),
+    "Import configuration": (
+        "Import konfiguracji"
+    ),
+    "Import…": (
+        "Importuj…"
+    ),
+    "Instances ({count})": (
+        "Instancje ({count})"
+    ),
+    "Keep the existing ones": (
+        "Zostaw istniejące"
+    ),
+    "KeyEnroll configuration (*.json)": (
+        "Konfiguracja KeyEnroll (*.json)"
+    ),
+    "KeyEnroll configuration (*.json);;All files (*)": (
+        "Konfiguracja KeyEnroll (*.json);;Wszystkie pliki (*)"
+    ),
+    "Names that exist already": (
+        "Nazwy, które już istnieją"
+    ),
+    "Not usable and left out: {names}": (
+        "Nie nadają się i zostały pominięte: {names}"
+    ),
+    "Profiles ({count})": (
+        "Profile ({count})"
+    ),
+    "Replace the existing ones": (
+        "Zastąp istniejące"
+    ),
+    "Saved to {path}.": (
+        "Zapisano w {path}."
+    ),
+    "Saves instances and profiles for another computer.": (
+        "Zapisuje instancje i profile do przeniesienia na inny komputer."
+    ),
+    "Sign in to each imported instance before you use it.": (
+        "Przed użyciem zaloguj się do każdej zaimportowanej instancji."
+    ),
+    "The file contains no sign-ins and no secrets: on the other computer, sign in to each instance again.": (
+        "Plik nie zawiera logowań ani sekretów: na drugim komputerze zaloguj się ponownie do każdej instancji."
+    ),
+    "The file is not a KeyEnroll configuration.": (
+        "Ten plik nie jest konfiguracją KeyEnroll."
+    ),
+    "The file is too large to be a KeyEnroll configuration.": (
+        "Plik jest za duży, aby był konfiguracją KeyEnroll."
+    ),
+    "The file was made by a newer version of KeyEnroll. Update the application first.": (
+        "Plik powstał w nowszej wersji KeyEnroll. Najpierw zaktualizuj aplikację."
+    ),
 }
