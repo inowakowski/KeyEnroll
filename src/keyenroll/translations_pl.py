@@ -16,6 +16,9 @@ PL = {
     "Not signed in. Sign in to the identity provider first.": (
         "Nie zalogowano. Najpierw zaloguj się do dostawcy tożsamości."
     ),
+    "The identity provider could not be reached. Check the connection and try again.": (
+        "Nie udało się połączyć z dostawcą tożsamości. Sprawdź połączenie i spróbuj ponownie."
+    ),
     "The session has expired. Sign in to the identity provider again.": (
         "Sesja wygasła. Zaloguj się ponownie do dostawcy tożsamości."
     ),
@@ -370,6 +373,10 @@ PL = {
         "Podłączono kilka kluczy. Zostaw podłączony tylko jeden."
     ),
     "Batch finished.": "Wdrożenie zakończone.",
+    "A different security key was inserted (S/N {found}). Start again "
+    "with the key S/N {expected}.": (
+        "Włożono inny klucz bezpieczeństwa (S/N {found}). Zacznij od nowa z kluczem S/N {expected}."
+    ),
     "Security key {serial} was already enrolled in this batch.": (
         "Klucz {serial} został już zarejestrowany w tym wdrożeniu."
     ),

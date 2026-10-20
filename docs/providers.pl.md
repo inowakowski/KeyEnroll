@@ -49,7 +49,13 @@ administratorów.
 - Jeśli polityka ogranicza klucze według AAGUID lub wymusza atestację, wydawane
   klucze muszą ją spełniać.
 
-**Warto wiedzieć:** nazwa klucza jest ograniczona do 30 znaków.
+**Warto wiedzieć:**
+
+- Nazwa klucza jest ograniczona do 30 znaków.
+- Microsoft udostępnia interfejs rejestracji kluczy FIDO2, z którego korzysta
+  KeyEnroll, tylko w chmurze globalnej; chmury US Government i Chiny (21Vianet) go
+  nie obsługują (stan dokumentacji Microsoft Graph z lipca 2026). Oba pola z adresami
+  punktów końcowych czekają na zmianę tej sytuacji.
 
 ## Okta
 

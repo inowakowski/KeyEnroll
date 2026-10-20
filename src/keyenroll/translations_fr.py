@@ -16,6 +16,9 @@ FR = {
     "Not signed in. Sign in to the identity provider first.": (
         "Non connecté. Connectez-vous d’abord au fournisseur d’identité."
     ),
+    "The identity provider could not be reached. Check the connection and try again.": (
+        "Le fournisseur d’identité est injoignable. Vérifiez la connexion et réessayez."
+    ),
     "The session has expired. Sign in to the identity provider again.": (
         "La session a expiré. Reconnectez-vous au fournisseur d’identité."
     ),
@@ -406,6 +409,10 @@ FR = {
         "Plusieurs clés de sécurité sont connectées. N’en laissez qu’une seule."
     ),
     "Batch finished.": "Lot terminé.",
+    "A different security key was inserted (S/N {found}). Start again "
+    "with the key S/N {expected}.": (
+        "Une autre clé de sécurité a été insérée (S/N {found}). Recommencez avec la clé S/N {expected}."
+    ),
     "Security key {serial} was already enrolled in this batch.": (
         "La clé de sécurité {serial} a déjà été enregistrée dans ce lot."
     ),

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from urllib.parse import urlsplit
+
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices, QFont, QFontDatabase
 from PySide6.QtWidgets import (
@@ -27,6 +29,17 @@ from ..handover import Handover
 from ..i18n import current_language, tr
 from ..providers import PROVIDERS
 from .common import copy_sensitive
+
+
+def local_redirect(uri: str) -> bool:
+    """The sign-in listener's rule: http, the host localhost and a valid port.
+    "http://localhost.example.com" starts with the right text but is not local."""
+    parts = urlsplit(uri)
+    try:
+        parts.port  # noqa: B018 - raises for a port that is not a number
+    except ValueError:
+        return False
+    return parts.scheme == "http" and parts.hostname == "localhost"
 
 
 class InstanceDialog(QDialog):
@@ -141,8 +154,7 @@ class InstanceDialog(QDialog):
                 tr("Required field is empty: {field}", field=tr(missing[0].label)),
             )
             return
-        redirect = settings.get("redirect_uri", "")
-        if not redirect.startswith("http://localhost"):
+        if not local_redirect(settings.get("redirect_uri", "")):
             QMessageBox.warning(
                 self, tr("Error"), tr("The redirect URI must start with http://localhost.")
             )

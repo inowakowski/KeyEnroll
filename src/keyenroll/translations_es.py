@@ -16,6 +16,9 @@ ES = {
     "Not signed in. Sign in to the identity provider first.": (
         "No ha iniciado sesión. Inicie sesión primero en el proveedor de identidad."
     ),
+    "The identity provider could not be reached. Check the connection and try again.": (
+        "No se pudo contactar con el proveedor de identidad. Compruebe la conexión e inténtelo de nuevo."
+    ),
     "The session has expired. Sign in to the identity provider again.": (
         "La sesión ha caducado. Vuelva a iniciar sesión en el proveedor de identidad."
     ),
@@ -395,6 +398,10 @@ ES = {
         "Hay varias llaves de seguridad conectadas. Deje conectada solo una."
     ),
     "Batch finished.": "Lote finalizado.",
+    "A different security key was inserted (S/N {found}). Start again "
+    "with the key S/N {expected}.": (
+        "Se ha insertado otra llave de seguridad (S/N {found}). Empiece de nuevo con la llave S/N {expected}."
+    ),
     "Security key {serial} was already enrolled in this batch.": (
         "La llave de seguridad {serial} ya se registró en este lote."
     ),

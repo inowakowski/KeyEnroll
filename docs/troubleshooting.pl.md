@@ -29,6 +29,10 @@ Przeglądarka nie mogła połączyć się z `http://localhost`. Blokują to niek
 rozszerzenia bezpieczeństwa i firmowe proxy; zezwól na `localhost` albo ustaw inną
 przeglądarkę jako domyślną.
 
+**„Nie udało się połączyć z dostawcą tożsamości.”**
+Połączenie z dostawcą się nie powiodło albo dostawca miał chwilowy problem.
+Logowanie zostaje zachowane; sprawdź sieć lub serwer proxy i spróbuj ponownie.
+
 **„Sesja wygasła.”**
 Zaloguj się ponownie. O tym, jak długo ważne jest logowanie, decyduje dostawca
 tożsamości.
@@ -55,6 +59,7 @@ konto nie ma wymaganej roli. Zobacz [Dostawcy tożsamości](providers.md).
 | *Reset nie został przyjęty. Trzeba go potwierdzić w ciągu kilku sekund od włożenia klucza.* | Klucz pozwala na reset tylko chwilę po włożeniu. Wyjmij go, włóż i dotknij, gdy tylko zacznie migać. Aplikacja ponawia próbę kilka razy. |
 | *Klucz nie został dotknięty na czas.* | Dotknij złotego styku lub przycisku klucza, gdy miga. |
 | *Upłynął czas oczekiwania na klucz.* | Klucza nie wyjęto lub nie włożono ponownie w ciągu dwóch minut. Zacznij od nowa. |
+| *Włożono inny klucz bezpieczeństwa …* | Do resetu fabrycznego włożono klucz o innym numerze seryjnym niż ten, który wyjęto. Nie został zmieniony. Zacznij od nowa z właściwym kluczem. |
 | *Wybrany klucz nie jest już podłączony.* | Klucz został wyjęty. Włóż go i kliknij **Odśwież**. |
 | *Błędny PIN.* z liczbą pozostałych prób | Obecny PIN klucza wpisano z błędem. Uważaj na licznik: gdy dojdzie do zera, PIN zostanie zablokowany. |
 | *Zbyt wiele błędnych prób PIN-u. Włóż klucz ponownie i spróbuj jeszcze raz.* | Po trzech błędnych PIN-ach z rzędu klucz wstrzymuje próby. Wyjmij go i włóż ponownie. |

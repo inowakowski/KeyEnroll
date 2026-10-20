@@ -204,6 +204,15 @@ class Provider:
                 raise AuthRequired(N_("Not signed in. Sign in to the identity provider first."))
             try:
                 new = oauth.refresh(self.oauth_config(), refresh_token, self._http)
+            except oauth.ProviderUnavailable as e:
+                # A network outage must not cost the operator the sign-in.
+                logger.info("Token refresh failed: %s", e)
+                raise ProviderError(
+                    N_(
+                        "The identity provider could not be reached. Check the "
+                        "connection and try again."
+                    )
+                ) from e
             except oauth.OAuthError as e:
                 logger.info("Token refresh failed: %s", e)
                 self._tokens = None

@@ -28,6 +28,10 @@ it, or register a redirect URI with a different port and enter it in the instanc
 The browser could not reach `http://localhost`. Some browser security extensions and
 corporate proxies block it; allow `localhost`, or use another browser as default.
 
+**"The identity provider could not be reached."**
+The connection to the provider failed, or the provider had a temporary problem. Your
+sign-in is kept; check the network or proxy and try again.
+
 **"The session has expired."**
 Sign in again. How long a sign-in lasts is decided by your identity provider.
 
@@ -53,6 +57,7 @@ does not have the required role. See [Identity providers](providers.md).
 | *The reset was not accepted. It must be confirmed within a few seconds of inserting the key.* | A security key only allows a reset shortly after it is plugged in. Remove it, insert it, and touch it as soon as it blinks. The application retries a few times. |
 | *The key was not touched in time.* | Touch the gold contact or the button of the key while it blinks. |
 | *Timed out waiting for the security key.* | The key was not removed or re-inserted within two minutes. Start again. |
+| *A different security key was inserted …* | For the factory reset, a key with another serial number was inserted than the one taken out. It was left untouched. Start again with the right key. |
 | *The selected security key is no longer connected.* | The key was unplugged. Insert it and press **Refresh**. |
 | *Wrong PIN.* with the remaining attempts | The current PIN of the key was mistyped. Mind the counter: when it reaches zero the PIN is blocked. |
 | *Too many wrong PIN attempts. Re-insert the key and try again.* | The key pauses after three wrong PINs in a row. Unplug it and plug it in again. |

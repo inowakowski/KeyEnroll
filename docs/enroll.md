@@ -19,12 +19,13 @@ You have to be [signed in](instances.md#signing-in) to search.
 
 | Control | What it is for |
 |---|---|
-| Key selector | The connected security keys. A key that is plugged in or removed appears or disappears by itself within a couple of seconds. |
+| Key selector | The connected security keys. A USB key that is plugged in or removed appears or disappears by itself within a couple of seconds. |
 | **Refresh** | Looks for keys again immediately. |
 | **Serial number**, **Firmware** | Read from the key, so that you can check you are holding the right one. Keys of the *Security Key* series do not reveal a serial number. |
 | Status line | The state of the key before enrollment: whether a PIN is set, its minimum PIN length, and whether "always UV", Enterprise Attestation or a forced PIN change are active. |
 
-Keys on an NFC reader are listed with the mark **NFC**.
+Keys on an NFC reader are listed with the mark **NFC**. They are not detected
+automatically: place the key on the reader, then press **Refresh**.
 
 ## 3. Enrollment options
 

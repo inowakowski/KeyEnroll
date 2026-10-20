@@ -16,6 +16,9 @@ DE = {
     "Not signed in. Sign in to the identity provider first.": (
         "Nicht angemeldet. Melden Sie sich zuerst beim Identitätsanbieter an."
     ),
+    "The identity provider could not be reached. Check the connection and try again.": (
+        "Der Identitätsanbieter ist nicht erreichbar. Prüfen Sie die Verbindung und versuchen Sie es erneut."
+    ),
     "The session has expired. Sign in to the identity provider again.": (
         "Die Sitzung ist abgelaufen. Melden Sie sich erneut beim Identitätsanbieter an."
     ),
@@ -414,6 +417,10 @@ DE = {
         "Es sind mehrere Sicherheitsschlüssel verbunden. Lassen Sie nur einen eingesteckt."
     ),
     "Batch finished.": "Durchlauf abgeschlossen.",
+    "A different security key was inserted (S/N {found}). Start again "
+    "with the key S/N {expected}.": (
+        "Es wurde ein anderer Sicherheitsschlüssel eingesteckt (S/N {found}). Beginnen Sie erneut mit dem Schlüssel S/N {expected}."
+    ),
     "Security key {serial} was already enrolled in this batch.": (
         "Der Sicherheitsschlüssel {serial} wurde in diesem Durchlauf bereits registriert."
     ),

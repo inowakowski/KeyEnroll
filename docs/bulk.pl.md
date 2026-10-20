@@ -103,7 +103,7 @@ z pliku.
 - Przed następnym użytkownikiem trzeba wyjąć poprzedni klucz, więc jednego klucza
   nie da się przez pomyłkę zarejestrować dwa razy.
 - Klucz o numerze seryjnym użytym już w tym wdrożeniu jest odrzucany **przed**
-  resetem.
+  resetem, również wtedy, gdy wkładasz go ponownie do resetu.
 - Wdrożenie pracuje z dokładnie jednym podłączonym kluczem. Jeśli w chwili
   kliknięcia Start podłączonych jest kilka, zatrzymuje się i prosi o zostawienie
   jednego.

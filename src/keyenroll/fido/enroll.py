@@ -224,7 +224,33 @@ class Enroller:
         self.ui.status(N_("The security key has been reset."))
         return None
 
-    def _reset(self, dev: CtapDevice) -> CtapDevice:
+    def _check_reinserted(self, dev: CtapDevice, expected: int | None) -> None:
+        """Refuses a key other than the one that was taken out, before it is
+        reset: the operator may have picked up a key that belongs to someone
+        else, or one already enrolled in this batch. Keys whose serial number
+        cannot be read (NFC, Security Key series) cannot be told apart."""
+        try:
+            found = self.source.describe(dev).serial
+        except Exception:
+            logger.debug("Reading the re-inserted key failed", exc_info=True)
+            found = None
+        if found and found in self.used_serials:
+            close(dev)
+            raise EnrollError(
+                N_("Security key {serial} was already enrolled in this batch."), serial=found
+            )
+        if expected and found and found != expected:
+            close(dev)
+            raise EnrollError(
+                N_(
+                    "A different security key was inserted (S/N {found}). Start again "
+                    "with the key S/N {expected}."
+                ),
+                found=found,
+                expected=expected,
+            )
+
+    def _reset(self, dev: CtapDevice, serial: int | None = None) -> CtapDevice:
         key = device_key(dev)
         if self.try_reset_first:
             error = self._try_reset(dev)
@@ -252,6 +278,7 @@ class Enroller:
             self._wait_for(removed, REINSERT_TIMEOUT)
             self.ui.status(N_("Factory reset: insert the security key again…"))
             dev = self._wait_for(inserted, REINSERT_TIMEOUT)
+            self._check_reinserted(dev, serial)
             key = device_key(dev)
             last_error = self._try_reset(dev)
             if last_error is None:
@@ -445,7 +472,7 @@ class Enroller:
             )
 
             if p.reset:
-                dev = self._reset(dev)
+                dev = self._reset(dev, result.key.serial)
                 ctap = Ctap2(dev)
                 result.key = self.source.describe(dev)
 

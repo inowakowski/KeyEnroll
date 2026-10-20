@@ -95,9 +95,9 @@ kodu (Windows) i konta Apple Developer z notaryzacją (macOS).
 i, jeśli jest nowsze, pokazuje przycisk otwierający stronę pobierania. Aplikacja sama
 niczego nie pobiera ani nie instaluje i nie sprawdza aktualizacji w tle.
 
-Sprawdzanie działa tylko wtedy, gdy wydania projektu są **publicznie dostępne**: dopóki
-repozytorium jest prywatne, GitHub odpowiada „nie znaleziono” i aplikacja zgłasza brak
-opublikowanego wydania.
+Sprawdzanie korzysta z publicznego API GitHuba, więc działa tylko wtedy, gdy
+repozytorium i jego wydania są publiczne; w przeciwnym razie GitHub odpowiada
+„nie znaleziono” i aplikacja zgłasza brak opublikowanego wydania.
 
 ### Przekazanie klucza użytkownikowi
 
@@ -177,7 +177,7 @@ Losowe PIN-y nigdy nie zaczynają się od zera, żeby arkusz kalkulacyjny ich ni
 
 - Rejestracja w **Okta kluczem USB na Windows ARM64** została potwierdzona na prawdziwym
   sprzęcie.
-- Pozostałe ścieżki sprawdza 273 testy automatyczne na programowym symulatorze klucza
+- Pozostałe ścieżki sprawdzają testy automatyczne na programowym symulatorze klucza
   i spreparowanych odpowiedziach dostawców: Entra ID, PingOne i PingOne AIC oraz tryb
   masowy **nie były jeszcze testowane na żywym tenancie**.
 - Testy przechodzą w GitHub Actions na Windows, macOS i Linuksie (x64 i ARM64), a
