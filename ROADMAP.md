@@ -1,7 +1,7 @@
 # Plan rozwoju KeyEnroll
 
-Stan na 2026-10-20. Funkcje 1–5 i 7 zatwierdził właściciel projektu, a tryb wiersza
-poleceń (6) został odłożony. Każde wydanie kończy się aktualizacją dokumentacji EN i PL,
+Stan na 2026-10-20. Funkcje 1–5 zatwierdził właściciel projektu. Etykiety (7) są
+wstrzymane, a tryb wiersza poleceń (6) został odłożony. Każde wydanie kończy się aktualizacją dokumentacji EN i PL,
 nowymi zrzutami ekranu (`tools/docs_screenshots.py`) i listą rzeczy, które trzeba
 sprawdzić na prawdziwym kluczu albo tenancie.
 
@@ -10,7 +10,7 @@ sprawdzić na prawdziwym kluczu albo tenancie.
 | **0.5.1** | poprawki z dwóch przeglądów, dokumentacja na GitHub Pages | symulator i jedna rejestracja na kluczu |
 | **0.6.0** | (3) eksport i import konfiguracji, (4) dziennik wdrożeń, (5) dozwolone modele kluczy | symulator, a na kluczu tylko (5) |
 | **0.7.0** | (1) istniejące klucze użytkownika, (2) lista z grupy w katalogu | **żywe tenanty** każdego dostawcy |
-| **0.8.0** | (7) etykiety i karty przekazania (PDF i druk) | drukarka, czytnik PDF |
+| wstrzymane | (7) etykiety i karty przekazania (PDF i druk) | drukarka, czytnik PDF |
 | później | polecenia tylko do odczytu w wierszu poleceń | – |
 
 Funkcje, które da się w pełni sprawdzić na symulatorze, wchodzą przed tymi, które
@@ -38,8 +38,8 @@ zmienia się w tym samym PR co funkcja, którą opisuje, a testy pilnują obu j�
 
 - `.github/workflows/docs.yml`:
   - zadanie `build` bez zmian: `mkdocs build --strict` przy każdym PR i pushu,
-  - nowe zadanie `deploy`, uruchamiane przy tagu `v*` i ręcznie
-    (`workflow_dispatch`). Kroki: `actions/configure-pages` (jego wynik `base_url`
+  - nowe zadanie `deploy`, uruchamiane po każdym pushu do `main` i ręcznie
+    (`workflow_dispatch`); nie uruchamia się dla pull requestów. Kroki: `actions/configure-pages` (jego wynik `base_url`
     trafia do zmiennej `SITE_URL`), `mkdocs build --strict`,
     `actions/upload-pages-artifact`, `actions/deploy-pages`,
   - uprawnienia `pages: write` i `id-token: write` tylko dla zadania `deploy`.
@@ -49,10 +49,14 @@ zmienia się w tym samym PR co funkcja, którą opisuje, a testy pilnują obu j�
 - README (sekcja „Budowanie dokumentacji”) i komentarz w workflow: GitHub Pages
   zamiast Cloudflare.
 
+Ponieważ strona publikuje się z `main`, może opisywać funkcje, których nie ma
+jeszcze w opublikowanym wydaniu. Dlatego każda nowa funkcja dostaje w dokumentacji
+dopisek „Od wersji 0.x.0” (`!!! info`), a strona *Instalacja* mówi, że opisuje
+najnowszy stan projektu.
+
 **Do zrobienia przez właściciela:**
-- *Settings → Pages → Source: GitHub Actions*.
-- *Settings → Environments → github-pages → Deployment branches and tags*: dodać
-  regułę tagu `v*`. Bez niej wdrożenie z tagu zostanie zablokowane.
+- *Settings → Pages → Source: GitHub Actions*. Środowisko `github-pages` domyślnie
+  pozwala wdrażać z `main`, więc dodatkowe reguły nie są potrzebne.
 - Wpisać adres strony w pole *Website* w opisie repozytorium.
 - Jeśli projekt w Cloudflare Pages istnieje, wyłączyć go.
 
@@ -104,8 +108,9 @@ Zapis każdej rejestracji, pojedynczej i masowej, do audytu. **Bez PIN-ów.**
   `id_token`, zostaje wartość z logowania, a w ostateczności „nieznany”. Okta
   i PingOne dostają dziś tylko `openid`; dodanie zakresu `profile` trzeba sprawdzić
   na żywym tenancie, więc w 0.6.0 tylko jako fallback do `sub`.
-- **Ustawienia:** włączony domyślnie, czas przechowywania (domyślnie 12 miesięcy;
-  starsze pliki usuwane przy starcie), przycisk *Otwórz dziennik*.
+- **Ustawienia (zdecydowane):** włączony domyślnie, czas przechowywania 12 miesięcy
+  (do zmiany w ustawieniach; starsze pliki usuwane przy starcie), przycisk
+  *Otwórz dziennik*.
 - **Kod:**
   - nowy moduł `journal.py`,
   - wywołania w `EnrollPage._on_done` i `_on_failed` oraz w `BulkRunner`
@@ -125,20 +130,29 @@ Profil może ograniczyć, jakie klucze wolno rejestrować. Sprawdzenie odbywa si
 **przed resetem fabrycznym**, bo dziś zły klucz jest najpierw wymazywany, a dopiero
 potem odrzucany przez politykę dostawcy.
 
-- **Profil:** nowe pola `allowed_aaguids: list[str]` (puste oznacza każdy model)
-  i `min_firmware: str` (puste oznacza brak wymagań). Starsze wersje aplikacji
+- **Profil:** nowe pola `allowed_aaguids: list[str]` (puste oznacza każdy model),
+  `min_firmware: str` (puste oznacza brak wymagań) i `unknown_firmware:
+  "refuse" | "warn"` (domyślnie `"refuse"`). Starsze wersje aplikacji
   ignorują nieznane pola, więc format pliku konfiguracji się nie zmienia.
 - **Silnik:** `Enroller._precheck` porównuje `ctap.info.aaguid` z listą, a firmware
-  z `describe()`. Firmware da się odczytać tylko przez USB i tylko z YubiKey; gdy jest
-  wymagany, a nieznany, klucz jest odrzucany.
+  z `describe()`. Firmware da się odczytać tylko przez USB i tylko z YubiKey. Gdy
+  minimalna wersja jest wymagana, a firmware nieznany, o skutku decyduje
+  administrator w profilu (zdecydowane):
+  - *Odrzuć klucz* (domyślnie): rejestracja kończy się przed resetem,
+  - *Tylko ostrzeż*: przy rejestracji pojedynczej ostrzeżenie pojawia się
+    w potwierdzeniu i w logu kroków, a we wdrożeniu masowym w kolumnie
+    *Komunikat*; rejestracja jest kontynuowana. Ostrzeżenie trafia też do
+    dziennika wdrożeń.
 - **UI:**
   - w formularzu profilu lista dozwolonych modeli z przyciskiem *Dodaj podłączony
     klucz*, który odczytuje AAGUID i nazwę produktu, oraz ręcznym wpisywaniem,
-  - pole minimalnej wersji firmware,
+  - pole minimalnej wersji firmware i wybór *Odrzuć klucz* albo *Tylko ostrzeż*
+    dla nieznanego firmware,
   - podsumowanie profilu pokazuje ograniczenie, a strona *Rejestracja* ostrzega
     zawczasu, gdy wybrany klucz nie pasuje.
 - **Testy:** symulator z innym AAGUID jest odrzucany bez resetu, a pasujący przechodzi;
-  nieznany firmware przy wymaganej wersji jest odrzucany.
+  nieznany firmware przy wymaganej wersji jest odrzucany albo przepuszczany
+  z ostrzeżeniem, zależnie od ustawienia profilu.
 - **Dokumentacja:** `profiles.md` (nowa opcja i przykład „tylko YubiKey 5 z firmware
   5.7+”), `troubleshooting.md` (nowe komunikaty).
 - **Na kluczu:** AAGUID i firmware prawdziwego YubiKey, odrzucenie innego modelu
@@ -186,6 +200,12 @@ istniejący mechanizm ponowień.
   - Okta: `okta.groups.read`,
   - PingOne: rola administratora z odczytem grup,
   - AIC: `fr:idm:*` już jest.
+
+  PingOne AIC wchodzi w zakres, jeśli jego API na to pozwala (zdecydowane). Jeśli
+  na żywym tenancie okaże się, że nie (np. grupy w innym obiekcie niż
+  `alpha_group` albo brak uprawnień przez `fr:idm:*`), przycisk dla AIC jest
+  nieaktywny z podpowiedzią, a ograniczenie opisują `providers.md` i `bulk.md`
+  w obu językach.
   
   Zakres jest dodawany do logowania tylko po włączeniu opcji. Bez niej aplikacja
   działa z obecną rejestracją z dokumentacji YubiEnroll.
@@ -199,7 +219,7 @@ istniejący mechanizm ponowień.
   | Entra | `GET /groups?$filter=startswith(displayName,'…')` | `/groups/{id}/members/microsoft.graph.user` lub `/transitiveMembers/microsoft.graph.user` |
   | Okta | `GET /api/v1/groups?q=…` | `GET /api/v1/groups/{id}/users` |
   | PingOne | `GET /groups?filter=name sw "…"` | `GET /users?filter=memberOfGroups[id eq "…"]` |
-  | AIC (opcjonalnie) | `managed/alpha_group?_queryFilter=…` | `managed/alpha_group/{id}/members` |
+  | AIC | `managed/alpha_group?_queryFilter=…` | `managed/alpha_group/{id}/members` |
 
 - **Kod:**
   - w dostawcach `search_groups()` i `group_members()` oraz flaga
@@ -218,9 +238,12 @@ istniejący mechanizm ponowień.
 
 ---
 
-## Wydanie 0.8.0
+## Wstrzymane
 
 ### (7) Etykiety i karty przekazania
+Wstrzymane decyzją właściciela z 2026-10-20. Opis zostaje na wypadek powrotu
+do tematu.
+
 - **Etykieta klucza:**
   - zawartość: nazwa wyświetlana, login, nazwa i numer seryjny klucza, data,
   - rozmiary do wyboru: 62×29 mm (taśma Brother DK) i arkusz A4 3×8 (70×37 mm),
@@ -274,11 +297,11 @@ w aplikacji.
 - PIN nigdy nie trafia do logu, dziennika, konfiguracji ani etykiety.
 - Każdy PR zawiera listę rzeczy do sprawdzenia na prawdziwym kluczu albo tenancie.
 
-## Decyzje do podjęcia
-1. GitHub Pages zamiast Cloudflare Pages i publikacja przy wydaniu (proponowane), czy
-   publikacja po każdym pushu do `main`?
-2. Dziennik wdrożeń domyślnie włączony z przechowywaniem 12 miesięcy?
-3. Import z grup także dla PingOne AIC, czy tylko Entra, Okta i PingOne?
-4. Rozmiary etykiet: wystarczą taśma 62 mm i arkusz A4 3×8?
-5. Wymagana minimalna wersja firmware i nieznany firmware (NFC): odrzucać klucz
-   (proponowane), czy tylko ostrzegać?
+## Podjęte decyzje (2026-10-20)
+1. Dokumentacja na GitHub Pages, publikowana po każdym pushu do `main`.
+2. Dziennik wdrożeń domyślnie włączony, przechowywanie 12 miesięcy.
+3. Import z grup także dla PingOne AIC, o ile API na to pozwala; jeśli nie,
+   ograniczenie opisuje dokumentacja.
+4. Etykiety i karty przekazania są wstrzymane.
+5. Nieznany firmware przy wymaganej wersji: ustawienie w profilu, *Odrzuć klucz*
+   (domyślnie) albo *Tylko ostrzeż*.
