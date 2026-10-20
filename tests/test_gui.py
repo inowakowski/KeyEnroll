@@ -973,3 +973,51 @@ def test_instance_redirect_uri_must_be_local():
     assert not local_redirect("https://localhost/callback")
     assert not local_redirect("http://localhost:80a/callback")
     assert not local_redirect("")
+
+
+def test_profile_limits_key_models_and_the_enroll_page_enforces_it(gui, monkeypatch):
+    from keyenroll.ui import profile_form
+
+    window, ctx, key, source, shown = gui
+    monkeypatch.setattr(
+        profile_form.ModelDialog, "exec", lambda self: QDialog.DialogCode.Accepted
+    )
+    window.nav.setCurrentRow(3)
+    page = window.pages.currentWidget()
+    page.new.click()
+    page.name.setText("only this key")
+    page.models.add_connected.click()  # reads the model of the plugged-in fake key
+    wait_until(lambda: page.models.list.count() == 1)
+    page.models.add_connected.click()
+    wait_until(lambda: page.models.add_connected.isEnabled())
+    assert page.models.list.count() == 1  # the same model is not listed twice
+    page.models.min_firmware.setText("5.7")
+    page.models.unknown.setCurrentIndex(page.models.unknown.findData("warn"))
+    page.save.click()
+
+    stored = ConfigStore(ctx.config.path).profile("only this key")
+    assert [m["aaguid"] for m in stored.allowed_models] == [
+        "00112233-4455-6677-8899-aabbccddeeff"
+    ]
+    assert (stored.min_firmware, stored.unknown_firmware) == ("5.7", "warn")
+
+    # The fake key reports no firmware version: a warning, and the profile's
+    # restrictions survive a one-off change of the options on the Enroll page.
+    enroll_page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    rescan(enroll_page)
+    combo = enroll_page.profile_combo
+    combo.setCurrentIndex(combo.findData("only this key"))
+    assert "cannot be read" in enroll_page.key_info.text()
+    enroll_page.form.always_uv.setChecked(True)
+    assert enroll_page.form.profile().allowed_models == stored.allowed_models
+
+    # Refusing instead: the enrollment does not start at all.
+    stored.unknown_firmware = "refuse"
+    ctx.config.upsert_profile(stored)
+    ctx.profiles_changed.emit()
+    combo.setCurrentIndex(combo.findData("only this key"))
+    pick_user(enroll_page, "Alice")
+    enroll_page.start.click()
+    assert "cannot be read" in shown["boxes"][-1]
+    assert not enroll_page.is_running() and "reset" not in key.log

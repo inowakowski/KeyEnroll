@@ -66,6 +66,9 @@ konto nie ma wymaganej roli. Zobacz [Dostawcy tożsamości](providers.md).
 | *PIN jest zablokowany. Klucz trzeba przywrócić do ustawień fabrycznych.* | Włącz opcję *Przywróć klucz do ustawień fabrycznych*. Wszystkie poświadczenia FIDO na kluczu przepadną. |
 | *Klucz odrzucił ten PIN (za krótki lub zbyt prosty).* | Klucz wymusza politykę PIN-u. Wybierz PIN dłuższy lub mniej regularny. |
 | *Obecny PIN jest krótszy niż minimalna długość PIN-u w profilu.* | Włącz *Ustaw nowy losowy PIN* lub reset fabryczny, żeby ustawić nowy PIN o wystarczającej długości. |
+| *Profil nie dopuszcza tego modelu klucza…* | Profil przyjmuje tylko [wybrane modele](profiles.md#allowed-security-keys). Klucz nie został zmieniony. Użyj klucza dozwolonego modelu albo dodaj model do profilu. |
+| *Klucz ma firmware…; profil wymaga wersji… lub nowszej.* | Klucz jest starszy, niż pozwala profil. Nie został zmieniony. |
+| *Nie można odczytać wersji firmware tego klucza…* | Profil wymaga minimalnej wersji firmware, a ten klucz (innego producenta albo na czytniku NFC) jej nie podaje. Podłącz YubiKey przez USB albo ustaw w profilu *Tylko ostrzeż*. |
 | *Ten klucz nie obsługuje…* | Klucz jest za stary na którąś opcję profilu albo nie został z nią wyprodukowany. Użyj innego profilu lub innego klucza. Zobacz [co musi obsługiwać klucz](profiles.md#what-the-key-has-to-support). |
 | *Ten klucz jest już zarejestrowany dla tego użytkownika.* | Użytkownik ma już poświadczenie na tym kluczu. Usuń je najpierw na stronie [Poświadczenia](credentials.md) albo włącz reset fabryczny. |
 | *Dostawca tożsamości zwrócił RP ID niezgodne z jego adresem (origin).* | Domena w instancji nie jest tą, dla której dostawca rejestruje klucze. Dla Okta wpisz domenę, na której logują się użytkownicy; dla PingOne AIC sprawdź pole *Origin WebAuthn*. |

@@ -535,4 +535,74 @@ ES = {
     "The update server returned an unexpected answer.": (
         "El servidor de actualizaciones devolvió una respuesta inesperada."
     ),
+    # -- allowed key models (0.6.0)
+    "Add AAGUID…": (
+        "Añadir AAGUID…"
+    ),
+    "Add the connected key": (
+        "Añadir la llave conectada"
+    ),
+    "Allowed key model": (
+        "Modelo de llave permitido"
+    ),
+    "Allowed security keys": (
+        "Llaves de seguridad permitidas"
+    ),
+    "If the version cannot be read": (
+        "Si no se puede leer la versión"
+    ),
+    "Leave the list empty to accept every model. The key is checked before it is reset, so a key that is not allowed stays as it is.": (
+        "Deje la lista vacía para aceptar cualquier modelo. La llave se comprueba antes de restablecerla, así que una llave no permitida queda intacta."
+    ),
+    "Minimum firmware": (
+        "Firmware mínimo"
+    ),
+    "Minimum firmware must be a version number such as 5.7.": (
+        "El firmware mínimo debe ser un número de versión, como 5.7."
+    ),
+    "No connected security key reports its model. Insert a key and try again.": (
+        "Ninguna llave conectada informa de su modelo. Inserte una llave y vuelva a intentarlo."
+    ),
+    "Only warn": (
+        "Solo advertir"
+    ),
+    "Reads the model of the security key that is plugged in.": (
+        "Lee el modelo de la llave de seguridad conectada."
+    ),
+    "Refuse the key": (
+        "Rechazar la llave"
+    ),
+    "Remove": (
+        "Quitar"
+    ),
+    "The firmware version is read from YubiKeys over USB only. This decides what happens with other keys and keys on an NFC reader.": (
+        "La versión del firmware solo se lee de las YubiKey conectadas por USB. Esto decide qué ocurre con otras llaves y con las llaves en un lector NFC."
+    ),
+    "The firmware version of this security key cannot be read; the profile requires {required} or newer.": (
+        "No se puede leer la versión del firmware de esta llave; el perfil requiere {required} o posterior."
+    ),
+    "The profile does not allow this security key model: {model}.": (
+        "El perfil no permite este modelo de llave: {model}."
+    ),
+    "The security key has firmware {firmware}; the profile requires {required} or newer.": (
+        "La llave tiene el firmware {firmware}; el perfil requiere {required} o posterior."
+    ),
+    "This is not an AAGUID.": (
+        "Esto no es un AAGUID."
+    ),
+    "This model is already on the list.": (
+        "Este modelo ya está en la lista."
+    ),
+    "Unnamed model": (
+        "Modelo sin nombre"
+    ),
+    "e.g. 5.7 (empty: any)": (
+        "p. ej., 5.7 (vacío: cualquiera)"
+    ),
+    "firmware {version} or newer": (
+        "firmware {version} o posterior"
+    ),
+    "only {count} allowed key model(s)": (
+        "solo modelos de llave permitidos: {count}"
+    ),
 }

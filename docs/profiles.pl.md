@@ -73,6 +73,33 @@ który żąda *atestacji Enterprise*. Działa tylko z kluczami zamówionymi z t�
 i z dostawcą odpowiednio skonfigurowanym. Zostaw wyłączone, jeśli nie masz pewności,
 że tego potrzebujesz.
 
+## Dozwolone klucze bezpieczeństwa { #allowed-security-keys }
+
+!!! info "Od wersji 0.6.0"
+
+Profil może przyjmować tylko wybrane modele kluczy, np. tylko te YubiKey, które
+kupuje Twoja organizacja. Klucz jest sprawdzany **przed resetem**: niedozwolony klucz
+pozostaje dokładnie taki, jaki był, razem z poświadczeniami i PIN-em.
+
+| Element | Do czego służy |
+|---|---|
+| Lista modeli | Modele, które profil przyjmuje. Każdy jest rozpoznawany po *AAGUID* (numerze modelu, który podaje każdy klucz FIDO2) i ma wybraną przez Ciebie nazwę. **Pusta lista oznacza każdy model.** Dwukrotne kliknięcie zmienia nazwę. |
+| **Dodaj podłączony klucz** | Odczytuje model podłączonego klucza i dodaje go do listy. Najszybciej: podłącz po jednym kluczu każdego wydawanego modelu. |
+| **Dodaj AAGUID…** | Ręczne wpisanie AAGUID, np. z dokumentacji producenta. |
+| **Usuń** | Usuwa zaznaczone modele z listy. |
+| **Minimalna wersja firmware** | Np. `5.7`. Klucze ze starszym firmware są odrzucane. Puste: bez wymagań. |
+| **Gdy wersji nie da się odczytać** | Wersję firmware odczytuje się tylko z kluczy YubiKey przez USB; klucze innych producentów i klucze na czytniku NFC jej nie podają. **Odrzuć klucz** (domyślnie) przerywa rejestrację, **Tylko ostrzeż** rejestruje klucz i zapisuje ostrzeżenie. |
+
+Na stronie [Rejestracja](enroll.md) wiersz stanu klucza od razu pokazuje, że wybrany
+klucz nie pasuje do profilu, a rejestracja się nie rozpoczyna. We
+[wdrożeniu masowym](bulk.md) wdrożenie zatrzymuje się na tym kluczu, a ostrzeżenie
+pojawia się w kolumnie *Komunikat*.
+
+!!! tip "Ustaw też politykę u dostawcy tożsamości"
+    To sprawdzenie chroni klucz przed niepotrzebnym resetem. O tym, którymi kluczami
+    można się logować, nadal decyduje dostawca tożsamości, np. w Entra ID ograniczenie
+    AAGUID w polityce Passkey.
+
 ## Co musi obsługiwać klucz { #what-the-key-has-to-support }
 
 | Opcja | Wymaganie |

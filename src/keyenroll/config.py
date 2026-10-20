@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 import time
 import uuid
@@ -22,6 +23,9 @@ CONFIG_VERSION = 1
 DEFAULT_THEME = "yubico"
 MIN_PIN = 4
 MAX_PIN = 63
+# What happens when a profile requires a minimum firmware version and the
+# version of the key cannot be read (NFC, keys other than YubiKeys).
+UNKNOWN_FIRMWARE = ("refuse", "warn")
 
 
 def config_dir() -> Path:
@@ -77,6 +81,24 @@ def legacy_config_dir() -> Path | None:
     return current.with_name(old)
 
 
+def version_tuple(text: str | None) -> tuple[int, ...] | None:
+    """'5.7.1' -> (5, 7, 1); None for anything that is not a version number."""
+    if not text or not re.fullmatch(r"\s*\d+(\.\d+){0,3}\s*", text):
+        return None
+    parts = [int(p) for p in text.strip().split(".")]
+    while len(parts) > 1 and parts[-1] == 0:
+        parts.pop()  # 5.7 and 5.7.0 are the same version
+    return tuple(parts)
+
+
+def normalize_aaguid(text: str) -> str | None:
+    """An AAGUID in its usual form (lower case, with hyphens), or None."""
+    try:
+        return str(uuid.UUID(text.strip()))
+    except (ValueError, AttributeError, TypeError):
+        return None
+
+
 @dataclass
 class Profile:
     """Enrollment profile. Defaults mirror the YubiEnroll CLI defaults."""
@@ -89,6 +111,15 @@ class Profile:
     reset: bool = True
     random_pin: bool = True
     random_pin_length: int = 6
+    # Key models the profile accepts, as {"aaguid": ..., "name": ...};
+    # empty accepts every model.
+    allowed_models: list[dict[str, str]] = field(default_factory=list)
+    min_firmware: str = ""  # empty: no requirement
+    unknown_firmware: str = "refuse"
+
+    @property
+    def allowed_aaguids(self) -> set[str]:
+        return {m["aaguid"] for m in self.allowed_models}
 
     def problems(self) -> list[str]:
         """Returns untranslated messages describing invalid settings."""
@@ -104,12 +135,25 @@ class Profile:
                 out.append(
                     N_("Random PIN length cannot be shorter than the minimum PIN length.")
                 )
+        if self.min_firmware.strip() and version_tuple(self.min_firmware) is None:
+            out.append(N_("Minimum firmware must be a version number such as 5.7."))
         return out
 
     @classmethod
     def from_dict(cls, data: dict) -> Profile:
         known = {f.name for f in fields(cls)}
-        return cls(**{k: v for k, v in data.items() if k in known})
+        profile = cls(**{k: v for k, v in data.items() if k in known})
+        # Hand-edited or imported files: keep what makes sense, drop the rest.
+        models = []
+        for entry in profile.allowed_models if isinstance(profile.allowed_models, list) else []:
+            aaguid = normalize_aaguid(entry.get("aaguid", "")) if isinstance(entry, dict) else None
+            if aaguid and aaguid not in {m["aaguid"] for m in models}:
+                models.append({"aaguid": aaguid, "name": str(entry.get("name") or "")})
+        profile.allowed_models = models
+        profile.min_firmware = str(profile.min_firmware or "").strip()
+        if profile.unknown_firmware not in UNKNOWN_FIRMWARE:
+            profile.unknown_firmware = "refuse"
+        return profile
 
 
 @dataclass

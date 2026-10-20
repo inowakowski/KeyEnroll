@@ -163,3 +163,27 @@ def test_message_templates_and_layout_state_persist(tmp_path):
     again = ConfigStore(path)
     assert (again.message_subject, again.message_body) == ("Key for {name}", "PIN {pin}")
     assert again.ui == {"enroll_splitter": "400,500"}
+
+
+def test_allowed_key_models_are_stored_and_cleaned(tmp_path):
+    store = ConfigStore(tmp_path / "config.json")
+    store.upsert_profile(
+        Profile(
+            name="yubikeys",
+            allowed_models=[{"aaguid": "CB69481E-8FF7-4039-93EC-0A2729A154A8", "name": "YubiKey 5"}],
+            min_firmware="5.7",
+            unknown_firmware="warn",
+        )
+    )
+    raw = json.loads((tmp_path / "config.json").read_text(encoding="utf-8"))
+    entry = next(p for p in raw["profiles"] if p["name"] == "yubikeys")
+    entry["allowed_models"].append({"aaguid": "not an aaguid"})
+    entry["allowed_models"].append("garbage")
+    entry["unknown_firmware"] = "explode"
+    (tmp_path / "config.json").write_text(json.dumps(raw), encoding="utf-8")
+
+    loaded = ConfigStore(tmp_path / "config.json").profile("yubikeys")
+    assert loaded.allowed_models == [
+        {"aaguid": "cb69481e-8ff7-4039-93ec-0a2729a154a8", "name": "YubiKey 5"}
+    ]
+    assert (loaded.min_firmware, loaded.unknown_firmware) == ("5.7", "refuse")

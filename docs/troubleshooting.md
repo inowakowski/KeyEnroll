@@ -64,6 +64,9 @@ does not have the required role. See [Identity providers](providers.md).
 | *The PIN is blocked. The key must be factory reset.* | Enable *Factory reset the security key*. All FIDO credentials on the key are lost. |
 | *The security key rejected this PIN (too short or too simple).* | The key enforces a PIN policy. Choose a longer or less regular PIN. |
 | *The current PIN is shorter than the minimum PIN length of the profile.* | Enable *Set new random PIN* or *Factory reset*, so that a new PIN of sufficient length is set. |
+| *The profile does not allow this security key model …* | The profile accepts only [certain models](profiles.md#allowed-security-keys). The key was left untouched. Use a key of an allowed model, or add the model to the profile. |
+| *The security key has firmware …; the profile requires … or newer.* | The key is older than the profile allows. It was left untouched. |
+| *The firmware version of this security key cannot be read …* | The profile requires a minimum firmware, and this key (another vendor, or on an NFC reader) does not report its version. Connect a YubiKey over USB, or set the profile to *Only warn*. |
 | *This security key does not support …* | The key is too old for an option of the profile, or was not manufactured with it. Use another profile or another key. See [what the key has to support](profiles.md#what-the-key-has-to-support). |
 | *This security key is already registered for this user.* | The user already has a credential on this key. Delete it on the [Credentials](credentials.md) page first, or enable the factory reset. |
 | *The identity provider returned an RP ID that does not match its origin.* | The domain in the instance is not the one the provider registers keys for. For Okta, enter the domain users sign in to; for PingOne AIC, check *WebAuthn origin*. |

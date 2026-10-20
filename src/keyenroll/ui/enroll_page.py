@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 
 from ..config import Profile
 from ..fido.devices import KeyInfo, close
-from ..fido.enroll import EnrollCancelled, EnrollResult, compose_key_name
+from ..fido.enroll import EnrollCancelled, EnrollResult, compose_key_name, model_issue
 from ..handover import Handover
 from ..i18n import tr
 from ..providers import AuthRequired
@@ -257,6 +257,7 @@ class EnrollPage(QWidget):
         profile = self.ctx.config.profile(self.profile_combo.currentData())
         if profile:
             self.form.set_profile(profile)
+        self._show_key_info()
 
     # -- keys --------------------------------------------------------------
 
@@ -340,7 +341,11 @@ class EnrollPage(QWidget):
             parts.append(tr("no support for advanced options"))
         if not info.serial:
             parts.append(tr("serial number not readable"))
-        self.key_info.setText(" · ".join(parts))
+        text = " · ".join(parts)
+        issue = model_issue(self.form.profile(), info)
+        if issue is not None:
+            text += "\n⚠ " + tr(issue.template, **issue.params)
+        self.key_info.setText(text)
 
     # -- key name ----------------------------------------------------------
 
@@ -398,11 +403,19 @@ class EnrollPage(QWidget):
         if problems:
             QMessageBox.warning(self, tr("Error"), "\n".join(tr(p) for p in problems))
             return
+        issue = model_issue(profile, key)
+        if issue is not None and issue.fatal:
+            QMessageBox.warning(
+                self, tr("Enrollment failed"), tr(issue.template, **issue.params)
+            )
+            return
 
         lines = [
             tr("User: {user}", user=user.display_name or user.username),
             tr("Security key: {key}", key=key.label),
         ]
+        if issue is not None:
+            lines.append(tr(issue.template, **issue.params))
         name = self._key_name(key)
         if name:
             lines.append(tr("Key name: {name}", name=name))

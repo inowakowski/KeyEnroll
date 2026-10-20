@@ -536,3 +536,88 @@ def test_a_key_of_the_batch_inserted_for_the_reset_is_left_untouched():
     with pytest.raises(EnrollError, match="already enrolled in this batch"):
         enroller.run()
     assert "reset" not in enrolled.log and enrolled.pin == "135790"
+
+
+# -- allowed key models ------------------------------------------------------
+
+YUBIKEY_5 = "cb69481e-8ff7-4039-93ec-0a2729a154a8"
+
+
+class FirmwareSource(FakeSource):
+    """A source that reports a firmware version, as a YubiKey over USB does."""
+
+    def __init__(self, *devices, firmware=None):
+        super().__init__(*devices)
+        self.firmware = firmware
+
+    def describe(self, dev):
+        info = super().describe(dev)
+        info.firmware = self.firmware
+        return info
+
+
+def test_a_model_the_profile_does_not_allow_is_refused_before_the_reset():
+    key = FakeAuthenticator()  # AAGUID 00112233-…
+    key.pin = "135790"
+    profile = Profile(allowed_models=[{"aaguid": YUBIKEY_5, "name": "YubiKey 5"}])
+    enroller, ui, provider = make(profile, key)
+
+    with pytest.raises(EnrollError, match="does not allow this security key model"):
+        enroller.run()
+    assert "reset" not in key.log and key.pin == "135790"
+    assert "begin" not in provider.events
+    assert enroller.key_info is not None  # known to the deployment log
+
+
+def test_an_allowed_model_is_enrolled():
+    key = FakeAuthenticator()
+    key.aaguid = bytes.fromhex(YUBIKEY_5.replace("-", ""))
+    profile = Profile(allowed_models=[{"aaguid": YUBIKEY_5, "name": "YubiKey 5"}])
+    enroller, ui, provider = make(profile, key)
+
+    result = enroller.run()
+
+    assert result.key.aaguid == YUBIKEY_5 and provider.completed is not None
+
+
+def test_firmware_older_than_the_profile_requires_is_refused():
+    key = FakeAuthenticator()
+    key.pin = "135790"
+    source = FirmwareSource(key, firmware="5.4.3")
+    enroller, ui, provider = make(Profile(min_firmware="5.7"), key, source=source)
+
+    with pytest.raises(EnrollError, match="firmware 5.4.3"):
+        enroller.run()
+    assert "reset" not in key.log
+
+
+def test_recent_enough_firmware_is_accepted():
+    key = FakeAuthenticator()
+    source = FirmwareSource(key, firmware="5.7.1")
+    enroller, ui, provider = make(Profile(min_firmware="5.7"), key, source=source)
+    assert enroller.run().warnings == []
+
+
+def test_unreadable_firmware_is_refused_or_only_warned_about_as_the_profile_says():
+    key = FakeAuthenticator()
+    key.pin = "135790"
+    enroller, ui, provider = make(Profile(min_firmware="5.7"), key)  # NFC: no version
+    with pytest.raises(EnrollError, match="cannot be read"):
+        enroller.run()
+    assert "reset" not in key.log
+
+    key = FakeAuthenticator()
+    profile = Profile(min_firmware="5.7", unknown_firmware="warn")
+    enroller, ui, provider = make(profile, key)
+    result = enroller.run()
+    assert provider.completed is not None
+    assert [t for t, _ in result.warnings] == [
+        "The firmware version of this security key cannot be read; the profile "
+        "requires {required} or newer."
+    ]
+    assert any("cannot be read" in m for m in ui.messages)
+
+
+def test_profile_rejects_a_firmware_that_is_not_a_version():
+    assert Profile(min_firmware="5.7").problems() == []
+    assert Profile(min_firmware="latest").problems()
