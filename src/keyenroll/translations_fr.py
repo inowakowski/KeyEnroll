@@ -588,8 +588,8 @@ FR = {
     "Refuse the key": (
         "Refuser la clé"
     ),
-    "Remove": (
-        "Retirer"
+    "Remove from the list": (
+        "Retirer de la liste"
     ),
     "The firmware version is read from YubiKeys over USB only. This decides what happens with other keys and keys on an NFC reader.": (
         "La version du firmware n’est lue que sur les YubiKey branchées en USB. Ce réglage décide du sort des autres clés et des clés posées sur un lecteur NFC."

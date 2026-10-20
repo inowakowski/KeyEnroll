@@ -60,6 +60,8 @@ profiles without typing them in again.
     | **Replace the existing ones** | The existing instance or profile takes the imported settings. An instance keeps its sign-in, unless its identity provider changed. |
     | **Keep the existing ones** | The imported entry is left out. |
 
+    ![Importing a configuration](assets/screenshots/en/import-config.png){ .shot .dialog }
+
 3. **Sign in** to each imported instance. The file contains no sign-ins and no
    secrets, only the values you typed into the instance form, so it does not have
    to be treated like a password. Still, it names your tenants: send it through a

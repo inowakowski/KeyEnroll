@@ -81,6 +81,8 @@ Profil może przyjmować tylko wybrane modele kluczy, np. tylko te YubiKey, któ
 kupuje Twoja organizacja. Klucz jest sprawdzany **przed resetem**: niedozwolony klucz
 pozostaje dokładnie taki, jaki był, razem z poświadczeniami i PIN-em.
 
+![Dozwolone klucze bezpieczeństwa profilu](assets/screenshots/pl/profiles-models.png){ .shot }
+
 | Element | Do czego służy |
 |---|---|
 | Lista modeli | Modele, które profil przyjmuje. Każdy jest rozpoznawany po *AAGUID* (numerze modelu, który podaje każdy klucz FIDO2) i ma wybraną przez Ciebie nazwę. **Pusta lista oznacza każdy model.** Dwukrotne kliknięcie zmienia nazwę. |

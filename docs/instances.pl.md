@@ -60,6 +60,8 @@ i profilami bez wpisywania ich od nowa.
     | **Zastąp istniejące** | Istniejąca instancja lub profil przejmuje zaimportowane ustawienia. Instancja zachowuje logowanie, chyba że zmienił się jej dostawca tożsamości. |
     | **Zostaw istniejące** | Importowany wpis zostaje pominięty. |
 
+    ![Import konfiguracji](assets/screenshots/pl/import-config.png){ .shot .dialog }
+
 3. **Zaloguj się** do każdej zaimportowanej instancji. Plik nie zawiera logowań ani
    sekretów, tylko wartości wpisane w formularzu instancji, więc nie trzeba go
    traktować jak hasła. Zawiera jednak nazwy Twoich tenantów: przekazuj go zaufanym

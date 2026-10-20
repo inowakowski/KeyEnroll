@@ -174,7 +174,8 @@ class KeyModelsEditor(QWidget):
         super().__init__(parent)
         self.source = source
         self.list = QListWidget()
-        self.list.setMinimumHeight(96)
+        # A handful of models at most: no need to take the whole page.
+        self.list.setFixedHeight(120)
         self.list.itemSelectionChanged.connect(self._update_buttons)
         self.list.itemDoubleClicked.connect(self._rename)
         self.add_connected = QPushButton(tr("Add the connected key"))
@@ -182,7 +183,7 @@ class KeyModelsEditor(QWidget):
         self.add_connected.clicked.connect(self._add_connected)
         self.add_manual = QPushButton(tr("Add AAGUID…"))
         self.add_manual.clicked.connect(self._add)
-        self.remove = QPushButton(tr("Remove"))
+        self.remove = QPushButton(tr("Remove from the list"))
         self.remove.clicked.connect(self._remove)
         buttons = QHBoxLayout()
         for b in (self.add_connected, self.add_manual, self.remove):

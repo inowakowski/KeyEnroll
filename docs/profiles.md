@@ -81,6 +81,8 @@ A profile can accept only certain key models, for example only the YubiKeys your
 organisation buys. The key is checked **before it is reset**: a key that is not
 allowed is left exactly as it was, with its credentials and PIN.
 
+![Allowed security keys of a profile](assets/screenshots/en/profiles-models.png){ .shot }
+
 | Control | What it is for |
 |---|---|
 | List of models | The models the profile accepts, each identified by its *AAGUID* (a model number every FIDO2 key reports) and a name of your choice. **An empty list accepts every model.** Double-click an entry to rename it. |
