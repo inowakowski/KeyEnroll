@@ -571,4 +571,20 @@ PL = {
     "only {count} allowed key model(s)": (
         "tylko dozwolone modele kluczy: {count}"
     ),
+    # -- deployment log (0.6.0)
+    "Deployment log": (
+        "Dziennik wdrożeń"
+    ),
+    "Keep a deployment log": (
+        "Prowadź dziennik wdrożeń"
+    ),
+    "Keep entries for (months)": (
+        "Przechowuj wpisy (miesiące)"
+    ),
+    "One line per enrollment: who enrolled which key for whom, and when. PINs are never written to it. The log names people: keep it only as long as your organisation needs it.": (
+        "Jeden wiersz na rejestrację: kto, kiedy i komu zarejestrował który klucz. PIN-y nigdy do niego nie trafiają. Dziennik zawiera dane osobowe: przechowuj go tylko tak długo, jak wymaga tego Twoja organizacja."
+    ),
+    "Open the deployment log folder": (
+        "Otwórz folder dziennika wdrożeń"
+    ),
 }

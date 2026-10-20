@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QColor, QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QColorDialog,
     QComboBox,
     QFormLayout,
@@ -15,11 +16,12 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
-from .. import APP_NAME, DOCS_URL, PROJECT_URL, __version__, handover, updates
+from .. import APP_NAME, DOCS_URL, PROJECT_URL, __version__, handover, journal, updates
 from ..config import config_dir
 from ..i18n import LANGUAGES, tr
 from .common import AppContext, run_task
@@ -113,6 +115,34 @@ class SettingsPage(QWidget):
         message.body.addLayout(message_buttons)
         self._load_message()
 
+        # -- deployment log ------------------------------------------------
+        self.journal_enabled = QCheckBox(tr("Keep a deployment log"))
+        self.journal_enabled.setChecked(config.journal_enabled)
+        self.journal_enabled.toggled.connect(self._set_journal)
+        self.journal_months = QSpinBox()
+        self.journal_months.setRange(1, 120)
+        self.journal_months.setValue(config.journal_months)
+        self.journal_months.valueChanged.connect(self._set_journal)
+        self.journal_months.setEnabled(config.journal_enabled)
+        self.open_journal = QPushButton(tr("Open the deployment log folder"))
+        self.open_journal.clicked.connect(self._open_journal)
+        log = Card(
+            tr("Deployment log"),
+            tr(
+                "One line per enrollment: who enrolled which key for whom, and when. "
+                "PINs are never written to it. The log names people: keep it only as "
+                "long as your organisation needs it."
+            ),
+        )
+        log_form = QFormLayout()
+        log_form.addRow(self.journal_enabled)
+        log_form.addRow(tr("Keep entries for (months)"), self.journal_months)
+        log.body.addLayout(log_form)
+        log_buttons = QHBoxLayout()
+        log_buttons.addWidget(self.open_journal)
+        log_buttons.addStretch(1)
+        log.body.addLayout(log_buttons)
+
         # -- about ---------------------------------------------------------
         about = Card(tr("About"))
         about_form = QFormLayout()
@@ -161,7 +191,7 @@ class SettingsPage(QWidget):
         column = QVBoxLayout(host)
         column.setContentsMargins(0, 0, 6, 0)
         column.setSpacing(14)
-        for card in (appearance, language, message, about):
+        for card in (appearance, language, message, log, about):
             column.addWidget(card)
         column.addStretch(1)
         scroll = QScrollArea()
@@ -238,6 +268,20 @@ class SettingsPage(QWidget):
         config.save()
         self._load_message()
         self.message_note.setText(tr("The default text has been restored."))
+
+    # -- deployment log ----------------------------------------------------
+
+    def _set_journal(self) -> None:
+        config = self.ctx.config
+        config.journal_enabled = self.journal_enabled.isChecked()
+        config.journal_months = self.journal_months.value()
+        config.save()
+        self.journal_months.setEnabled(config.journal_enabled)
+
+    def _open_journal(self) -> None:
+        folder = journal.journal_dir(self.ctx.config.path)
+        folder.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
     # -- about -------------------------------------------------------------
 

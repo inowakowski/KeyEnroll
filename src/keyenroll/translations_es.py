@@ -605,4 +605,20 @@ ES = {
     "only {count} allowed key model(s)": (
         "solo modelos de llave permitidos: {count}"
     ),
+    # -- deployment log (0.6.0)
+    "Deployment log": (
+        "Registro de implantaciones"
+    ),
+    "Keep a deployment log": (
+        "Llevar un registro de implantaciones"
+    ),
+    "Keep entries for (months)": (
+        "Conservar las entradas (meses)"
+    ),
+    "One line per enrollment: who enrolled which key for whom, and when. PINs are never written to it. The log names people: keep it only as long as your organisation needs it.": (
+        "Una línea por registro: quién registró qué llave, para quién y cuándo. Los PIN nunca se escriben en él. El registro contiene nombres de personas: consérvelo solo el tiempo que su organización lo necesite."
+    ),
+    "Open the deployment log folder": (
+        "Abrir la carpeta del registro de implantaciones"
+    ),
 }

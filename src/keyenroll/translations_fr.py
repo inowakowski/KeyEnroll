@@ -621,4 +621,20 @@ FR = {
     "only {count} allowed key model(s)": (
         "uniquement les modèles de clé autorisés\u00a0: {count}"
     ),
+    # -- deployment log (0.6.0)
+    "Deployment log": (
+        "Journal des déploiements"
+    ),
+    "Keep a deployment log": (
+        "Tenir un journal des déploiements"
+    ),
+    "Keep entries for (months)": (
+        "Conserver les entrées (mois)"
+    ),
+    "One line per enrollment: who enrolled which key for whom, and when. PINs are never written to it. The log names people: keep it only as long as your organisation needs it.": (
+        "Une ligne par enregistrement\u00a0: qui a enregistré quelle clé, pour qui et quand. Les codes PIN n’y figurent jamais. Le journal contient des noms de personnes\u00a0: ne le conservez que le temps nécessaire à votre organisation."
+    ),
+    "Open the deployment log folder": (
+        "Ouvrir le dossier du journal des déploiements"
+    ),
 }

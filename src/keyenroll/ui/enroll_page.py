@@ -60,6 +60,8 @@ class EnrollPage(QWidget):
         self._refreshing = False
         self._last_paths: set | None = None
         self._provider_label = ""
+        self._journal = None
+        self._user = None
 
         # 1. user
         self.picker = UserPicker(ctx)
@@ -436,6 +438,8 @@ class EnrollPage(QWidget):
 
         self.log.clear()
         self._provider_label = provider.label
+        self._journal = self.ctx.journal(provider, profile.name)
+        self._user = user
         worker = EnrollWorker(
             self.ctx.source,
             provider,
@@ -489,13 +493,18 @@ class EnrollPage(QWidget):
 
     def _on_done(self, result) -> None:
         self._finish()
+        if self._journal is not None:
+            self._journal.enrolled(result)
         self.step.setText(tr("The security key has been enrolled."))
         handover = handover_from_result(result, self._provider_label)
         ResultDialog(handover, self.ctx.config, self).exec()
         self.refresh_keys()
 
     def _on_failed(self, exc) -> None:
+        key_info = self._worker.key_info if self._worker else None
         self._finish()
+        if self._journal is not None and not isinstance(exc, EnrollCancelled):
+            self._journal.failed(self._user, key_info, exc)
         text = error_text(exc)
         self.step.setText(text)
         self._add_log(text)

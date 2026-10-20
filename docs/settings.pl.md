@@ -55,6 +55,16 @@ Możesz używać poniższych pól; są zastępowane danymi rejestracji:
 Pole wpisane z błędem zostaje w tekście bez zmian, więc po zmianie szablonu warto
 raz sprawdzić gotową wiadomość.
 
+## Dziennik wdrożeń { #deployment-log }
+
+!!! info "Od wersji 0.6.0"
+
+| Element | Do czego służy |
+|---|---|
+| **Prowadź dziennik wdrożeń** | Zapisuje jeden wiersz na rejestrację w [dzienniku wdrożeń](data.md#the-deployment-log). Domyślnie włączone. |
+| **Przechowuj wpisy (miesiące)** | Starsze miesiące są usuwane przy uruchomieniu aplikacji. Domyślnie 12. |
+| **Otwórz folder dziennika wdrożeń** | Otwiera folder z miesięcznymi plikami CSV. |
+
 ## O programie
 
 ![Sekcja O programie](assets/screenshots/pl/settings-about.png){ .shot }

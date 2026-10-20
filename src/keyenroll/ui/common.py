@@ -32,6 +32,7 @@ from ..config import ConfigStore, Instance
 from ..fido.devices import DeviceSource
 from ..fido.enroll import EnrollError
 from ..i18n import tr
+from ..journal import Journal, JournalContext, journal_dir
 from ..oauth import OAuthError
 from ..providers import AuthRequired, DirectoryUser, Provider, ProviderError, create_provider
 from ..secrets_store import TokenStore
@@ -82,6 +83,18 @@ class AppContext(QObject):
     def provider(self) -> Provider | None:
         instance = self.config.active_instance
         return self.provider_for(instance) if instance else None
+
+    def journal(self, provider: Provider, profile: str, mode: str = "single") -> Journal:
+        """The deployment log for an enrollment with the active instance."""
+        instance = self.config.active_instance
+        context = JournalContext(
+            instance=instance.name if instance else "",
+            provider=provider.label,
+            operator=getattr(provider, "operator", ""),
+            profile=profile,
+            mode=mode,
+        )
+        return Journal(journal_dir(self.config.path), context, self.config.journal_enabled)
 
     def forget_provider(self, instance_id: str) -> None:
         self._providers.pop(instance_id, None)

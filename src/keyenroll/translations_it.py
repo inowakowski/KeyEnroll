@@ -608,4 +608,20 @@ IT = {
     "only {count} allowed key model(s)": (
         "solo modelli di chiave consentiti: {count}"
     ),
+    # -- deployment log (0.6.0)
+    "Deployment log": (
+        "Registro delle distribuzioni"
+    ),
+    "Keep a deployment log": (
+        "Tenere un registro delle distribuzioni"
+    ),
+    "Keep entries for (months)": (
+        "Conservare le voci (mesi)"
+    ),
+    "One line per enrollment: who enrolled which key for whom, and when. PINs are never written to it. The log names people: keep it only as long as your organisation needs it.": (
+        "Una riga per registrazione: chi ha registrato quale chiave, per chi e quando. I PIN non vi vengono mai scritti. Il registro contiene nomi di persone: conservarlo solo per il tempo necessario alla propria organizzazione."
+    ),
+    "Open the deployment log folder": (
+        "Apri la cartella del registro delle distribuzioni"
+    ),
 }

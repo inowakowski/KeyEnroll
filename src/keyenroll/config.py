@@ -72,6 +72,15 @@ def write_private(path: str | Path, data: bytes) -> None:
         f.write(data)
 
 
+def append_private(path: str | Path, data: bytes) -> None:
+    """Adds to a file that only the owner can read, creating it if needed."""
+    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    with os.fdopen(fd, "ab") as f:
+        if hasattr(os, "fchmod"):
+            os.fchmod(f.fileno(), 0o600)
+        f.write(data)
+
+
 def legacy_config_dir() -> Path | None:
     """Where the app kept its configuration under its former name."""
     if os.environ.get("KEYENROLL_HOME"):
@@ -187,6 +196,9 @@ class ConfigStore:
         self.custom_base: str = "dark"
         self.custom_accent: str = "#4f5bd5"
         self.append_serial: bool = False
+        # Deployment log (journal.py) and how many months it is kept.
+        self.journal_enabled: bool = True
+        self.journal_months: int = 12
         # Hand-over message templates; empty means the built-in text.
         self.message_subject: str = ""
         self.message_body: str = ""
@@ -241,6 +253,12 @@ class ConfigStore:
         self.custom_base = str(data.get("custom_base", "dark"))
         self.custom_accent = str(data.get("custom_accent", "#4f5bd5"))
         self.append_serial = bool(data.get("append_serial", False))
+        self.journal_enabled = bool(data.get("journal_enabled", True))
+        try:
+            months = int(data.get("journal_months", 12))
+        except (TypeError, ValueError):
+            months = 12
+        self.journal_months = min(max(months, 1), 120)
         self.message_subject = str(data.get("message_subject", ""))
         self.message_body = str(data.get("message_body", ""))
         ui = data.get("ui", {})
@@ -258,6 +276,8 @@ class ConfigStore:
             "custom_base": self.custom_base,
             "custom_accent": self.custom_accent,
             "append_serial": self.append_serial,
+            "journal_enabled": self.journal_enabled,
+            "journal_months": self.journal_months,
             "message_subject": self.message_subject,
             "message_body": self.message_body,
             "ui": self.ui,

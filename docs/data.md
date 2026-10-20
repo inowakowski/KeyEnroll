@@ -9,6 +9,7 @@ What KeyEnroll stores, where, and what never leaves the application.
 | Settings: instances, profiles, appearance, language, message template, window layout | `config.json` in the settings folder | No. Tenant and client IDs are identifiers, not secrets. |
 | Sign-in (refresh token) of each instance | The credential store of the operating system | Yes — protected by the operating system, tied to your user account. |
 | Log | `logs/keyenroll.log` in the settings folder | No PINs and no tokens. |
+| Deployment log | `journal/deployments-<year>-<month>.csv` in the settings folder | No PINs and no tokens, but names of people. See [below](#the-deployment-log). |
 | Temporary PINs | Only in the memory of the running application | They exist on disk only in files **you** export or save. |
 
 The settings folder:
@@ -82,6 +83,34 @@ useful. It is limited to four files of 1 MB each; older entries are overwritten.
 It contains names of users you enrolled and addresses of your tenant, so read it
 before you attach it to a public issue.
 
+## The deployment log
+
+!!! info "Since version 0.6.0"
+
+Every enrollment, single or bulk, successful or failed, adds one line to a CSV file
+for the month. It answers the questions of an audit: who enrolled which key for
+whom, and when.
+
+| Column | Content |
+|---|---|
+| `time` | Date and time in UTC. |
+| `result`, `mode` | `enrolled` or `failed`; `single` or `bulk`. |
+| `instance`, `provider`, `operator` | Where the key was registered, and the administrator account that was signed in, as the identity provider names it. |
+| `username`, `user_id`, `display_name` | The user who received the key. |
+| `serial`, `firmware`, `aaguid`, `key_name` | The key: serial number, firmware version, model and the name it was registered under. |
+| `profile`, `pin_changed`, `pin_change_forced` | The profile used, whether the PIN was set, and whether the key now forces the user to change it. |
+| `message` | Why an enrollment failed, or a warning, in English so that logs of operators working in different languages can be compared. |
+
+**A PIN is never written to the deployment log.** It does contain names of people,
+which in the EU makes it personal data: KeyEnroll deletes months older than the
+period set in [Settings → Deployment log](settings.md#deployment-log) (12 months
+by default), and the log can be switched off there. On macOS and Linux the files
+are readable by your user only.
+
+The administrator's name comes from the sign-in. If the identity provider does not
+say it (some PingOne configurations), the column holds the account's identifier, or
+stays empty until the next sign-in.
+
 ## If the settings file is damaged
 
 If `config.json` cannot be read, KeyEnroll does not overwrite it. The file is set
@@ -93,7 +122,7 @@ default settings and tells you so. Stored sign-ins are not affected.
 1. Sign out of every instance (this removes the stored sign-ins), or delete the
    instances.
 2. Uninstall the application.
-3. Delete the settings folder.
+3. Delete the settings folder. It also holds the deployment log.
 
 ## Reporting a security problem
 

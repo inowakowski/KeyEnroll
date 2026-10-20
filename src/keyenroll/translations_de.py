@@ -626,4 +626,20 @@ DE = {
     "only {count} allowed key model(s)": (
         "nur zulässige Schlüsselmodelle: {count}"
     ),
+    # -- deployment log (0.6.0)
+    "Deployment log": (
+        "Bereitstellungsprotokoll"
+    ),
+    "Keep a deployment log": (
+        "Bereitstellungsprotokoll führen"
+    ),
+    "Keep entries for (months)": (
+        "Einträge aufbewahren (Monate)"
+    ),
+    "One line per enrollment: who enrolled which key for whom, and when. PINs are never written to it. The log names people: keep it only as long as your organisation needs it.": (
+        "Eine Zeile pro Registrierung: wer wann für wen welchen Schlüssel registriert hat. PINs werden nie hineingeschrieben. Das Protokoll enthält Namen von Personen: Bewahren Sie es nur so lange auf, wie Ihre Organisation es benötigt."
+    ),
+    "Open the deployment log folder": (
+        "Ordner des Bereitstellungsprotokolls öffnen"
+    ),
 }

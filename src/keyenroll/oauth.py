@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import html
+import json
 import logging
 import queue
 import secrets
@@ -57,6 +58,7 @@ class TokenSet:
     access_token: str
     expires_at: float
     refresh_token: str | None = None
+    id_token: str | None = None
 
     @classmethod
     def from_response(cls, data: dict) -> TokenSet:
@@ -68,7 +70,29 @@ class TokenSet:
             access_token=data["access_token"],
             expires_at=time.time() + expires_in,
             refresh_token=data.get("refresh_token"),
+            id_token=data.get("id_token"),
         )
+
+
+def signed_in_as(id_token: str | None) -> str:
+    """The name of the signed-in account, read from an ID token.
+
+    Only used to say who did something (the deployment log). The token comes
+    straight from the provider's token endpoint over TLS, so its signature is
+    not checked here.
+    """
+    try:
+        payload = id_token.split(".")[1]
+        claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+    except (AttributeError, IndexError, ValueError):
+        return ""
+    if not isinstance(claims, dict):
+        return ""
+    for claim in ("preferred_username", "email", "upn", "unique_name", "name", "sub"):
+        value = claims.get(claim)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
 
 
 def _b64url(data: bytes) -> str:

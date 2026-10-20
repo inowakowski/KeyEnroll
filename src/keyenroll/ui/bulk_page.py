@@ -435,6 +435,7 @@ class BulkPage(QWidget):
             self.rows,
             self.key_name.text().strip(),
             self.append_serial.isChecked(),
+            journal=self.ctx.journal(provider, profile.name, "bulk"),
         )
         worker.status.connect(self._on_status)
         worker.prompt.connect(self._on_prompt)

@@ -1021,3 +1021,35 @@ def test_profile_limits_key_models_and_the_enroll_page_enforces_it(gui, monkeypa
     enroll_page.start.click()
     assert "cannot be read" in shown["boxes"][-1]
     assert not enroll_page.is_running() and "reset" not in key.log
+
+
+def test_enrollments_are_written_to_the_deployment_log(gui):
+    import csv
+
+    window, ctx, key, source, shown = gui
+    folder = ctx.config.path.parent / "journal"
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    wait_until(lambda: page.key_combo.currentData() is not None)
+    pick_user(page, "Alice")
+    page.start.click()
+    wait_until(lambda: not page.is_running())
+
+    (log_file,) = folder.glob("deployments-*.csv")
+    rows = list(csv.DictReader(log_file.read_text(encoding="utf-8-sig").splitlines()))
+    assert [(r["result"], r["instance"], r["username"]) for r in rows] == [
+        ("enrolled", "Prod", "alice@example.com")
+    ]
+    assert key.pin not in log_file.read_text(encoding="utf-8-sig")
+
+    # Switched off in the settings: nothing more is written.
+    window.nav.setCurrentRow(PAGE_SETTINGS)
+    settings = window.pages.currentWidget()
+    settings.journal_enabled.setChecked(False)
+    assert not ConfigStore(ctx.config.path).journal_enabled
+    assert not settings.journal_months.isEnabled()
+    window.nav.setCurrentRow(0)
+    rescan(page)
+    page.start.click()
+    wait_until(lambda: not page.is_running())
+    assert len(log_file.read_text(encoding="utf-8-sig").splitlines()) == 2  # header + 1
