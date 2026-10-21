@@ -33,6 +33,7 @@ między nimi bez wychodzenia z aplikacji.
 | **Nazwa instancji** | Dowolna nazwa, po której rozpoznasz tenant, np. *Produkcja*. |
 | **Dostawca tożsamości** | Rodzaj tenanta. Od niego zależą pola poniżej. |
 | Pola dostawcy | Wartości aplikacji zarejestrowanej u dostawcy tożsamości. Każde pole opisuje strona [Dostawcy tożsamości](providers.md). |
+| **Listy masowe z grup** | Wyłączone, chyba że potrzebujesz [list masowych z grup](providers.md#bulk-lists-from-groups); włączenie prosi dostawcę o dodatkowe uprawnienie (od wersji 0.7.0). |
 | **Profil domyślny** | Opcjonalny. |
 
 !!! warning "Redirect URI musi zgadzać się co do znaku"

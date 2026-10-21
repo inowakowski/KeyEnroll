@@ -115,6 +115,28 @@ MFA devices in the environment.
 credentials, so the [Credentials](credentials.md) page is not available. Manage them
 in the administration console.
 
+## Bulk lists from groups
+
+!!! info "Since version 0.7.0"
+
+[Loading a bulk list from a group](bulk.md#loading-the-list-from-a-group) reads group
+memberships, which the registration described by YubiEnroll does not allow. It is
+therefore **off** until you switch it on for an instance:
+
+1. Grant the additional permission at the identity provider (table below).
+2. In KeyEnroll, edit the instance and set **Bulk lists from groups** to **On**.
+3. **Sign out and sign in again**, so that the new permission is part of the sign-in.
+
+| Identity provider | Additional permission |
+|---|---|
+| Microsoft Entra ID | Delegated Microsoft Graph permission `GroupMember.Read.All`, with admin consent for the tenant. |
+| Okta | Scope `okta.groups.read`, granted to the application on its *Okta API Scopes* tab. |
+| PingOne PingID | No scope; the administrator's role has to allow reading groups (for example *Identity Data Read Only* in addition to the role used for enrollment). |
+| PingOne Advanced Identity Cloud | No change; `fr:idm:*` already covers groups. Groups are read from the managed object `<realm>_group` and its members through the users' `groups` relationship. **Not yet tried against a live tenant**: if it does not work in your tenant, please [report it](https://github.com/inowakowski/KeyEnroll/issues). |
+
+With the option on and the permission missing, signing in or loading a group ends
+with the provider's message about consent or a forbidden request.
+
 ## Has it been tested?
 
 Only the **Okta** integration has been confirmed against a live tenant so far. The

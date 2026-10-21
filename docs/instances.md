@@ -33,6 +33,7 @@ leaving the application.
 | **Instance name** | Any name that helps you recognise the tenant, for example *Production*. |
 | **Identity provider** | The kind of tenant. The fields below change accordingly. |
 | Provider fields | The values of the application registered at the identity provider. See [Identity providers](providers.md) for each field. |
+| **Bulk lists from groups** | Off unless you need [bulk lists from groups](providers.md#bulk-lists-from-groups); switching it on asks the provider for an additional permission (since 0.7.0). |
 | **Default profile** | Optional. |
 
 !!! warning "The redirect URI must match exactly"

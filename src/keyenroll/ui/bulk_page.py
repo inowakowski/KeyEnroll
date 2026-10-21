@@ -159,7 +159,6 @@ class BulkPage(QWidget):
         list_buttons.addSpacing(10)
         list_buttons.addWidget(self.show_pins)
         list_buttons.addStretch(1)
-        list_buttons.addWidget(self.summary)
         self.table = make_table(
             [
                 tr("User"),
@@ -184,6 +183,8 @@ class BulkPage(QWidget):
             ),
         )
         list_card.body.addLayout(list_buttons)
+        # On its own line: next to three buttons it would be cut off.
+        list_card.body.addWidget(self.summary)
         list_card.body.addWidget(self.table, 1)
 
         # options

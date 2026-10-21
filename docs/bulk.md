@@ -40,6 +40,39 @@ Rules:
 - Files saved by Excel or Notepad work as they are (UTF-8, UTF-16 and Windows
   encodings are detected).
 
+## Loading the list from a group
+
+!!! info "Since version 0.7.0"
+
+Instead of a file, the list can be the members of a group in the directory, for
+example *New starters October*. This needs an additional permission and is switched
+on per instance; see [Bulk lists from groups](providers.md#bulk-lists-from-groups).
+
+![Choosing a group](assets/screenshots/en/group.png){ .shot .dialog }
+
+1. **Load from group…**, type the beginning of the group name and press **Search**.
+2. Select the group. With Microsoft Entra ID, **Include members of nested groups**
+   also takes the members of groups inside it.
+3. **Load members**. Only users are taken; devices and other objects in the group
+   are left out, and a user who appears twice is listed once.
+
+The users come straight from the directory, so no separate lookup is needed. The
+list belongs to the instance it was loaded for, like a list from a file.
+
+## Users who already have a key
+
+!!! info "Since version 0.7.0"
+
+With **Check for existing FIDO methods** on (the default), KeyEnroll counts the FIDO
+methods each user already has while the list is loaded, and shows the number in the
+column **FIDO methods**. **Skip users who already have one** moves those users to the
+status *Has a key*, so that the batch passes them over; switch it off to put them
+back in the queue.
+
+The count includes every FIDO method the identity provider knows: security keys,
+and with Entra ID and Okta also passkeys in Microsoft Authenticator or Windows Hello.
+PingOne Advanced Identity Cloud cannot list them, so with it the column stays empty.
+
 ## The page
 
 **Enrollment options** (top)
@@ -49,12 +82,14 @@ Rules:
 | **Profile** | The [profile](profiles.md) applied to every key of the batch. The line below summarises it. |
 | **Key display name** | The name given to every key. Combine it with the serial number to tell the keys apart. |
 | **Add the serial number to the key name** | Appends each key's own serial number. |
+| **Check for existing FIDO methods**, **Skip users who already have one** | See [Users who already have a key](#users-who-already-have-a-key). |
 
 **User list** (middle)
 
 | Control | What it is for |
 |---|---|
 | **Load from file…** | Loads the list and looks every user up in the directory. |
+| **Load from group…** | Takes the members of a directory group as the list, see [above](#loading-the-list-from-a-group). |
 | **Clear list** | Empties the list. Asks first if there are PINs you have not exported. |
 | **Show PINs in the list** | Shows the temporary PINs instead of dots. Leave it off if someone can see your screen. |
 | Summary on the right | How many users are ready, enrolled, failed and not found. |
@@ -81,6 +116,7 @@ Rules:
 | In progress | This user's key is being enrolled right now. |
 | Enrolled | Done. The row shows the serial number and the PIN. |
 | Failed | Something went wrong; the *Message* column says what. |
+| Has a key | The user already has a FIDO method and *Skip users who already have one* is on. The row is passed over. |
 
 ## Running a batch
 
