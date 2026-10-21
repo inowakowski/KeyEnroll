@@ -22,6 +22,7 @@ między nimi bez wychodzenia z aplikacji.
 | **Edytuj** | Zmienia zaznaczoną instancję. To samo robi dwukrotne kliknięcie wiersza. Dostawcy tożsamości istniejącej instancji nie można zmienić. |
 | **Ustaw jako aktywną** | Czyni zaznaczoną instancję tą, z którą pracujesz. To samo robi lista u góry okna. |
 | **Usuń** | Usuwa z tego komputera instancję **wraz z zapisanym logowaniem**. U dostawcy tożsamości nic się nie zmienia. |
+| **Eksportuj…**, **Importuj…** | Przenoszą instancje i profile na inny komputer, zob. [niżej](#moving-the-configuration). |
 
 ## Dodawanie instancji
 
@@ -39,6 +40,36 @@ między nimi bez wychodzenia z aplikacji.
     u dostawcy tożsamości — u Okta i Ping łącznie z numerem portu. Zawsze zaczyna
     się od `http://localhost`. Niezgodność to najczęstsza przyczyna nieudanego
     logowania.
+
+## Przenoszenie konfiguracji { #moving-the-configuration }
+
+!!! info "Od wersji 0.6.0"
+
+Kilku administratorów albo nowe stanowisko może pracować z tymi samymi instancjami
+i profilami bez wpisywania ich od nowa.
+
+1. Na komputerze, na którym są: **Eksportuj…**, wybierz, co zapisać (instancje,
+   profile, [wiadomość dla użytkownika](settings.md#message-for-the-user)), i zapisz
+   plik `.json`.
+2. Na drugim komputerze: **Importuj…** i wskaż plik. Wybierz, co przejąć i co zrobić
+   z **nazwami, które już istnieją**:
+
+    | Wybór | Skutek |
+    |---|---|
+    | **Dodaj je pod nową nazwą** (domyślnie) | Importowany wpis zostaje dodany np. jako *Produkcja (2)*. Nic istniejącego się nie zmienia. |
+    | **Zastąp istniejące** | Istniejąca instancja lub profil przejmuje zaimportowane ustawienia. Instancja zachowuje logowanie, chyba że zmienił się jej dostawca tożsamości. |
+    | **Zostaw istniejące** | Importowany wpis zostaje pominięty. |
+
+    ![Import konfiguracji](assets/screenshots/pl/import-config.png){ .shot .dialog }
+
+3. **Zaloguj się** do każdej zaimportowanej instancji. Plik nie zawiera logowań ani
+   sekretów, tylko wartości wpisane w formularzu instancji, więc nie trzeba go
+   traktować jak hasła. Zawiera jednak nazwy Twoich tenantów: przekazuj go zaufanym
+   kanałem.
+
+Wpisy, których aplikacja nie może użyć, np. instancja dostawcy nieznanego tej wersji,
+są wymienione w oknie importu i pomijane. Plik z nowszej wersji KeyEnroll jest
+odrzucany; najpierw zaktualizuj aplikację.
 
 ## Przełączanie instancji
 

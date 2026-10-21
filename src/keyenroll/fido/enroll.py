@@ -20,7 +20,7 @@ from fido2.ctap2 import Ctap2
 from fido2.ctap2.config import Config
 from fido2.ctap2.pin import ClientPin
 
-from ..config import Profile
+from ..config import Profile, version_tuple
 from ..i18n import N_
 from ..providers import DirectoryUser, Provider
 from .devices import DeviceSource, KeyInfo, close, device_key
@@ -85,6 +85,44 @@ def compose_key_name(base: str, serial: int | None, limit: int | None = None) ->
     return f"{base} {suffix}".strip()
 
 
+@dataclass
+class ModelIssue:
+    """Why a key does not match the models a profile allows. A fatal issue
+    stops the enrollment; the other kind is reported as a warning."""
+
+    template: str
+    params: dict
+    fatal: bool = True
+
+
+def model_issue(profile: Profile, key: KeyInfo) -> ModelIssue | None:
+    allowed = profile.allowed_aaguids
+    if allowed and key.aaguid not in allowed:
+        model = f"{key.name}, AAGUID {key.aaguid}" if key.aaguid else key.name
+        return ModelIssue(
+            N_("The profile does not allow this security key model: {model}."), {"model": model}
+        )
+    required = version_tuple(profile.min_firmware)
+    if required is None:
+        return None
+    found = version_tuple(key.firmware)
+    if found is None:
+        return ModelIssue(
+            N_(
+                "The firmware version of this security key cannot be read; the "
+                "profile requires {required} or newer."
+            ),
+            {"required": profile.min_firmware},
+            fatal=profile.unknown_firmware != "warn",
+        )
+    if found < required:
+        return ModelIssue(
+            N_("The security key has firmware {firmware}; the profile requires {required} or newer."),
+            {"firmware": key.firmware, "required": profile.min_firmware},
+        )
+    return None
+
+
 class _Interaction(UserInteraction):
     def __init__(self, pin: str, ui: EnrollUI):
         self._pin = pin
@@ -129,6 +167,9 @@ class Enroller:
         self.try_reset_first = try_reset_first
         # Serial numbers that must not be enrolled (again) in this session.
         self.used_serials = used_serials
+        # The key being enrolled, as far as known; read by the deployment
+        # log also when the enrollment fails.
+        self.key_info: KeyInfo | None = None
 
     # -- helpers -----------------------------------------------------------
 
@@ -455,7 +496,16 @@ class Enroller:
                 raise EnrollError(N_("This security key does not support FIDO2.")) from e
             self._precheck(ctap.info)
             result = EnrollResult(user=self.user, key=self.source.describe(dev))
+            self.key_info = result.key
             self.ui.status(N_("Security key: {key}"), key=result.key.label)
+            issue = model_issue(p, result.key)
+            if issue is not None:
+                # Checked before the reset: a key the profile does not allow
+                # must leave the enrollment as it came in.
+                if issue.fatal:
+                    raise EnrollError(issue.template, **issue.params)
+                result.warnings.append((issue.template, issue.params))
+                self.ui.status(issue.template, **issue.params)
             if result.key.serial and result.key.serial in self.used_serials:
                 raise EnrollError(
                     N_("Security key {serial} was already enrolled in this batch."),
@@ -474,7 +524,7 @@ class Enroller:
             if p.reset:
                 dev = self._reset(dev, result.key.serial)
                 ctap = Ctap2(dev)
-                result.key = self.source.describe(dev)
+                result.key = self.key_info = self.source.describe(dev)
 
             try:
                 pin = self._prepare_pin(ctap, result)
@@ -512,7 +562,7 @@ class Enroller:
                             {"detail": e.code.name},
                         )
                     )
-            result.key = self.source.describe(dev)
+            result.key = self.key_info = self.source.describe(dev)
             self.ui.status(N_("Done."))
             return result
         finally:

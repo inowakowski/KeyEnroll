@@ -973,3 +973,112 @@ def test_instance_redirect_uri_must_be_local():
     assert not local_redirect("https://localhost/callback")
     assert not local_redirect("http://localhost:80a/callback")
     assert not local_redirect("")
+
+
+def test_profile_limits_key_models_and_the_enroll_page_enforces_it(gui, monkeypatch):
+    from keyenroll.ui import profile_form
+
+    window, ctx, key, source, shown = gui
+    monkeypatch.setattr(
+        profile_form.ModelDialog, "exec", lambda self: QDialog.DialogCode.Accepted
+    )
+    window.nav.setCurrentRow(3)
+    page = window.pages.currentWidget()
+    page.new.click()
+    page.name.setText("only this key")
+    page.models.add_connected.click()  # reads the model of the plugged-in fake key
+    wait_until(lambda: page.models.list.count() == 1)
+    page.models.add_connected.click()
+    wait_until(lambda: page.models.add_connected.isEnabled())
+    assert page.models.list.count() == 1  # the same model is not listed twice
+    page.models.min_firmware.setText("5.7")
+    page.models.unknown.setCurrentIndex(page.models.unknown.findData("warn"))
+    page.save.click()
+
+    stored = ConfigStore(ctx.config.path).profile("only this key")
+    assert [m["aaguid"] for m in stored.allowed_models] == [
+        "00112233-4455-6677-8899-aabbccddeeff"
+    ]
+    assert (stored.min_firmware, stored.unknown_firmware) == ("5.7", "warn")
+
+    # The fake key reports no firmware version: a warning, and the profile's
+    # restrictions survive a one-off change of the options on the Enroll page.
+    enroll_page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    rescan(enroll_page)
+    combo = enroll_page.profile_combo
+    combo.setCurrentIndex(combo.findData("only this key"))
+    assert "cannot be read" in enroll_page.key_info.text()
+    enroll_page.form.always_uv.setChecked(True)
+    assert enroll_page.form.profile().allowed_models == stored.allowed_models
+
+    # Refusing instead: the enrollment does not start at all.
+    stored.unknown_firmware = "refuse"
+    ctx.config.upsert_profile(stored)
+    ctx.profiles_changed.emit()
+    combo.setCurrentIndex(combo.findData("only this key"))
+    pick_user(enroll_page, "Alice")
+    enroll_page.start.click()
+    assert "cannot be read" in shown["boxes"][-1]
+    assert not enroll_page.is_running() and "reset" not in key.log
+
+
+def test_enrollments_are_written_to_the_deployment_log(gui):
+    import csv
+
+    window, ctx, key, source, shown = gui
+    folder = ctx.config.path.parent / "journal"
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    wait_until(lambda: page.key_combo.currentData() is not None)
+    pick_user(page, "Alice")
+    page.start.click()
+    wait_until(lambda: not page.is_running())
+
+    (log_file,) = folder.glob("deployments-*.csv")
+    rows = list(csv.DictReader(log_file.read_text(encoding="utf-8-sig").splitlines()))
+    assert [(r["result"], r["instance"], r["username"]) for r in rows] == [
+        ("enrolled", "Prod", "alice@example.com")
+    ]
+    assert key.pin not in log_file.read_text(encoding="utf-8-sig")
+
+    # Switched off in the settings: nothing more is written.
+    window.nav.setCurrentRow(PAGE_SETTINGS)
+    settings = window.pages.currentWidget()
+    settings.journal_enabled.setChecked(False)
+    assert not ConfigStore(ctx.config.path).journal_enabled
+    assert not settings.journal_months.isEnabled()
+    window.nav.setCurrentRow(0)
+    rescan(page)
+    page.start.click()
+    wait_until(lambda: not page.is_running())
+    assert len(log_file.read_text(encoding="utf-8-sig").splitlines()) == 2  # header + 1
+
+
+def test_configuration_moves_to_another_workstation(gui, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QFileDialog
+
+    window, ctx, key, source, shown = gui
+    path = tmp_path / "keyenroll-config.json"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: (str(path), "")))
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", staticmethod(lambda *a, **k: (str(path), "")))
+    accepted = lambda self: QDialog.DialogCode.Accepted  # noqa: E731
+    monkeypatch.setattr(dialogs.ExportConfigDialog, "exec", accepted)
+    monkeypatch.setattr(dialogs.ImportConfigDialog, "exec", accepted)
+
+    window.nav.setCurrentRow(PAGE_INSTANCES)
+    page = window.pages.currentWidget()
+    page.export.click()
+    assert path.is_file() and "Saved to" in shown["boxes"][-1]
+
+    # Importing the same file again: by default clashing names get a new one.
+    page.import_.click()
+    names = [i.name for i in ConfigStore(ctx.config.path).instances]
+    assert names == ["Prod", "Lab", "Prod (2)", "Lab (2)"]
+    assert page.table.rowCount() == 4
+    assert window.instance_combo.count() == 4
+    assert "Added: 3" in shown["boxes"][-1]  # two instances and a "default (2)" profile
+
+    path.write_text("{}", encoding="utf-8")
+    page.import_.click()
+    assert "not a KeyEnroll configuration" in shown["boxes"][-1]

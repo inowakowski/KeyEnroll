@@ -12,6 +12,7 @@ again after changing the user interface, on a machine with a desktop session
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tempfile
@@ -30,9 +31,11 @@ from PySide6.QtWidgets import QApplication, QScrollArea
 
 from fake_authenticator import FakeAuthenticator
 from keyenroll import DOCS_LANGUAGES, bulk, i18n
+from keyenroll import config as config_transfer
 from keyenroll.bulk import BulkRow
 from keyenroll.config import ConfigStore, Instance, Profile
 from keyenroll.handover import Handover
+from keyenroll.providers import PROVIDERS
 from keyenroll.providers.base import Credential, DirectoryUser
 from keyenroll.secrets_store import TokenStore
 from keyenroll.ui import dialogs, main_window
@@ -58,6 +61,7 @@ PEOPLE = [
     )
 ]
 LABELS = {"entra": "Microsoft Entra ID", "okta": "Okta"}
+YUBIKEY_5_NFC = "2fc0579f-8113-47ea-b116-bb5a8db9202a"
 
 
 class Provider(GuiProvider):
@@ -104,7 +108,9 @@ def render(app: QApplication, lang: str) -> list[str]:
     config.append_serial = True
     config.upsert_profile(
         Profile(name="high-security", min_pin_length=8, random_pin_length=8,
-                force_pin_change=True, require_always_uv=True)
+                force_pin_change=True, require_always_uv=True,
+                allowed_models=[{"aaguid": YUBIKEY_5_NFC, "name": "YubiKey 5 NFC"}],
+                min_firmware="5.7")
     )
     config.upsert_instance(
         Instance(name="Example Corp", kind="entra", default_profile="high-security",
@@ -115,6 +121,7 @@ def render(app: QApplication, lang: str) -> list[str]:
     providers: dict[str, Provider] = {}
     key = FakeAuthenticator("YubiKey 5 NFC")
     key.serial = 23456789
+    key.aaguid = bytes.fromhex(YUBIKEY_5_NFC.replace("-", ""))
     ctx = AppContext(
         config,
         TokenStore(),
@@ -200,6 +207,9 @@ def render(app: QApplication, lang: str) -> list[str]:
     profiles = window.pages.currentWidget()
     profiles.list.setCurrentRow(1)
     shot(window, "profiles")
+    bar = profiles.findChild(QScrollArea).verticalScrollBar()
+    bar.setValue(bar.maximum())
+    shot(window, "profiles-models")
 
     # -- instances -------------------------------------------------------------
     window.nav.setCurrentRow(main_window.PAGE_INSTANCES)
@@ -212,6 +222,10 @@ def render(app: QApplication, lang: str) -> list[str]:
     dialog._inputs["tenant_id"].setText("3f2b9a6e-1c4d-4e8a-9b7f-5d6c0a1e2f34")
     dialog._inputs["client_id"].setText("a81c5d2e-7f30-4b96-8e21-c4d9b0f6a753")
     shot(dialog, "instance-dialog")
+    exported = config_transfer.parse_import(
+        json.dumps(config_transfer.export_config(config)).encode(), set(PROVIDERS)
+    )
+    shot(dialogs.ImportConfigDialog(exported, window), "import-config")
 
     # -- settings --------------------------------------------------------------
     window.nav.setCurrentRow(main_window.PAGE_SETTINGS)

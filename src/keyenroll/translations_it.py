@@ -538,4 +538,160 @@ IT = {
     "The update server returned an unexpected answer.": (
         "Il server degli aggiornamenti ha restituito una risposta imprevista."
     ),
+    # -- allowed key models (0.6.0)
+    "Add AAGUID…": (
+        "Aggiungi AAGUID…"
+    ),
+    "Add the connected key": (
+        "Aggiungi la chiave collegata"
+    ),
+    "Allowed key model": (
+        "Modello di chiave consentito"
+    ),
+    "Allowed security keys": (
+        "Chiavi di sicurezza consentite"
+    ),
+    "If the version cannot be read": (
+        "Se la versione non è leggibile"
+    ),
+    "Leave the list empty to accept every model. The key is checked before it is reset, so a key that is not allowed stays as it is.": (
+        "Lasciare l’elenco vuoto per accettare qualsiasi modello. La chiave viene controllata prima del ripristino, quindi una chiave non consentita resta intatta."
+    ),
+    "Minimum firmware": (
+        "Firmware minimo"
+    ),
+    "Minimum firmware must be a version number such as 5.7.": (
+        "Il firmware minimo deve essere un numero di versione, ad es. 5.7."
+    ),
+    "No connected security key reports its model. Insert a key and try again.": (
+        "Nessuna chiave collegata indica il proprio modello. Inserire una chiave e riprovare."
+    ),
+    "Only warn": (
+        "Solo avvisare"
+    ),
+    "Reads the model of the security key that is plugged in.": (
+        "Legge il modello della chiave di sicurezza collegata."
+    ),
+    "Refuse the key": (
+        "Rifiutare la chiave"
+    ),
+    "Remove from the list": (
+        "Rimuovi dall’elenco"
+    ),
+    "The firmware version is read from YubiKeys over USB only. This decides what happens with other keys and keys on an NFC reader.": (
+        "La versione del firmware viene letta solo dalle YubiKey collegate via USB. Questa impostazione decide cosa succede con le altre chiavi e con quelle su un lettore NFC."
+    ),
+    "The firmware version of this security key cannot be read; the profile requires {required} or newer.": (
+        "Impossibile leggere la versione del firmware di questa chiave; il profilo richiede {required} o successiva."
+    ),
+    "The profile does not allow this security key model: {model}.": (
+        "Il profilo non consente questo modello di chiave: {model}."
+    ),
+    "The security key has firmware {firmware}; the profile requires {required} or newer.": (
+        "La chiave ha il firmware {firmware}; il profilo richiede {required} o successiva."
+    ),
+    "This is not an AAGUID.": (
+        "Questo non è un AAGUID."
+    ),
+    "This model is already on the list.": (
+        "Questo modello è già nell’elenco."
+    ),
+    "Unnamed model": (
+        "Modello senza nome"
+    ),
+    "e.g. 5.7 (empty: any)": (
+        "ad es. 5.7 (vuoto: qualsiasi)"
+    ),
+    "firmware {version} or newer": (
+        "firmware {version} o successivo"
+    ),
+    "only {count} allowed key model(s)": (
+        "solo modelli di chiave consentiti: {count}"
+    ),
+    # -- deployment log (0.6.0)
+    "Deployment log": (
+        "Registro delle distribuzioni"
+    ),
+    "Keep a deployment log": (
+        "Tenere un registro delle distribuzioni"
+    ),
+    "Keep entries for (months)": (
+        "Conservare le voci (mesi)"
+    ),
+    "One line per enrollment: who enrolled which key for whom, and when. PINs are never written to it. The log names people: keep it only as long as your organisation needs it.": (
+        "Una riga per registrazione: chi ha registrato quale chiave, per chi e quando. I PIN non vi vengono mai scritti. Il registro contiene nomi di persone: conservarlo solo per il tempo necessario alla propria organizzazione."
+    ),
+    "Open the deployment log folder": (
+        "Apri la cartella del registro delle distribuzioni"
+    ),
+    # -- moving the configuration (0.6.0)
+    "Add them with a new name": (
+        "Aggiungerli con un nuovo nome"
+    ),
+    "Added: {added} · replaced: {replaced} · kept as they were: {skipped}.": (
+        "Aggiunti: {added} · sostituiti: {replaced} · lasciati invariati: {skipped}."
+    ),
+    "Adds instances and profiles exported on another computer.": (
+        "Aggiunge istanze e profili esportati su un altro computer."
+    ),
+    "Export configuration": (
+        "Esporta configurazione"
+    ),
+    "Export…": (
+        "Esporta…"
+    ),
+    "Import": (
+        "Importa"
+    ),
+    "Import configuration": (
+        "Importa configurazione"
+    ),
+    "Import…": (
+        "Importa…"
+    ),
+    "Instances ({count})": (
+        "Istanze ({count})"
+    ),
+    "Keep the existing ones": (
+        "Mantenere quelli esistenti"
+    ),
+    "KeyEnroll configuration (*.json)": (
+        "Configurazione di KeyEnroll (*.json)"
+    ),
+    "KeyEnroll configuration (*.json);;All files (*)": (
+        "Configurazione di KeyEnroll (*.json);;Tutti i file (*)"
+    ),
+    "Names that exist already": (
+        "Nomi già esistenti"
+    ),
+    "Not usable and left out: {names}": (
+        "Non utilizzabili e tralasciati: {names}"
+    ),
+    "Profiles ({count})": (
+        "Profili ({count})"
+    ),
+    "Replace the existing ones": (
+        "Sostituire quelli esistenti"
+    ),
+    "Saved to {path}.": (
+        "Salvato in {path}."
+    ),
+    "Saves instances and profiles for another computer.": (
+        "Salva istanze e profili per un altro computer."
+    ),
+    "Sign in to each imported instance before you use it.": (
+        "Accedere a ogni istanza importata prima di usarla."
+    ),
+    "The file contains no sign-ins and no secrets: on the other computer, sign in to each instance again.": (
+        "Il file non contiene accessi né segreti: sull’altro computer, accedere di nuovo a ogni istanza."
+    ),
+    "The file is not a KeyEnroll configuration.": (
+        "Il file non è una configurazione di KeyEnroll."
+    ),
+    "The file is too large to be a KeyEnroll configuration.": (
+        "Il file è troppo grande per essere una configurazione di KeyEnroll."
+    ),
+    "The file was made by a newer version of KeyEnroll. Update the application first.": (
+        "Il file è stato creato da una versione più recente di KeyEnroll. Aggiornare prima l’applicazione."
+    ),
 }

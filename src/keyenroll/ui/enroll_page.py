@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 
 from ..config import Profile
 from ..fido.devices import KeyInfo, close
-from ..fido.enroll import EnrollCancelled, EnrollResult, compose_key_name
+from ..fido.enroll import EnrollCancelled, EnrollResult, compose_key_name, model_issue
 from ..handover import Handover
 from ..i18n import tr
 from ..providers import AuthRequired
@@ -60,6 +60,8 @@ class EnrollPage(QWidget):
         self._refreshing = False
         self._last_paths: set | None = None
         self._provider_label = ""
+        self._journal = None
+        self._user = None
 
         # 1. user
         self.picker = UserPicker(ctx)
@@ -257,6 +259,7 @@ class EnrollPage(QWidget):
         profile = self.ctx.config.profile(self.profile_combo.currentData())
         if profile:
             self.form.set_profile(profile)
+        self._show_key_info()
 
     # -- keys --------------------------------------------------------------
 
@@ -340,7 +343,11 @@ class EnrollPage(QWidget):
             parts.append(tr("no support for advanced options"))
         if not info.serial:
             parts.append(tr("serial number not readable"))
-        self.key_info.setText(" · ".join(parts))
+        text = " · ".join(parts)
+        issue = model_issue(self.form.profile(), info)
+        if issue is not None:
+            text += "\n⚠ " + tr(issue.template, **issue.params)
+        self.key_info.setText(text)
 
     # -- key name ----------------------------------------------------------
 
@@ -398,11 +405,19 @@ class EnrollPage(QWidget):
         if problems:
             QMessageBox.warning(self, tr("Error"), "\n".join(tr(p) for p in problems))
             return
+        issue = model_issue(profile, key)
+        if issue is not None and issue.fatal:
+            QMessageBox.warning(
+                self, tr("Enrollment failed"), tr(issue.template, **issue.params)
+            )
+            return
 
         lines = [
             tr("User: {user}", user=user.display_name or user.username),
             tr("Security key: {key}", key=key.label),
         ]
+        if issue is not None:
+            lines.append(tr(issue.template, **issue.params))
         name = self._key_name(key)
         if name:
             lines.append(tr("Key name: {name}", name=name))
@@ -423,6 +438,8 @@ class EnrollPage(QWidget):
 
         self.log.clear()
         self._provider_label = provider.label
+        self._journal = self.ctx.journal(provider, profile.name)
+        self._user = user
         worker = EnrollWorker(
             self.ctx.source,
             provider,
@@ -476,13 +493,18 @@ class EnrollPage(QWidget):
 
     def _on_done(self, result) -> None:
         self._finish()
+        if self._journal is not None:
+            self._journal.enrolled(result)
         self.step.setText(tr("The security key has been enrolled."))
         handover = handover_from_result(result, self._provider_label)
         ResultDialog(handover, self.ctx.config, self).exec()
         self.refresh_keys()
 
     def _on_failed(self, exc) -> None:
+        key_info = self._worker.key_info if self._worker else None
         self._finish()
+        if self._journal is not None and not isinstance(exc, EnrollCancelled):
+            self._journal.failed(self._user, key_info, exc)
         text = error_text(exc)
         self.step.setText(text)
         self._add_log(text)

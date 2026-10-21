@@ -31,6 +31,7 @@ class FakeAuthenticator(CtapDevice):
     def __init__(self, name: str = "fake", supports_config: bool = True):
         self._name = name
         self.supports_config = supports_config
+        self.aaguid = AAGUID
         self.log: list[str] = []
         self.closed = 0
         self._wipe()
@@ -103,7 +104,7 @@ class FakeAuthenticator(CtapDevice):
             )
         return {
             0x01: ["FIDO_2_0", "FIDO_2_1"],
-            0x03: AAGUID,
+            0x03: self.aaguid,
             0x04: dict(sorted(options.items(), key=lambda kv: (len(kv[0]), kv[0]))),
             0x05: 1200,
             0x06: [2, 1],
@@ -252,7 +253,7 @@ class FakeAuthenticator(CtapDevice):
             sha256(rp["id"].encode())
             + bytes([flags])
             + struct.pack(">I", 1)
-            + AAGUID
+            + self.aaguid
             + struct.pack(">H", len(cred_id))
             + cred_id
             + cbor.encode(cose)

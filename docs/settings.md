@@ -55,6 +55,16 @@ Use these placeholders; they are replaced with the data of the enrollment:
 A placeholder that is misspelt is left in the text as it is, so check a message once
 after changing the template.
 
+## Deployment log
+
+!!! info "Since version 0.6.0"
+
+| Control | What it is for |
+|---|---|
+| **Keep a deployment log** | Writes one line per enrollment to the [deployment log](data.md#the-deployment-log). On by default. |
+| **Keep entries for (months)** | Months older than this are deleted when the application starts. Default 12. |
+| **Open the deployment log folder** | Opens the folder with the monthly CSV files. |
+
 ## About
 
 ![The About section](assets/screenshots/en/settings-about.png){ .shot }

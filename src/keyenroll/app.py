@@ -14,6 +14,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from . import APP_NAME, __version__
 from .config import ConfigStore, config_dir, private_dir
 from .i18n import current_language, set_language, tr
+from .journal import journal_dir, prune
 from .secrets_store import default_store
 from .ui.common import AppContext
 from .ui.main_window import MainWindow
@@ -124,6 +125,7 @@ def main(argv: list[str] | None = None) -> int:
     app.setApplicationVersion(__version__)
 
     config = ConfigStore()
+    prune(journal_dir(config.path), config.journal_months)
     set_language(config.language)
     install_qt_translation(app, current_language())
     theme = apply_theme(app, config.theme, config.custom_base, config.custom_accent)

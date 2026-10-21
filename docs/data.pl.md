@@ -9,6 +9,7 @@ Co KeyEnroll zapisuje, gdzie, i co nigdy nie opuszcza aplikacji.
 | Ustawienia: instancje, profile, wygląd, język, szablon wiadomości, układ okna | `config.json` w folderze ustawień | Nie. Identyfikatory tenanta i klienta to identyfikatory, nie sekrety. |
 | Logowanie (token odświeżania) każdej instancji | Systemowy magazyn poświadczeń | Tak — chronione przez system operacyjny, przypisane do Twojego konta. |
 | Log | `logs/keyenroll.log` w folderze ustawień | Nie zawiera PIN-ów ani tokenów. |
+| Dziennik wdrożeń | `journal/deployments-<rok>-<miesiąc>.csv` w folderze ustawień | Nie zawiera PIN-ów ani tokenów, ale zawiera dane osób. Zobacz [niżej](#the-deployment-log). |
 | Tymczasowe PIN-y | Wyłącznie w pamięci działającej aplikacji | Na dysku są tylko w plikach, które **sam** wyeksportujesz lub zapiszesz. |
 
 Folder ustawień:
@@ -86,6 +87,34 @@ nadpisywane.
 Zawiera nazwy użytkowników, dla których rejestrowano klucze, i adresy Twojego
 tenanta, więc przeczytaj go, zanim dołączysz go do publicznego zgłoszenia.
 
+## Dziennik wdrożeń { #the-deployment-log }
+
+!!! info "Od wersji 0.6.0"
+
+Każda rejestracja, pojedyncza i masowa, udana i nieudana, dodaje jeden wiersz do
+pliku CSV danego miesiąca. Odpowiada na pytania audytu: kto, kiedy i komu
+zarejestrował który klucz.
+
+| Kolumna | Zawartość |
+|---|---|
+| `time` | Data i godzina w UTC. |
+| `result`, `mode` | `enrolled` (zarejestrowano) lub `failed` (błąd); `single` (pojedyncza) lub `bulk` (masowa). |
+| `instance`, `provider`, `operator` | Gdzie zarejestrowano klucz i które konto administratora było zalogowane, tak jak nazywa je dostawca tożsamości. |
+| `username`, `user_id`, `display_name` | Użytkownik, który dostał klucz. |
+| `serial`, `firmware`, `aaguid`, `key_name` | Klucz: numer seryjny, wersja firmware, model i nazwa, pod którą go zarejestrowano. |
+| `profile`, `pin_changed`, `pin_change_forced` | Użyty profil, czy ustawiono PIN i czy klucz wymusza teraz jego zmianę. |
+| `message` | Powód błędu albo ostrzeżenie, po angielsku, żeby dało się porównać dzienniki administratorów pracujących w różnych językach. |
+
+**PIN nigdy nie trafia do dziennika wdrożeń.** Dziennik zawiera jednak dane osób,
+czyli w rozumieniu RODO dane osobowe. KeyEnroll usuwa miesiące starsze niż okres
+ustawiony w [Ustawienia → Dziennik wdrożeń](settings.md#deployment-log) (domyślnie
+12 miesięcy), a dziennik można tam wyłączyć. Na macOS i Linuksie pliki może czytać
+tylko Twoje konto.
+
+Nazwa administratora pochodzi z logowania. Jeśli dostawca tożsamości jej nie podaje
+(niektóre konfiguracje PingOne), kolumna zawiera identyfikator konta albo pozostaje
+pusta do następnego logowania.
+
 ## Gdy plik ustawień jest uszkodzony { #if-the-settings-file-is-damaged }
 
 Jeśli `config.json` nie da się odczytać, KeyEnroll go nie nadpisuje. Plik jest
@@ -98,7 +127,7 @@ nienaruszone.
 1. Wyloguj się ze wszystkich instancji (to usuwa zapisane logowania) albo usuń
    instancje.
 2. Odinstaluj aplikację.
-3. Usuń folder ustawień.
+3. Usuń folder ustawień. Jest w nim także dziennik wdrożeń.
 
 ## Zgłaszanie problemu z bezpieczeństwem
 

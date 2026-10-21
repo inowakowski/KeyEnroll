@@ -73,6 +73,35 @@ that requests *enterprise attestation*. This only works with keys that were orde
 with that feature and with a provider configured for it. Leave it off unless you
 know you need it.
 
+## Allowed security keys
+
+!!! info "Since version 0.6.0"
+
+A profile can accept only certain key models, for example only the YubiKeys your
+organisation buys. The key is checked **before it is reset**: a key that is not
+allowed is left exactly as it was, with its credentials and PIN.
+
+![Allowed security keys of a profile](assets/screenshots/en/profiles-models.png){ .shot }
+
+| Control | What it is for |
+|---|---|
+| List of models | The models the profile accepts, each identified by its *AAGUID* (a model number every FIDO2 key reports) and a name of your choice. **An empty list accepts every model.** Double-click an entry to rename it. |
+| **Add the connected key** | Reads the model of the security key that is plugged in and adds it. The quickest way: plug in one key of each model you hand out. |
+| **Add AAGUID…** | Enter an AAGUID by hand, for example from the vendor's documentation. |
+| **Remove** | Takes the selected models off the list. |
+| **Minimum firmware** | For example `5.7`. Keys with older firmware are refused. Empty: no requirement. |
+| **If the version cannot be read** | The firmware version is read from YubiKeys over USB only; keys from other vendors and keys on an NFC reader do not report it. **Refuse the key** (default) stops the enrollment; **Only warn** enrolls the key and records a warning. |
+
+On the [Enroll page](enroll.md) the status line of the key already shows when the
+selected key does not match the profile, and the enrollment does not start. In
+[bulk enrollment](bulk.md) the batch stops at that key, and a warning appears in the
+*Message* column.
+
+!!! tip "Also set the policy at the identity provider"
+    This check protects the key from being reset for nothing. Which keys may sign in
+    is still decided by the identity provider: in Entra ID, for example, by the AAGUID
+    restriction of the passkey policy.
+
 ## What the key has to support
 
 | Option | Requirement |

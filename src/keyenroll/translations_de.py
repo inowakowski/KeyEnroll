@@ -556,4 +556,160 @@ DE = {
     "The update server returned an unexpected answer.": (
         "Der Update-Server hat eine unerwartete Antwort geliefert."
     ),
+    # -- allowed key models (0.6.0)
+    "Add AAGUID…": (
+        "AAGUID hinzufügen…"
+    ),
+    "Add the connected key": (
+        "Eingesteckten Schlüssel hinzufügen"
+    ),
+    "Allowed key model": (
+        "Zulässiges Schlüsselmodell"
+    ),
+    "Allowed security keys": (
+        "Zulässige Sicherheitsschlüssel"
+    ),
+    "If the version cannot be read": (
+        "Wenn die Version nicht lesbar ist"
+    ),
+    "Leave the list empty to accept every model. The key is checked before it is reset, so a key that is not allowed stays as it is.": (
+        "Eine leere Liste lässt jedes Modell zu. Der Schlüssel wird vor dem Zurücksetzen geprüft, ein nicht zulässiger Schlüssel bleibt also unverändert."
+    ),
+    "Minimum firmware": (
+        "Mindest-Firmware"
+    ),
+    "Minimum firmware must be a version number such as 5.7.": (
+        "Die Mindest-Firmware muss eine Versionsnummer wie 5.7 sein."
+    ),
+    "No connected security key reports its model. Insert a key and try again.": (
+        "Kein eingesteckter Sicherheitsschlüssel meldet sein Modell. Stecken Sie einen Schlüssel ein und versuchen Sie es erneut."
+    ),
+    "Only warn": (
+        "Nur warnen"
+    ),
+    "Reads the model of the security key that is plugged in.": (
+        "Liest das Modell des eingesteckten Sicherheitsschlüssels."
+    ),
+    "Refuse the key": (
+        "Schlüssel ablehnen"
+    ),
+    "Remove from the list": (
+        "Aus der Liste entfernen"
+    ),
+    "The firmware version is read from YubiKeys over USB only. This decides what happens with other keys and keys on an NFC reader.": (
+        "Die Firmware-Version wird nur von YubiKeys über USB gelesen. Diese Einstellung legt fest, was mit anderen Schlüsseln und Schlüsseln auf einem NFC-Leser geschieht."
+    ),
+    "The firmware version of this security key cannot be read; the profile requires {required} or newer.": (
+        "Die Firmware-Version dieses Sicherheitsschlüssels ist nicht lesbar; das Profil verlangt {required} oder neuer."
+    ),
+    "The profile does not allow this security key model: {model}.": (
+        "Das Profil lässt dieses Schlüsselmodell nicht zu: {model}."
+    ),
+    "The security key has firmware {firmware}; the profile requires {required} or newer.": (
+        "Der Schlüssel hat Firmware {firmware}; das Profil verlangt {required} oder neuer."
+    ),
+    "This is not an AAGUID.": (
+        "Das ist keine AAGUID."
+    ),
+    "This model is already on the list.": (
+        "Dieses Modell steht bereits in der Liste."
+    ),
+    "Unnamed model": (
+        "Modell ohne Namen"
+    ),
+    "e.g. 5.7 (empty: any)": (
+        "z. B. 5.7 (leer: beliebig)"
+    ),
+    "firmware {version} or newer": (
+        "Firmware {version} oder neuer"
+    ),
+    "only {count} allowed key model(s)": (
+        "nur zulässige Schlüsselmodelle: {count}"
+    ),
+    # -- deployment log (0.6.0)
+    "Deployment log": (
+        "Bereitstellungsprotokoll"
+    ),
+    "Keep a deployment log": (
+        "Bereitstellungsprotokoll führen"
+    ),
+    "Keep entries for (months)": (
+        "Einträge aufbewahren (Monate)"
+    ),
+    "One line per enrollment: who enrolled which key for whom, and when. PINs are never written to it. The log names people: keep it only as long as your organisation needs it.": (
+        "Eine Zeile pro Registrierung: wer wann für wen welchen Schlüssel registriert hat. PINs werden nie hineingeschrieben. Das Protokoll enthält Namen von Personen: Bewahren Sie es nur so lange auf, wie Ihre Organisation es benötigt."
+    ),
+    "Open the deployment log folder": (
+        "Ordner des Bereitstellungsprotokolls öffnen"
+    ),
+    # -- moving the configuration (0.6.0)
+    "Add them with a new name": (
+        "Unter neuem Namen hinzufügen"
+    ),
+    "Added: {added} · replaced: {replaced} · kept as they were: {skipped}.": (
+        "Hinzugefügt: {added} · ersetzt: {replaced} · unverändert gelassen: {skipped}."
+    ),
+    "Adds instances and profiles exported on another computer.": (
+        "Fügt Instanzen und Profile hinzu, die auf einem anderen Computer exportiert wurden."
+    ),
+    "Export configuration": (
+        "Konfiguration exportieren"
+    ),
+    "Export…": (
+        "Exportieren…"
+    ),
+    "Import": (
+        "Importieren"
+    ),
+    "Import configuration": (
+        "Konfiguration importieren"
+    ),
+    "Import…": (
+        "Importieren…"
+    ),
+    "Instances ({count})": (
+        "Instanzen ({count})"
+    ),
+    "Keep the existing ones": (
+        "Vorhandene behalten"
+    ),
+    "KeyEnroll configuration (*.json)": (
+        "KeyEnroll-Konfiguration (*.json)"
+    ),
+    "KeyEnroll configuration (*.json);;All files (*)": (
+        "KeyEnroll-Konfiguration (*.json);;Alle Dateien (*)"
+    ),
+    "Names that exist already": (
+        "Bereits vorhandene Namen"
+    ),
+    "Not usable and left out: {names}": (
+        "Nicht verwendbar und ausgelassen: {names}"
+    ),
+    "Profiles ({count})": (
+        "Profile ({count})"
+    ),
+    "Replace the existing ones": (
+        "Vorhandene ersetzen"
+    ),
+    "Saved to {path}.": (
+        "Gespeichert unter {path}."
+    ),
+    "Saves instances and profiles for another computer.": (
+        "Speichert Instanzen und Profile für einen anderen Computer."
+    ),
+    "Sign in to each imported instance before you use it.": (
+        "Melden Sie sich bei jeder importierten Instanz an, bevor Sie sie verwenden."
+    ),
+    "The file contains no sign-ins and no secrets: on the other computer, sign in to each instance again.": (
+        "Die Datei enthält keine Anmeldungen und keine Geheimnisse: Melden Sie sich auf dem anderen Computer bei jeder Instanz erneut an."
+    ),
+    "The file is not a KeyEnroll configuration.": (
+        "Die Datei ist keine KeyEnroll-Konfiguration."
+    ),
+    "The file is too large to be a KeyEnroll configuration.": (
+        "Die Datei ist zu groß für eine KeyEnroll-Konfiguration."
+    ),
+    "The file was made by a newer version of KeyEnroll. Update the application first.": (
+        "Die Datei wurde mit einer neueren Version von KeyEnroll erstellt. Aktualisieren Sie zuerst die Anwendung."
+    ),
 }

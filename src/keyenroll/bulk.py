@@ -16,6 +16,7 @@ from .fido import enroll
 from .fido.devices import DeviceSource, close, device_key
 from .fido.enroll import EnrollCancelled, Enroller, EnrollError, EnrollUI
 from .i18n import N_, tr
+from .journal import Journal, safe_cell
 from .providers import AuthRequired, DirectoryUser, Provider, ProviderError
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,6 @@ _HEADER_NAMES = {
     "nom d’utilisateur", "nom d'utilisateur", "utilisateur", "identifiant", "courriel",
     "nome utente", "utente",
 }  # fmt: skip
-_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 
 @dataclass
@@ -117,12 +117,6 @@ def read_identifiers(path: str | Path) -> list[str]:
     return parse_identifiers(_decode(Path(path).read_bytes()))
 
 
-def _safe_cell(value) -> str:
-    """Neutralises values a spreadsheet would run as a formula."""
-    text = "" if value is None else str(value)
-    return "'" + text if text.startswith(_FORMULA_PREFIXES) else text
-
-
 def results_csv(
     rows: list[BulkRow],
     delimiter: str = ",",
@@ -169,7 +163,7 @@ def results_csv(
         ]
         if not include_pins:
             del cells[pin_column]
-        writer.writerow(_safe_cell(v) for v in cells)
+        writer.writerow(safe_cell(v) for v in cells)
     return out.getvalue()
 
 
@@ -225,10 +219,12 @@ class BulkRunner:
         ui: BulkUI,
         source: DeviceSource | None = None,
         cancel: threading.Event | None = None,
+        journal: Journal | None = None,
     ):
         self.provider = provider
         self.profile = profile
         self.rows = rows
+        self.journal = journal
         self.key_name = key_name
         self.append_serial = append_serial
         self.ui = ui
@@ -294,9 +290,10 @@ class BulkRunner:
                 raise EnrollCancelled()
             row.status, row.message, row.message_params = RUNNING, "", {}
             self.ui.row_changed(index)
+            enroller = None
             try:
                 key = self._next_key(row.user, swap)
-                result = Enroller(
+                enroller = Enroller(
                     self.provider,
                     self.profile,
                     row.user,
@@ -308,13 +305,16 @@ class BulkRunner:
                     append_serial=self.append_serial,
                     try_reset_first=True,
                     used_serials=used,
-                ).run()
+                )
+                result = enroller.run()
             except (EnrollCancelled, AuthRequired):
                 row.status = READY
                 self.ui.row_changed(index)
                 raise
             except Exception as e:
                 logger.info("Bulk enrollment of %s failed", row.identifier, exc_info=True)
+                if self.journal is not None:
+                    self.journal.failed(row.user, enroller.key_info if enroller else None, e)
                 row.status = FAILED
                 if isinstance(e, EnrollError):
                     row.message, row.message_params = e.template, e.params
@@ -322,6 +322,8 @@ class BulkRunner:
                     row.message, row.message_params = str(e) or type(e).__name__, {}
                 self.ui.row_changed(index)
                 raise
+            if self.journal is not None:
+                self.journal.enrolled(result)
             row.status = DONE
             row.serial = result.key.serial
             row.key_name = result.display_name

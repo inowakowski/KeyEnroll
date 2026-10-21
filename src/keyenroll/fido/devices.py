@@ -25,6 +25,7 @@ class KeyInfo:
     name: str
     serial: int | None = None
     firmware: str | None = None
+    aaguid: str | None = None  # identifies the model; None if the key has none
     ctap2: bool = True
     has_pin: bool = False
     min_pin_length: int = 4
@@ -140,6 +141,8 @@ def describe(dev: CtapDevice) -> KeyInfo:
     except Exception:
         info.ctap2 = False
         return info
+    if any(ctap_info.aaguid):
+        info.aaguid = str(ctap_info.aaguid)
     options = ctap_info.options
     info.has_pin = bool(options.get("clientPin"))
     info.min_pin_length = ctap_info.min_pin_length

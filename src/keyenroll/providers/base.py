@@ -140,6 +140,7 @@ class Provider:
         self._http = http or requests.Session()
         self._tokens: oauth.TokenSet | None = None
         self._lock = threading.RLock()
+        self._operator = ""  # who is signed in, for the deployment log
 
     # -- configuration -----------------------------------------------------
 
@@ -169,12 +170,19 @@ class Provider:
     def _set_tokens(self, tokens: oauth.TokenSet) -> None:
         with self._lock:
             self._tokens = tokens
+            # A refresh does not always bring a new ID token: keep the name.
+            self._operator = oauth.signed_in_as(tokens.id_token) or self._operator
             if tokens.refresh_token:
                 try:
                     self._store.set(self.instance_id, tokens.refresh_token)
                 except Exception:
                     # The session still works; it just will not survive a restart.
                     logger.warning("Could not save the sign-in to the OS keyring", exc_info=True)
+
+    @property
+    def operator(self) -> str:
+        """The administrator signed in to this instance, if the provider said."""
+        return self._operator
 
     def has_session(self) -> bool:
         """Cheap check without network access."""
@@ -190,6 +198,7 @@ class Provider:
                 oauth.revoke(self.oauth_config(), refresh_token, self._http)
             self._store.delete(self.instance_id)
             self._tokens = None
+            self._operator = ""
 
     def access_token(self, force_refresh: bool = False) -> str:
         with self._lock:

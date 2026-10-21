@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
@@ -9,13 +10,15 @@ from PySide6.QtWidgets import (
     QListWidget,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QVBoxLayout,
     QWidget,
 )
 
 from ..config import Profile
 from ..i18n import N_, tr
 from .common import AppContext
-from .profile_form import ProfileForm
+from .profile_form import KeyModelsEditor, ProfileForm
 from .theme import Card
 
 
@@ -51,14 +54,42 @@ class ProfilesPage(QWidget):
         box = Card(tr("Profile settings"))
         box.body.addLayout(name_form)
         box.body.addWidget(self.form)
-        box.body.addStretch(1)
-        box.body.addLayout(buttons)
+
+        self.models = KeyModelsEditor(ctx.source)
+        models_box = Card(
+            tr("Allowed security keys"),
+            tr(
+                "Leave the list empty to accept every model. The key is checked "
+                "before it is reset, so a key that is not allowed stays as it is."
+            ),
+        )
+        models_box.body.addWidget(self.models)
+
+        # Both cards can be taller than a small window: let them scroll.
+        right_host = QWidget()
+        right = QVBoxLayout(right_host)
+        right.setContentsMargins(0, 0, 6, 0)
+        right.setSpacing(14)
+        right.addWidget(box)
+        right.addWidget(models_box)
+        right.addStretch(1)
+        scroll = QScrollArea()
+        scroll.setObjectName("plain")
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(right_host)
+        right_column = QWidget()
+        column = QVBoxLayout(right_column)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(12)
+        column.addWidget(scroll, 1)
+        column.addLayout(buttons)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(14)
         layout.addWidget(left, 1)
-        layout.addWidget(box, 2)
+        layout.addWidget(right_column, 2)
 
         self._reload()
 
@@ -79,6 +110,7 @@ class ProfilesPage(QWidget):
         self._editing = name
         self.name.setText(profile.name)
         self.form.set_profile(profile)
+        self.models.set_profile(profile)
         self.delete.setEnabled(True)
 
     def _new(self) -> None:
@@ -88,11 +120,12 @@ class ProfilesPage(QWidget):
         self.list.blockSignals(False)
         self.name.setText("")
         self.form.set_profile(Profile())
+        self.models.set_profile(Profile())
         self.delete.setEnabled(False)
         self.name.setFocus()
 
     def _save(self) -> None:
-        profile = self.form.profile(self.name.text().strip())
+        profile = self.models.apply(self.form.profile(self.name.text().strip()))
         problems = profile.problems()
         clash = self.ctx.config.profile(profile.name)
         if clash is not None and profile.name != self._editing:

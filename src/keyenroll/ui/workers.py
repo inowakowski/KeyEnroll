@@ -103,12 +103,17 @@ class EnrollWorker(_Worker):
             append_serial=append_serial,
         )
 
+    @property
+    def key_info(self):
+        """The key being enrolled, as far as the engine got."""
+        return self._enroller.key_info
+
     def job(self):
         return self._enroller.run()
 
 
 class BulkWorker(_Worker):
-    def __init__(self, source, provider, profile, rows, name, append_serial):
+    def __init__(self, source, provider, profile, rows, name, append_serial, journal=None):
         super().__init__()
         self._runner = BulkRunner(
             provider,
@@ -119,6 +124,7 @@ class BulkWorker(_Worker):
             _Bridge(self),
             source=source,
             cancel=self.cancel,
+            journal=journal,
         )
 
     def job(self):
