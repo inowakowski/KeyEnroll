@@ -87,6 +87,11 @@ aktualizacji w tle.
 Aby zaktualizować, zainstaluj nową wersję na starą. Ustawienia, instancje i profile
 zostają zachowane.
 
+!!! info "Ta dokumentacja opisuje wersję rozwojową"
+    Strona jest aktualizowana przy każdej zmianie w projekcie, więc może opisywać
+    funkcje, których nie ma jeszcze w opublikowanym wydaniu. Są one oznaczone
+    dopiskiem *Od wersji …*; porównaj go z wersją widoczną w *Ustawienia → O programie*.
+
 ## Uruchamianie ze źródeł
 
 Programiści mogą uruchomić aplikację bezpośrednio; opis jest w pliku

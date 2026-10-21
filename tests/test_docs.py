@@ -41,6 +41,10 @@ def test_no_host_of_the_site_is_built_in():
     config = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
     assert re.search(r"^site_url: !ENV", config, flags=re.M)
     assert "github.io" not in config and "pages.dev" not in config
+    # The workflow takes the address from GitHub Pages at build time.
+    workflow = (ROOT / ".github" / "workflows" / "docs.yml").read_text(encoding="utf-8")
+    assert "steps.pages.outputs.base_url" in workflow
+    assert "github.io" not in workflow
 
 
 @pytest.mark.parametrize("lang", TRANSLATED)

@@ -245,22 +245,19 @@ interfejsu uruchom go ponownie:
 .venv\Scripts\python tools/docs_screenshots.py
 ```
 
-Stronę buduje i publikuje **Cloudflare Pages** prosto z repozytorium (po każdym
-pushu do `main`; pull requesty dostają podgląd). Ustawienia projektu w Cloudflare:
+Stronę buduje i publikuje na **GitHub Pages** workflow `.github/workflows/docs.yml`,
+po każdym pushu do `main`, który zmienia dokumentację (można go też uruchomić
+ręcznie). Pull requesty tylko ją budują: niedziałający odnośnik przerywa budowanie.
+Strona opisuje więc najnowszy stan `main`, a funkcje, których nie ma jeszcze
+w wydaniu, mają w dokumentacji dopisek „Od wersji …”.
 
-| Ustawienie | Wartość |
-|---|---|
-| Build command | `pip install -r docs/requirements.txt && mkdocs build --strict` |
-| Build output directory | `site` |
-| Zmienna `SITE_URL` (opcjonalna) | pełny adres strony, np. `https://docs.example.com/` — dodaje mapę strony i odnośniki kanoniczne |
+Jednorazowo, w ustawieniach repozytorium: *Settings → Pages → Source:
+GitHub Actions*. Bez tego publikacja kończy się błędem.
 
-W repozytorium nie ma zaszytego żadnego adresu strony: wszystkie odnośniki są
-względne, więc strona działa pod adresem `*.pages.dev` i pod własną domeną bez zmian
-w kodzie. Po zmianie adresu wystarczy poprawić pole *Website* w opisie repozytorium
-i ewentualnie zmienną `SITE_URL`.
-
-Workflow `.github/workflows/docs.yml` niczego nie publikuje — sprawdza tylko, czy
-strona nadal się buduje (niedziałający odnośnik przerywa budowanie).
+W repozytorium nie ma zaszytego żadnego adresu strony. Workflow pobiera go od
+GitHub Pages w czasie budowania (zmienna `SITE_URL`), a wszystkie odnośniki są
+względne, więc własna domena dodana później w *Settings → Pages* działa bez zmian
+w kodzie. Po zmianie adresu wystarczy poprawić pole *Website* w opisie repozytorium.
 
 ### Nowy język interfejsu
 
@@ -287,7 +284,7 @@ Wynik trafia do `dist/installer/`. Każdą platformę trzeba budować na niej sa
 2. Wypchnij tag, np. `v0.3.0`. Workflow `.github/workflows/build.yml` uruchomi testy,
    zbuduje instalatory dla sześciu platform i dołączy je do wydania na GitHubie.
 
-Dokumentację publikuje osobno Cloudflare Pages, po każdym pushu do `main`.
+Dokumentację publikuje osobno GitHub Pages, po każdym pushu do `main`.
 
 Każdy push do `main` i każdy pull request uruchamia linter i testy na Windows, macOS
 i Linuksie (`.github/workflows/tests.yml`).

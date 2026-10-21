@@ -1,8 +1,12 @@
 name: docs
 
-# Checks that the documentation site still builds whenever it changes: a link
-# to a missing page, heading or screenshot fails the run. The site itself is
-# built and published by Cloudflare Pages straight from the repository.
+# Builds the documentation site and publishes it on GitHub Pages after every
+# push to main. Pull requests only build it: a link to a missing page, heading
+# or screenshot fails the run.
+#
+# No address of the site is kept in the repository. GitHub Pages reports it at
+# build time (actions/configure-pages), so a custom domain added later in the
+# repository settings works without a change here.
 on:
   push:
     branches: [main]
@@ -30,5 +34,36 @@ jobs:
           python-version: "3.13"
       - name: Install
         run: python -m pip install -r docs/requirements.txt
+      - name: Find the address of the site
+        id: pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v6
       - name: Build
+        env:
+          # Empty for pull requests: the site then has relative links only.
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
         run: python -m mkdocs build --strict
+      - name: Keep the site for publishing
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    # One publication at a time; a newer push waits instead of being cut off.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v5
