@@ -71,9 +71,25 @@ out of KeyEnroll on a computer you share.
 |---|---|---|
 | Your identity provider | Sign-in, user search, enrollment, credential list | The requests needed for those actions, authorised with your sign-in. |
 | The security key | Enrollment | FIDO commands over USB or NFC. |
-| `api.github.com` | Only when you press **Check for updates** | A request for the latest release number. Nothing about you or your tenant is sent. |
+| `api.github.com` | When you press **Check for updates**, or at start-up if you switched that on | A request for the latest release number. Nothing about you or your tenant is sent. |
+| `github.com` | Only when you confirm an update | The download of the release file. |
 
-There is no telemetry, no usage statistics and no background connection.
+There is no telemetry, no usage statistics and no background connection unless you
+switch on the update check at start-up.
+
+## Updates
+
+!!! info "Since version 0.7.0"
+
+When you confirm an update, KeyEnroll downloads the file from the project's own
+release on GitHub and uses it only if its SHA-256 checksum is the one GitHub
+publishes for it; a file that differs is deleted at once. Once the project's release
+key is built into the application, the list of checksums must also carry the
+maintainer's signature, made with a key that is never stored on GitHub. Then even
+someone who took over the GitHub account could not slip in a file of their own.
+
+The installers are not signed with a commercial certificate, so Windows and macOS
+may still warn about an unknown publisher the first time.
 
 ## The log
 

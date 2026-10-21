@@ -92,6 +92,15 @@ listę.
 Arkusz oczekuje innego separatora. Wyeksportuj ponownie i wybierz drugi format
 (średnik lub przecinek).
 
+## Aktualizacje
+
+| Komunikat | Co oznacza i co zrobić |
+|---|---|
+| *Pobrany plik nie jest tym, który opublikowano.* | Plik zmienił się po drodze albo pobieranie było niepełne. Został usunięty. Spróbuj ponownie; jeśli to się powtarza, zainstaluj ze strony pobierania i zgłoś problem. |
+| *Podpis tego wydania jest nieprawidłowy.* | Wydania nie podpisano kluczem projektu. **Nie instaluj go**; zgłoś to w systemie zgłoszeń. |
+| *To wydanie nie jest podpisane kluczem projektu.* | Aplikacja oczekuje podpisanego wydania, a to go nie ma. Zainstaluj je ze strony pobierania tylko wtedy, gdy notatka wydania wyjaśnia dlaczego. |
+| *Na liście wdrożenia masowego są tymczasowe PIN-y, których nie wyeksportowano.* | Najpierw wyeksportuj wyniki we Wdrożeniu masowym albo wyczyść listę. Przy ustawieniu *Ostrzeż mnie* możesz też kontynuować i je utracić. |
+
 ## Sama aplikacja
 
 **Ostrzeżenie, że nie udało się odczytać pliku ustawień.**

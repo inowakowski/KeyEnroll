@@ -74,9 +74,25 @@ ją, gdy odchodzisz, a na współdzielonym komputerze wyloguj się z KeyEnroll.
 |---|---|---|
 | Twój dostawca tożsamości | Logowanie, wyszukiwanie użytkowników, rejestracja, lista poświadczeń | Żądania potrzebne do tych działań, autoryzowane Twoim logowaniem. |
 | Klucz bezpieczeństwa | Rejestracja | Polecenia FIDO przez USB lub NFC. |
-| `api.github.com` | Tylko po kliknięciu **Sprawdź aktualizacje** | Pytanie o numer najnowszego wydania. Nie są wysyłane żadne dane o Tobie ani o tenancie. |
+| `api.github.com` | Po kliknięciu **Sprawdź aktualizacje** albo przy starcie, jeśli to włączysz | Pytanie o numer najnowszego wydania. Nie są wysyłane żadne dane o Tobie ani o tenancie. |
+| `github.com` | Tylko gdy potwierdzisz aktualizację | Pobranie pliku wydania. |
 
-Nie ma telemetrii, statystyk użycia ani połączeń w tle.
+Nie ma telemetrii, statystyk użycia ani połączeń w tle, chyba że włączysz
+sprawdzanie aktualizacji przy starcie.
+
+## Aktualizacje { #updates }
+
+!!! info "Od wersji 0.7.0"
+
+Gdy potwierdzisz aktualizację, KeyEnroll pobiera plik z wydania projektu na GitHubie
+i używa go tylko wtedy, gdy jego suma SHA-256 jest taka, jaką GitHub dla niego
+publikuje; inny plik jest od razu usuwany. Gdy w aplikacji znajdzie się klucz wydań
+projektu, lista sum musi mieć też podpis opiekuna, złożony kluczem, który nigdy nie
+trafia na GitHub. Wtedy nawet ktoś, kto przejąłby konto GitHub, nie podsunie
+aplikacji własnego pliku.
+
+Instalatory nie są podpisane komercyjnym certyfikatem, więc Windows i macOS mogą
+przy pierwszym uruchomieniu ostrzec o nieznanym wydawcy.
 
 ## Log
 

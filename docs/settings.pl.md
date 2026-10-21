@@ -65,6 +65,24 @@ raz sprawdzić gotową wiadomość.
 | **Przechowuj wpisy (miesiące)** | Starsze miesiące są usuwane przy uruchomieniu aplikacji. Domyślnie 12. |
 | **Otwórz folder dziennika wdrożeń** | Otwiera folder z miesięcznymi plikami CSV. |
 
+## Aktualizacje { #updates }
+
+!!! info "Od wersji 0.7.0"
+
+| Element | Do czego służy |
+|---|---|
+| **Sprawdź aktualizacje** | Pyta GitHuba, czy opublikowano nowsze wydanie. |
+| **Zainstaluj wersję …** (Windows) | Pobiera instalator, sprawdza, czy to opublikowany plik, zamyka KeyEnroll, instaluje nową wersję i uruchamia ją ponownie. Ustawienia, instancje i profile zostają. |
+| **Pobierz wersję …** (macOS, Linux) | Pobiera właściwy plik dla Twojego komputera, sprawdza go i otwiera, z informacją, co dalej: na macOS przeciągnij aplikację do *Aplikacji*, `.deb` zainstaluj menedżerem pakietów, archiwum rozpakuj. |
+| **Otwórz stronę pobierania** | Strona wydania na GitHubie, żeby pobrać dowolny plik samodzielnie. |
+| **Uwzględniaj wersje testowe** | Proponuje też [wersje testowe](install.md#updating), które mają najnowsze funkcje, zanim zostaną sprawdzone na prawdziwych kluczach i tenantach. Domyślnie wyłączone. |
+| **Sprawdzaj aktualizacje przy uruchomieniu aplikacji** | Przy każdym starcie pyta raz GitHuba i pokazuje pasek u góry okna, jeśli jest coś nowego. Domyślnie wyłączone: bez tego KeyEnroll nie nawiązuje żadnego połączenia, o które nie prosisz. |
+| **Tymczasowe PIN-y jeszcze niewyeksportowane** | Co się dzieje, gdy na [liście masowej](bulk.md) są PIN-y, których nie wyeksportowano: **Ostrzeż mnie** pyta najpierw i mówi, że po aktualizacji przepadną bezpowrotnie; **Nie pozwalaj na aktualizację** odmawia, dopóki ich nie wyeksportujesz albo nie wyczyścisz listy. |
+
+Aktualizacja nigdy nie instaluje się w trakcie rejestracji ani bez Twojego
+potwierdzenia. Jak sprawdzany jest pobrany plik, opisuje
+[Dane i bezpieczeństwo](data.md#updates).
+
 ## O programie
 
 ![Sekcja O programie](assets/screenshots/pl/settings-about.png){ .shot }
@@ -74,5 +92,4 @@ raz sprawdzić gotową wiadomość.
 | **Wersja**, **Licencja** | Używana wersja. Podaj ją, zgłaszając problem. |
 | **Strona projektu** | Kod źródłowy i zgłoszenia na GitHubie. |
 | **Dokumentacja** | Otwiera sekcję strony projektu, w której podany jest adres tej dokumentacji. |
-| **Sprawdź aktualizacje** | Pyta GitHuba, czy opublikowano nowsze wydanie. Jeśli tak, pojawia się **Otwórz stronę pobierania**. Nic nie jest pobierane ani instalowane automatycznie, a aplikacja nigdy nie sprawdza aktualizacji sama. |
 | **Otwórz folder z ustawieniami i logami** | Otwiera folder z plikiem ustawień i podfolderem `logs`. Zobacz [Dane i bezpieczeństwo](data.md). |

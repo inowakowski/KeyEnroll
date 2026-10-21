@@ -72,8 +72,9 @@ for the second account, otherwise the first credential is erased.
 
 ## Does it send any data to the author?
 
-No. There is no telemetry. The only connection besides your identity provider is the
-update check, and only when you press the button. See
+No. There is no telemetry. The only connections besides your identity provider are
+the update check, when you press the button or at start-up if you switched that on,
+and the download of an update you confirmed. See
 [Data and security](data.md#what-keyenroll-communicates-with).
 
 ## Which languages are available?

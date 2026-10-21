@@ -90,6 +90,15 @@ the list.
 The spreadsheet expects the other separator. Export again and choose the other
 format (semicolon or comma).
 
+## Updates
+
+| Message | What it means and what to do |
+|---|---|
+| *The downloaded file is not the one that was published.* | The file changed on the way, or the download was incomplete. It was deleted. Try again; if it keeps happening, install from the download page and report it. |
+| *The signature of this release is not valid.* | The release was not signed with the project's key. **Do not install it**; report it in the issue tracker. |
+| *This release is not signed with the project's key.* | The application expects a signed release and this one has none. Install it from the download page only if the release notes explain why. |
+| *The bulk enrollment list has temporary PINs that were not exported.* | Export the results in Bulk enrollment first, or clear the list. With *Warn me* you may also go on and lose them. |
+
 ## The application itself
 
 **A warning that the settings file could not be read.**
