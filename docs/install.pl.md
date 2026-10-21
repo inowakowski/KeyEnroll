@@ -4,6 +4,13 @@ Instalatory dla każdej platformy są dołączone do każdego wydania na GitHubi
 
 [Otwórz stronę pobierania](https://github.com/inowakowski/KeyEnroll/releases/latest){ .md-button .md-button--primary }
 
+!!! note "Wersje testowe"
+    Wersje z dopiskiem *preview*, np. `0.7.0-preview.1`, są oznaczone jako
+    **Pre-release** na [liście wszystkich wydań](https://github.com/inowakowski/KeyEnroll/releases).
+    Zawierają najnowsze funkcje, zanim zostały sprawdzone na prawdziwym sprzęcie
+    i tenantach; wypróbuj je najpierw na zapasowym kluczu. Przycisk powyżej zawsze
+    prowadzi do najnowszej zwykłej wersji.
+
 | System operacyjny | Plik do pobrania |
 |---|---|
 | Windows 10/11, procesor Intel lub AMD | `KeyEnroll-<wersja>-windows-x64-setup.exe` |

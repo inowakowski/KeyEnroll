@@ -5,6 +5,7 @@ set -eu
 
 PYTHON="${PYTHON:-python3}"
 VERSION=$("$PYTHON" -c "import sys; sys.path.insert(0, 'src'); import keyenroll; print(keyenroll.__version__)")
+DEB_VERSION=$(echo "$VERSION" | sed 's/-/~/')
 DEB_ARCH=$(dpkg --print-architecture)
 ARCH=$(echo "$DEB_ARCH" | sed 's/amd64/x64/')
 
@@ -20,7 +21,7 @@ cp packaging/icons/icon_256.png "$STAGE/usr/share/icons/hicolor/256x256/apps/key
 
 cat > "$STAGE/DEBIAN/control" <<EOF
 Package: keyenroll
-Version: $VERSION
+Version: $DEB_VERSION
 Architecture: $DEB_ARCH
 Maintainer: Ignacy Nowakowski <15818597+inowakowski@users.noreply.github.com>
 Section: admin
@@ -33,6 +34,6 @@ Description: Enroll FIDO2 security keys on behalf of users
 EOF
 
 mkdir -p dist/installer
-dpkg-deb --build --root-owner-group "$STAGE" "dist/installer/keyenroll_${VERSION}_${DEB_ARCH}.deb"
+dpkg-deb --build --root-owner-group "$STAGE" "dist/installer/keyenroll_${DEB_VERSION}_${DEB_ARCH}.deb"
 tar -C dist -czf "dist/installer/KeyEnroll-$VERSION-linux-$ARCH.tar.gz" KeyEnroll
 ls -l dist/installer

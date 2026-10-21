@@ -5,6 +5,7 @@
 
 import importlib.metadata
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -81,6 +82,6 @@ if sys.platform == "darwin":
         name="KeyEnroll.app",
         icon=icon,
         bundle_identifier="app.keyenroll",
-        version=__version__,
+        version=re.match(r"\d+(?:\.\d+)*", __version__).group(),
         info_plist={"NSHighResolutionCapable": True},
     )
