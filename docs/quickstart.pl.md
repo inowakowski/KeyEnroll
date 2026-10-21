@@ -5,7 +5,8 @@ Od pustej aplikacji do pierwszego zarejestrowanego klucza. Potrzebujesz:
 - [zainstalowanego](install.md) KeyEnroll,
 - aplikacji zarejestrowanej u dostawcy tożsamości na potrzeby rejestracji kluczy
   ([co jest potrzebne](providers.md)),
-- konta administratora, które może zarządzać metodami uwierzytelniania użytkowników,
+- konta administratora, które może zarządzać metodami uwierzytelniania użytkowników
+  ([jaka rola](providers.md#administrator-roles-at-a-glance)),
 - klucza bezpieczeństwa i użytkownika testowego.
 
 ## 1. Dodaj instancję
