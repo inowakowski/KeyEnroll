@@ -16,6 +16,8 @@ from urllib.parse import quote
 from .. import oauth
 from ..i18n import N_
 from .base import (
+    GROUPS_FIELD,
+    DirectoryGroup,
     DirectoryUser,
     FieldSpec,
     Provider,
@@ -149,6 +151,7 @@ class PingOneAicProvider(Provider):
     label = "PingOne Advanced Identity Cloud"
     supports_credential_list = False
     supports_credential_delete = False
+    supports_groups = True  # not yet tried against a live tenant
     fields = [
         FieldSpec(
             "tenant", N_("Tenant"), placeholder="openam-example.forgeblocks.com"
@@ -172,6 +175,7 @@ class PingOneAicProvider(Provider):
             placeholder="https://sso.example.com",
             help=N_("Leave empty to use the tenant address."),
         ),
+        GROUPS_FIELD,
     ]
 
     @property
@@ -215,25 +219,63 @@ class PingOneAicProvider(Provider):
         users = self._users(f"userName eq {q} or mail eq {q}", 2)
         return users[0] if len(users) == 1 else None
 
+    def _managed(self, kind: str) -> str:
+        return f"https://{self._tenant}/openidm/managed/{quote(self._realm)}_{kind}"
+
     def _users(self, query_filter: str, page_size: int) -> list[DirectoryUser]:
         data = self._request(
             "GET",
-            f"https://{self._tenant}/openidm/managed/{quote(self._realm)}_user",
+            self._managed("user"),
             params={
                 "_queryFilter": query_filter,
                 "_pageSize": str(page_size),
                 "_fields": "userName,givenName,sn,mail",
             },
         ).json()
+        return [self._to_user(u) for u in data.get("result", [])]
+
+    @staticmethod
+    def _to_user(u: dict) -> DirectoryUser:
+        return DirectoryUser(
+            id=u["_id"],
+            username=u.get("userName") or "",
+            display_name=" ".join(p for p in (u.get("givenName"), u.get("sn")) if p),
+            email=u.get("mail") or "",
+        )
+
+    def search_groups(self, query: str) -> list[DirectoryGroup]:
+        query = query.strip()
+        data = self._request(
+            "GET",
+            self._managed("group"),
+            params={
+                "_queryFilter": f"name sw {_query_quote(query)}" if query else "true",
+                "_pageSize": "25",
+                "_fields": "name,description",
+            },
+        ).json()
         return [
-            DirectoryUser(
-                id=u["_id"],
-                username=u.get("userName") or "",
-                display_name=" ".join(p for p in (u.get("givenName"), u.get("sn")) if p),
-                email=u.get("mail") or "",
-            )
-            for u in data.get("result", [])
+            DirectoryGroup(g["_id"], g.get("name") or "", g.get("description") or "")
+            for g in data.get("result", [])
         ]
+
+    def group_members(self, group: DirectoryGroup, nested: bool = False) -> list[DirectoryUser]:
+        url = self._managed("user")
+        params = {
+            # Users whose "groups" relationship points at the group.
+            "_queryFilter": f"groups/_refResourceId eq {_query_quote(group.id)}",
+            "_pageSize": "200",
+            "_fields": "userName,givenName,sn,mail",
+        }
+
+        def page(resp):
+            data = resp.json()
+            cookie = data.get("pagedResultsCookie")
+            if not cookie:
+                return data.get("result", []), None, None
+            return data.get("result", []), url, {**params, "_pagedResultsCookie": cookie}
+
+        return [self._to_user(u) for u in self._collect(url, params, page)]
 
     def _journey(self, payload: dict | None) -> dict:
         resp = self._request(

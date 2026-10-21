@@ -15,6 +15,7 @@ from keyenroll.bulk import BulkRow, BulkRunner, parse_identifiers
 from keyenroll.config import Profile
 from keyenroll.fido import enroll
 from keyenroll.fido.enroll import EnrollCancelled, EnrollError
+from keyenroll.i18n import tr
 from keyenroll.providers.base import AuthRequired, DirectoryUser, ProviderError
 from test_enroll import FakeProvider, FakeSource, FakeUI
 
@@ -105,6 +106,70 @@ def test_resolve_stops_on_expired_session_and_on_cancel():
     cancel.set()
     bulk.resolve_rows(Directory([]), rows, lambda i: None, cancel)
     assert [r.status for r in rows] == [bulk.NEW, bulk.NEW]
+
+
+class KeyedDirectory(Directory):
+    """Also lists the FIDO methods each user has."""
+
+    supports_credential_list = True
+
+    def __init__(self, users, keys):
+        super().__init__(users)
+        self.keys = keys  # user id -> number of FIDO methods
+        self.listed = []
+
+    def list_credentials(self, user):
+        self.listed.append(user.id)
+        if user.id == "id-broken":
+            raise ProviderError("Fake: HTTP 403")
+        return ["c"] * self.keys.get(user.id, 0)
+
+
+def test_existing_fido_methods_are_counted_and_can_be_skipped():
+    directory = KeyedDirectory(users("alice", "bob", "carol"), {"id-alice": 2})
+    rows = [BulkRow(i) for i in ("alice@x.com", "bob@x.com", "ghost@x.com")]
+
+    bulk.resolve_rows(directory, rows, lambda i: None, check_existing=True, skip_existing=True)
+
+    assert [r.status for r in rows] == [bulk.HAS_KEY, bulk.READY, bulk.NOT_FOUND]
+    assert [r.existing for r in rows] == [2, 0, None]
+    # Taken back into the queue, and out again.
+    assert bulk.apply_skip(rows, False) == [0] and rows[0].status == bulk.READY
+    assert bulk.apply_skip(rows, True) == [0] and rows[0].status == bulk.HAS_KEY
+    assert tr(bulk.STATUS_LABELS[bulk.HAS_KEY]) == "Has a key"
+
+
+def test_without_the_check_nothing_extra_is_asked():
+    directory = KeyedDirectory(users("alice"), {"id-alice": 2})
+    rows = [BulkRow("alice@x.com")]
+    bulk.resolve_rows(directory, rows, lambda i: None)
+    assert directory.listed == [] and rows[0].existing is None and rows[0].status == bulk.READY
+
+    class NoList(Directory):
+        supports_credential_list = False  # PingOne AIC
+
+    rows = [BulkRow("alice@x.com")]
+    bulk.resolve_rows(NoList(users("alice")), rows, lambda i: None, check_existing=True)
+    assert rows[0].status == bulk.READY and rows[0].existing is None
+
+
+def test_a_failed_check_marks_only_that_row():
+    directory = KeyedDirectory(users("alice", "broken"), {})
+    rows = [BulkRow("broken@x.com"), BulkRow("alice@x.com")]
+    bulk.resolve_rows(directory, rows, lambda i: None, check_existing=True)
+    assert [r.status for r in rows] == [bulk.FAILED, bulk.READY]
+    assert "403" in rows[0].message
+
+
+def test_group_members_become_rows_without_a_second_lookup():
+    alice, bob = users("alice", "bob")
+    rows = bulk.rows_from_users([alice, bob, alice])
+    assert [r.identifier for r in rows] == ["alice@x.com", "bob@x.com"]
+
+    directory = KeyedDirectory([], {"id-bob": 1})  # find_user would find nobody
+    bulk.resolve_rows(directory, rows, lambda i: None, check_existing=True)
+    assert [r.status for r in rows] == [bulk.READY, bulk.READY]
+    assert [r.existing for r in rows] == [0, 1]
 
 
 # -- batch run --------------------------------------------------------------

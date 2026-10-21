@@ -119,6 +119,28 @@ i zarządzać ich urządzeniami MFA w środowisku.
 poświadczeń, więc strona [Poświadczenia](credentials.md) jest niedostępna. Zarządzaj
 nimi w konsoli administracyjnej.
 
+## Listy masowe z grup { #bulk-lists-from-groups }
+
+!!! info "Od wersji 0.7.0"
+
+[Wczytanie listy z grupy](bulk.md#loading-the-list-from-a-group) odczytuje członkostwo
+w grupach, na co nie pozwala rejestracja opisana przez YubiEnroll. Dlatego opcja jest
+**wyłączona**, dopóki nie włączysz jej dla instancji:
+
+1. Nadaj dodatkowe uprawnienie u dostawcy tożsamości (tabela poniżej).
+2. W KeyEnroll edytuj instancję i ustaw **Listy masowe z grup** na **Włączone**.
+3. **Wyloguj się i zaloguj ponownie**, żeby nowe uprawnienie weszło do logowania.
+
+| Dostawca tożsamości | Dodatkowe uprawnienie |
+|---|---|
+| Microsoft Entra ID | Delegowane uprawnienie Microsoft Graph `GroupMember.Read.All` ze zgodą administratora dla tenanta. |
+| Okta | Zakres `okta.groups.read`, nadany aplikacji na karcie *Okta API Scopes*. |
+| PingOne PingID | Bez zakresu; rola administratora musi pozwalać na odczyt grup (np. *Identity Data Read Only* obok roli używanej do rejestracji). |
+| PingOne Advanced Identity Cloud | Bez zmian; `fr:idm:*` obejmuje już grupy. Grupy są odczytywane z obiektu `<realm>_group`, a ich członkowie przez relację `groups` użytkowników. **Jeszcze niesprawdzone na żywym tenancie**: jeśli w Twoim tenancie nie działa, prosimy o [zgłoszenie](https://github.com/inowakowski/KeyEnroll/issues). |
+
+Jeśli opcja jest włączona, a uprawnienia brakuje, logowanie lub wczytanie grupy
+kończy się komunikatem dostawcy o braku zgody albo zabronionym żądaniu.
+
 ## Czy to było testowane?
 
 Na żywym tenancie potwierdzono dotąd tylko integrację z **Okta**. Pozostałe trzy

@@ -17,9 +17,10 @@ from keyenroll.secrets_store import TokenStore
 
 
 class FakeResponse:
-    def __init__(self, status=200, body=None):
+    def __init__(self, status=200, body=None, links=None):
         self.status_code = status
         self._body = body
+        self.links = links or {}  # requests parses the Link header into this
 
     def json(self):
         if self._body is None:
@@ -51,8 +52,8 @@ class FakeHttp:
         self.calls: list[Call] = []
         self.queue: list[FakeResponse] = []
 
-    def add(self, body=None, status=200):
-        self.queue.append(FakeResponse(status, body))
+    def add(self, body=None, status=200, links=None):
+        self.queue.append(FakeResponse(status, body, links))
         return self
 
     def request(self, method, url, params=None, json=None, data=None, headers=None, timeout=None):

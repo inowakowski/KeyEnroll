@@ -65,8 +65,15 @@ class EnrollPage(QWidget):
 
         # 1. user
         self.picker = UserPicker(ctx)
+        self.picker.selection_changed.connect(self._check_existing)
+        self._existing_id = 0
+        self.user_note = QLabel()
+        self.user_note.setObjectName("hint")
+        self.user_note.setWordWrap(True)
+        self.user_note.setVisible(False)
         user_card = Card(tr("1. User"))
         user_card.body.addWidget(self.picker, 1)
+        user_card.body.addWidget(self.user_note)
         user_card.setMinimumWidth(300)
 
         # 2. key
@@ -260,6 +267,36 @@ class EnrollPage(QWidget):
         if profile:
             self.form.set_profile(profile)
         self._show_key_info()
+
+    # -- existing keys of the user -----------------------------------------
+
+    def _check_existing(self, user) -> None:
+        """Says how many FIDO methods the selected user has already, so that a
+        second key is not handed out by mistake."""
+        self._existing_id += 1
+        request = self._existing_id
+        self.user_note.setVisible(False)
+        provider = self.ctx.provider
+        if user is None or provider is None or not provider.supports_credential_list:
+            return
+        name = user.display_name or user.username
+
+        def done(credentials) -> None:
+            if request != self._existing_id:
+                return
+            if credentials:
+                text = tr(
+                    "{name} already has {count} FIDO method(s).", name=name, count=len(credentials)
+                )
+            else:
+                text = tr("{name} has no FIDO method yet.", name=name)
+            self.user_note.setText(text)
+            self.user_note.setVisible(True)
+
+        def failed(exc) -> None:
+            pass  # only a hint; the enrollment itself reports real problems
+
+        run_task(self, lambda: provider.list_credentials(user), done, failed)
 
     # -- keys --------------------------------------------------------------
 

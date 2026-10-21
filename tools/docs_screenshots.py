@@ -36,8 +36,9 @@ from keyenroll.bulk import BulkRow
 from keyenroll.config import ConfigStore, Instance, Profile
 from keyenroll.handover import Handover
 from keyenroll.providers import PROVIDERS
-from keyenroll.providers.base import Credential, DirectoryUser
+from keyenroll.providers.base import Credential, DirectoryGroup, DirectoryUser
 from keyenroll.secrets_store import TokenStore
+from keyenroll.ui import bulk_page as bulk_page_module
 from keyenroll.ui import dialogs, main_window
 from keyenroll.ui.common import AppContext
 from keyenroll.ui.theme import apply_theme
@@ -76,6 +77,12 @@ class Provider(GuiProvider):
 
     def search_users(self, query):
         return [u for u in PEOPLE if query.lower() in u.display_name.lower()]
+
+    def search_groups(self, query):
+        return [
+            DirectoryGroup("g1", "New starters October", "Joined in October 2026"),
+            DirectoryGroup("g2", "New starters September", "Joined in September 2026"),
+        ]
 
 
 class Source(FakeSource):
@@ -163,16 +170,19 @@ def render(app: QApplication, lang: str) -> list[str]:
     window.nav.setCurrentRow(main_window.PAGE_BULK)
     bulk_page = window.bulk_page
     states = [
-        (bulk.DONE, 23456789, "48153729"),
-        (bulk.DONE, 23456790, "90274615"),
-        (bulk.RUNNING, None, None),
-        (bulk.READY, None, None),
+        (bulk.DONE, 23456789, "48153729", 0),
+        (bulk.DONE, 23456790, "90274615", 0),
+        (bulk.RUNNING, None, None, 0),
+        (bulk.READY, None, None, 0),
+        (bulk.HAS_KEY, None, None, 2),
     ]
+    bulk_page.skip_existing.setChecked(True)
     bulk_page.rows = [
         BulkRow(user.username, user=user, status=status, serial=serial, pin=pin,
                 key_name=f"YubiKey 5 NFC {serial}" if serial else "",
-                finished="2026-10-02 09:41:07" if serial else "", must_change_pin=True)
-        for user, (status, serial, pin) in zip(PEOPLE, states, strict=False)
+                finished="2026-10-02 09:41:07" if serial else "", must_change_pin=True,
+                existing=existing)
+        for user, (status, serial, pin, existing) in zip(PEOPLE, states, strict=False)
     ]
     bulk_page.rows.append(BulkRow("frank.ghost@example.com", status=bulk.NOT_FOUND))
     bulk_page._instance_id = config.active_instance_id
@@ -187,6 +197,12 @@ def render(app: QApplication, lang: str) -> list[str]:
     bulk_page.table.selectRow(0)
     shot(window, "bulk")
     shot(dialogs.ExportDialog(window), "export")
+    group_dialog = bulk_page_module.GroupDialog(ctx.provider, window)
+    group_dialog.query.setText("New starters")
+    group_dialog.search()
+    pump(0.3)
+    group_dialog.table.selectRow(0)
+    shot(group_dialog, "group")
     bulk_page._worker, bulk_page._running = None, False
     bulk_page.rows = []  # nothing left to warn about when the window closes
     bulk_page._refresh_all()

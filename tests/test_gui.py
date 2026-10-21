@@ -25,9 +25,10 @@ from keyenroll import DOCS_URL, PROJECT_URL, bulk, i18n
 from keyenroll.config import ConfigStore, Instance
 from keyenroll.fido import enroll
 from keyenroll.handover import Handover
-from keyenroll.providers.base import AuthRequired, Credential, DirectoryUser
+from keyenroll.providers.base import AuthRequired, Credential, DirectoryGroup, DirectoryUser
 from keyenroll.secrets_store import TokenStore
 from keyenroll.ui import common, dialogs
+from keyenroll.ui.bulk_page import COL_MESSAGE, COL_PIN, COL_SERIAL, COL_STATUS
 from keyenroll.ui.common import AppContext
 from keyenroll.ui.main_window import PAGE_BULK, PAGE_INSTANCES, PAGE_SETTINGS, MainWindow
 from test_enroll import FakeProvider, FakeSource
@@ -41,6 +42,9 @@ USERS = [
 class GuiProvider(FakeProvider):
     supports_credential_list = True
     supports_credential_delete = True
+    supports_groups = True
+    supports_nested_groups = True
+    groups_enabled = True
 
     def __init__(self, instance):
         super().__init__()
@@ -68,6 +72,13 @@ class GuiProvider(FakeProvider):
 
     def logout(self):
         self.session = False
+
+    def search_groups(self, query):
+        return [DirectoryGroup("g1", "Finance", "Everyone in finance")]
+
+    def group_members(self, group, nested=False):
+        self.nested = nested
+        return list(USERS)
 
 
 @pytest.fixture(scope="module")
@@ -383,7 +394,7 @@ def test_bulk_page_imports_enrolls_and_exports(gui, tmp_path, monkeypatch):
     page.load.click()
     wait_until(lambda: not page.is_running() and page.table.rowCount() == 3)
     assert [r.status for r in page.rows] == [bulk.READY, bulk.NOT_FOUND, bulk.READY]
-    assert page.table.item(1, 2).text() == "Not found"
+    assert page.table.item(1, COL_STATUS).text() == "Not found"
     assert "2 ready" in page.summary.text() and "1 not found" in page.summary.text()
 
     keys = [FakeAuthenticator("k1"), FakeAuthenticator("k2")]
@@ -411,10 +422,10 @@ def test_bulk_page_imports_enrolls_and_exports(gui, tmp_path, monkeypatch):
     assert "factory reset" in shown["boxes"][-1] and "2 security key(s)" in shown["boxes"][-1]
     assert [r.status for r in page.rows] == [bulk.DONE, bulk.NOT_FOUND, bulk.DONE]
     assert [k.pin for k in keys] == [page.rows[0].pin, page.rows[2].pin]
-    assert page.table.item(0, 3).text() == "501" and page.table.item(2, 3).text() == "502"
-    assert page.table.item(0, 4).text() == "••••••"  # PINs are masked on screen
+    assert page.table.item(0, COL_SERIAL).text() == "501" and page.table.item(2, COL_SERIAL).text() == "502"
+    assert page.table.item(0, COL_PIN).text() == "••••••"  # PINs are masked on screen
     page.show_pins.setChecked(True)
-    assert page.table.item(0, 4).text() == keys[0].pin
+    assert page.table.item(0, COL_PIN).text() == keys[0].pin
     assert page.progress.value() == 2 and page.progress.maximum() == 2
     assert not ctx.busy and window.enroll_page.start.isEnabled()
     assert page.has_unexported_pins()
@@ -473,12 +484,12 @@ def test_bulk_failure_pauses_and_retry_resets_the_row(gui, tmp_path, monkeypatch
     wait_until(lambda: not page.is_running())
 
     assert [r.status for r in page.rows] == [bulk.FAILED, bulk.READY]
-    assert "server said no" in page.table.item(0, 5).text()
+    assert "server said no" in page.table.item(0, COL_MESSAGE).text()
     assert "server said no" in shown["boxes"][-1]
     assert page.retry.isEnabled()
     page.retry.click()
     assert [r.status for r in page.rows] == [bulk.READY, bulk.READY]
-    assert page.table.item(0, 5).text() == ""
+    assert page.table.item(0, COL_MESSAGE).text() == ""
 
 
 def test_bulk_list_is_locked_to_its_instance(gui, tmp_path, monkeypatch):
@@ -905,7 +916,7 @@ def test_sorted_bulk_list_keeps_rows_tied_to_their_users(gui, tmp_path, monkeypa
     wait_until(lambda: not page.is_running())
 
     by_user = {
-        page.table.item(r, 0).text(): (page.table.item(r, 2).text(), page.table.item(r, 3).text())
+        page.table.item(r, 0).text(): (page.table.item(r, COL_STATUS).text(), page.table.item(r, COL_SERIAL).text())
         for r in range(3)
     }
     assert by_user == {
@@ -921,10 +932,10 @@ def test_sorted_bulk_list_keeps_rows_tied_to_their_users(gui, tmp_path, monkeypa
     assert shown["results"][-1].handover.pin == keys[1].pin
 
     # Sorting by status regroups the rows; the data follows.
-    page.table.sortItems(3, Qt.SortOrder.DescendingOrder)
-    assert column(page.table, 3) == ["502", "501", ""]
+    page.table.sortItems(COL_SERIAL, Qt.SortOrder.DescendingOrder)
+    assert column(page.table, COL_SERIAL) == ["502", "501", ""]
     page.show_pins.setChecked(True)
-    assert column(page.table, 4) == [keys[1].pin, keys[0].pin, ""]
+    assert column(page.table, COL_PIN) == [keys[1].pin, keys[0].pin, ""]
 
 
 # -- update check -----------------------------------------------------------
@@ -1082,3 +1093,54 @@ def test_configuration_moves_to_another_workstation(gui, tmp_path, monkeypatch):
     path.write_text("{}", encoding="utf-8")
     page.import_.click()
     assert "not a KeyEnroll configuration" in shown["boxes"][-1]
+
+
+def test_bulk_list_from_a_group_with_existing_keys(gui, monkeypatch):
+    from keyenroll.ui import bulk_page
+    from keyenroll.ui.bulk_page import COL_EXISTING
+
+    window, ctx, key, source, shown = gui
+
+    def pick_group(dialog):
+        dialog.search()
+        wait_until(lambda: dialog.table.rowCount() == 1 and dialog.ok.isEnabled())
+        dialog.nested.setChecked(True)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(bulk_page.GroupDialog, "exec", pick_group)
+    window.nav.setCurrentRow(PAGE_BULK)
+    page = window.bulk_page
+    page.load_group.click()
+    wait_until(lambda: not page.is_running() and len(page.rows) == 2)
+    wait_until(lambda: all(r.status == bulk.READY for r in page.rows))
+
+    assert ctx.provider.nested is True
+    assert [r.user.username for r in page.rows] == ["alice@example.com", "bob@example.com"]
+    assert [page.table.item(r, COL_EXISTING).text() for r in range(2)] == ["1", "1"]
+    assert page.start.isEnabled()
+
+    page.skip_existing.setChecked(True)  # everyone has a key already
+    assert [r.status for r in page.rows] == [bulk.HAS_KEY, bulk.HAS_KEY]
+    assert "2 skipped" in page.summary.text() and not page.start.isEnabled()
+    page.skip_existing.setChecked(False)
+    assert [r.status for r in page.rows] == [bulk.READY, bulk.READY]
+
+    # Switched off for the instance: the button explains instead.
+    ctx.provider.groups_enabled = False
+    page.load_group.click()
+    assert "switched off for this instance" in shown["boxes"][-1]
+
+
+def test_enroll_page_tells_how_many_keys_the_user_has(gui):
+    window, ctx, key, source, shown = gui
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    pick_user(page, "Alice")
+    wait_until(lambda: page.user_note.isVisible())
+    assert "already has 1 FIDO method" in page.user_note.text()
+
+    ctx.provider.credentials = []
+    page.picker.table.clearSelection()
+    assert not page.user_note.isVisible()
+    page.picker.table.selectRow(0)
+    wait_until(lambda: "no FIDO method yet" in page.user_note.text())

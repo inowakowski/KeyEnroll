@@ -5,6 +5,7 @@ from ..secrets_store import TokenStore
 from .base import (
     AuthRequired,
     Credential,
+    DirectoryGroup,
     DirectoryUser,
     FieldSpec,
     Provider,
@@ -33,6 +34,7 @@ def create_provider(instance: Instance, token_store: TokenStore) -> Provider:
 __all__ = [
     "AuthRequired",
     "Credential",
+    "DirectoryGroup",
     "DirectoryUser",
     "FieldSpec",
     "PROVIDERS",

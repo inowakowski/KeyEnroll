@@ -40,6 +40,40 @@ Zasady:
 - Pliki zapisane przez Excela lub Notatnik działają bez przeróbek (wykrywane są
   kodowania UTF-8, UTF-16 i kodowania Windows).
 
+## Lista z grupy { #loading-the-list-from-a-group }
+
+!!! info "Od wersji 0.7.0"
+
+Zamiast pliku listą mogą być członkowie grupy z katalogu, np. *Nowi pracownicy
+październik*. Wymaga to dodatkowego uprawnienia i włącza się osobno dla każdej
+instancji; zobacz [Listy masowe z grup](providers.md#bulk-lists-from-groups).
+
+![Wybór grupy](assets/screenshots/pl/group.png){ .shot .dialog }
+
+1. **Wczytaj z grupy…**, wpisz początek nazwy grupy i kliknij **Szukaj**.
+2. Zaznacz grupę. W Microsoft Entra ID opcja **Uwzględnij członków podgrup** dodaje
+   też członków grup zagnieżdżonych.
+3. **Wczytaj członków**. Brani są tylko użytkownicy; urządzenia i inne obiekty
+   w grupie są pomijane, a użytkownik występujący dwa razy trafia na listę raz.
+
+Użytkownicy pochodzą wprost z katalogu, więc nie trzeba ich osobno wyszukiwać. Lista
+należy do instancji, dla której ją wczytano, tak samo jak lista z pliku.
+
+## Użytkownicy, którzy mają już klucz { #users-who-already-have-a-key }
+
+!!! info "Od wersji 0.7.0"
+
+Gdy opcja **Sprawdzaj istniejące metody FIDO** jest włączona (domyślnie), KeyEnroll
+przy wczytywaniu listy liczy metody FIDO, które każdy użytkownik już ma, i pokazuje
+tę liczbę w kolumnie **Metody FIDO**. Opcja **Pomiń użytkowników, którzy już je
+mają** zmienia ich status na *Ma już klucz*, więc wdrożenie ich pomija; jej
+wyłączenie przywraca ich do kolejki.
+
+Liczone są wszystkie metody FIDO znane dostawcy tożsamości: klucze bezpieczeństwa,
+a w Entra ID i Okta także passkeys w Microsoft Authenticator czy Windows Hello.
+PingOne Advanced Identity Cloud nie udostępnia ich listy, więc przy nim kolumna
+pozostaje pusta.
+
 ## Strona
 
 **Opcje rejestracji** (u góry)
@@ -49,12 +83,14 @@ Zasady:
 | **Profil** | [Profil](profiles.md) stosowany do każdego klucza we wdrożeniu. Wiersz poniżej streszcza jego opcje. |
 | **Nazwa wyświetlana klucza** | Nazwa nadawana każdemu kluczowi. Połącz ją z numerem seryjnym, żeby rozróżniać klucze. |
 | **Dodaj numer seryjny do nazwy klucza** | Dopisuje numer seryjny danego klucza. |
+| **Sprawdzaj istniejące metody FIDO**, **Pomiń użytkowników, którzy już je mają** | Zobacz [Użytkownicy, którzy mają już klucz](#users-who-already-have-a-key). |
 
 **Lista użytkowników** (środek)
 
 | Element | Do czego służy |
 |---|---|
 | **Wczytaj z pliku…** | Wczytuje listę i sprawdza każdego użytkownika w katalogu. |
+| **Wczytaj z grupy…** | Używa członków grupy z katalogu jako listy, zobacz [wyżej](#loading-the-list-from-a-group). |
 | **Wyczyść listę** | Opróżnia listę. Najpierw pyta, jeśli są PIN-y, których nie wyeksportowano. |
 | **Pokaż PIN-y na liście** | Pokazuje tymczasowe PIN-y zamiast kropek. Zostaw wyłączone, jeśli ktoś może widzieć Twój ekran. |
 | Podsumowanie po prawej | Ilu użytkowników jest gotowych, zarejestrowanych, nieudanych i nieznalezionych. |
@@ -81,6 +117,7 @@ Zasady:
 | W toku | Klucz tego użytkownika jest właśnie rejestrowany. |
 | Zarejestrowano | Gotowe. Wiersz pokazuje numer seryjny i PIN. |
 | Niepowodzenie | Coś poszło nie tak; kolumna *Komunikat* mówi co. |
+| Ma już klucz | Użytkownik ma już metodę FIDO, a opcja *Pomiń użytkowników, którzy już je mają* jest włączona. Wiersz jest pomijany. |
 
 ## Przebieg wdrożenia
 

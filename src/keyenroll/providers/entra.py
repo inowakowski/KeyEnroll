@@ -8,7 +8,9 @@ from urllib.parse import quote
 from .. import oauth
 from ..i18n import N_
 from .base import (
+    GROUPS_FIELD,
     Credential,
+    DirectoryGroup,
     DirectoryUser,
     FieldSpec,
     Provider,
@@ -36,6 +38,8 @@ class EntraProvider(Provider):
     kind = "entra"
     label = "Microsoft Entra ID"
     max_display_name = MAX_DISPLAY_NAME
+    supports_groups = True
+    supports_nested_groups = True
     fields = [
         FieldSpec("tenant_id", N_("Directory (tenant) ID")),
         FieldSpec("client_id", N_("Application (client) ID")),
@@ -56,6 +60,7 @@ class EntraProvider(Provider):
             default="https://graph.microsoft.com",
             help=N_("Change only for national cloud deployments."),
         ),
+        GROUPS_FIELD,
     ]
 
     @property
@@ -76,6 +81,7 @@ class EntraProvider(Provider):
             scopes=[
                 f"{self._graph}/User.ReadBasic.All",
                 f"{self._graph}/UserAuthenticationMethod.ReadWrite.All",
+                *([f"{self._graph}/GroupMember.Read.All"] if self.groups_enabled else []),
                 "offline_access",
                 "openid",
                 "profile",
@@ -180,8 +186,13 @@ class EntraProvider(Provider):
         user = DirectoryUser(id=registration.state["user_id"], username="")
         self._request("POST", self._methods_url(user), json=body)
 
+    @staticmethod
+    def _page(resp) -> tuple[list, str | None, None]:
+        data = resp.json()
+        return data.get("value", []), data.get("@odata.nextLink"), None
+
     def list_credentials(self, user: DirectoryUser) -> list[Credential]:
-        data = self._request("GET", self._methods_url(user)).json()
+        methods = self._collect(self._methods_url(user), None, self._page)
         return [
             Credential(
                 id=m["id"],
@@ -189,7 +200,30 @@ class EntraProvider(Provider):
                 created=m.get("createdDateTime") or "",
                 detail=m.get("model") or m.get("aaGuid") or "",
             )
-            for m in data.get("value", [])
+            for m in methods
+        ]
+
+    def search_groups(self, query: str) -> list[DirectoryGroup]:
+        params = {"$select": "id,displayName,description", "$top": "25"}
+        query = query.strip()
+        if query:
+            params["$filter"] = "startswith(displayName,'{}')".format(query.replace("'", "''"))
+        data = self._request("GET", f"{self._api}/groups", params=params).json()
+        return [
+            DirectoryGroup(g["id"], g.get("displayName") or "", g.get("description") or "")
+            for g in data.get("value", [])
+        ]
+
+    def group_members(self, group: DirectoryGroup, nested: bool = False) -> list[DirectoryUser]:
+        relation = "transitiveMembers" if nested else "members"
+        members = self._collect(
+            f"{self._api}/groups/{quote(group.id)}/{relation}",
+            {"$select": "id,displayName,userPrincipalName,mail", "$top": "999"},
+            self._page,
+        )
+        # Groups also hold devices, service principals and other groups.
+        return [
+            self._to_user(m) for m in members if m.get("@odata.type") == "#microsoft.graph.user"
         ]
 
     def delete_credential(self, user: DirectoryUser, credential_id: str) -> None:

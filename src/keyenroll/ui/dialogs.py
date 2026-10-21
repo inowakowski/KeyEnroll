@@ -112,7 +112,7 @@ class InstanceDialog(QDialog):
             if spec.choices:
                 widget: QLineEdit | QComboBox = QComboBox()
                 for choice, label in spec.choices:
-                    widget.addItem(label, choice)
+                    widget.addItem(tr(label), choice)
                 widget.setCurrentIndex(max(0, widget.findData(value)))
             else:
                 widget = QLineEdit(value)

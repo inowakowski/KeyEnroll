@@ -12,6 +12,7 @@ laid out as three numbered steps and a large button.
 | Search field | Type the beginning of a name, user name or e-mail address and press ++enter++ or **Search**. An empty search lists the first users of the directory. |
 | User list | Select the user who will receive the key. Click a column header to sort. |
 | Counter below the list | How many users matched. At most 25 are shown, so make the search more specific if the user is missing. |
+| Note under the list | How many FIDO methods the selected user already has, so that a second key is not handed out by mistake (since 0.7.0; not with PingOne AIC). |
 
 You have to be [signed in](instances.md#signing-in) to search.
 

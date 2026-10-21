@@ -8,6 +8,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, ClassVar, Iterable
+from urllib.parse import urlsplit
 
 import requests
 
@@ -20,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 MAX_THROTTLE_RETRIES = 3
 MAX_THROTTLE_WAIT = 30.0
+# Upper bound for following "next page" links: a provider that keeps sending
+# them must not keep the application busy forever.
+MAX_PAGES = 100
 
 
 def _retry_after(resp) -> float:
@@ -60,6 +64,13 @@ class DirectoryUser:
     username: str
     display_name: str = ""
     email: str = ""
+
+
+@dataclass
+class DirectoryGroup:
+    id: str
+    name: str
+    description: str = ""
 
 
 @dataclass
@@ -109,6 +120,19 @@ def to_b64url(value: Any) -> str:
     raise ProviderError(f"Unsupported binary value: {value!r}")
 
 
+GROUPS_FIELD = FieldSpec(
+    "groups",
+    N_("Bulk lists from groups"),
+    required=False,
+    default="off",
+    choices=[("off", N_("Off")), ("on", N_("On"))],
+    help=N_(
+        "Lets bulk enrollment load the members of a directory group. Needs an "
+        "additional permission in the application registration; see the documentation."
+    ),
+)
+
+
 def clean_host(value: str) -> str:
     """Accepts 'https://host/path' or 'host' and returns the bare host."""
     value = value.strip()
@@ -124,6 +148,8 @@ class Provider:
     supports_credential_list: ClassVar[bool] = True
     supports_credential_delete: ClassVar[bool] = True
     max_display_name: ClassVar[int | None] = None  # limit for credential names
+    supports_groups: ClassVar[bool] = False
+    supports_nested_groups: ClassVar[bool] = False
 
     def __init__(
         self,
@@ -154,6 +180,13 @@ class Provider:
 
     def oauth_config(self) -> oauth.OAuthConfig:
         raise NotImplementedError
+
+    @property
+    def groups_enabled(self) -> bool:
+        """Group lists were switched on for this instance. They need a
+        permission beyond the registration YubiEnroll documents, so they are
+        off unless the operator asks for them."""
+        return self.supports_groups and self.settings.get("groups") == "on"
 
     # -- session -----------------------------------------------------------
 
@@ -280,6 +313,27 @@ class Provider:
             )
         return resp
 
+    def _collect(self, url: str, params: dict | None, page) -> list:
+        """Follows a provider's "next page" links and returns every item.
+
+        ``page(response)`` returns ``(items, next_url, next_params)``; no
+        next URL ends the list. A next link to another host is not followed:
+        the access token must never be sent anywhere else.
+        """
+        host = urlsplit(url).netloc
+        items: list = []
+        for _ in range(MAX_PAGES):
+            got, next_url, params = page(self._request("GET", url, params=params))
+            items.extend(got)
+            if not next_url:
+                return items
+            if urlsplit(next_url).netloc != host:
+                logger.warning("%s: not following a next-page link to another host", self.label)
+                return items
+            url = next_url
+        logger.warning("%s: stopped after %d pages", self.label, MAX_PAGES)
+        return items
+
     def _error_message(self, resp: requests.Response) -> str:
         try:
             body = resp.json()
@@ -321,6 +375,14 @@ class Provider:
         """Cleans up server-side state of a ceremony that was not completed."""
 
     def list_credentials(self, user: DirectoryUser) -> list[Credential]:
+        raise NotImplementedError
+
+    def search_groups(self, query: str) -> list[DirectoryGroup]:
+        raise NotImplementedError
+
+    def group_members(self, group: DirectoryGroup, nested: bool = False) -> list[DirectoryUser]:
+        """The users in a group; ``nested`` includes members of its subgroups
+        where the provider can tell them apart."""
         raise NotImplementedError
 
     def delete_credential(self, user: DirectoryUser, credential_id: str) -> None:

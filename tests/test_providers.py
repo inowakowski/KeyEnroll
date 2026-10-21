@@ -715,3 +715,101 @@ def test_sign_in_works_even_if_the_keyring_refuses_to_store_it(http):
     p._set_tokens(oauth.TokenSet("ACCESS", time.time() + 3600, "REFRESH"))
     http.add([])
     assert p.search_users("") == [] and p.has_session()
+
+
+# -- groups and paging (0.7.0) ---------------------------------------------------
+
+from keyenroll.providers.base import DirectoryGroup  # noqa: E402
+
+GROUP = DirectoryGroup("g1", "Finance")
+
+
+def test_group_permission_is_requested_only_when_switched_on(http, store):
+    def scopes(cls, settings):
+        return cls("i1", settings, store, http).oauth_config().scopes
+
+    entra = {"tenant_id": "T", "client_id": "C"}
+    okta = {"domain": "x.okta.com", "client_id": "C"}
+    assert not any("GroupMember" in s for s in scopes(EntraProvider, entra))
+    assert "https://graph.microsoft.com/GroupMember.Read.All" in scopes(
+        EntraProvider, {**entra, "groups": "on"}
+    )
+    assert "okta.groups.read" not in scopes(OktaProvider, okta)
+    assert "okta.groups.read" in scopes(OktaProvider, {**okta, "groups": "on"})
+    assert not EntraProvider("i1", entra, store, http).groups_enabled
+
+
+def test_entra_groups_and_members_across_pages(entra, http):
+    http.add({"value": [{"id": "g1", "displayName": "Finance", "description": "All of it"}]})
+    assert entra.search_groups("Fin'") == [DirectoryGroup("g1", "Finance", "All of it")]
+    assert http.calls[0].params["$filter"] == "startswith(displayName,'Fin''')"
+
+    user = {"@odata.type": "#microsoft.graph.user", "id": "u1", "userPrincipalName": "a@x", "displayName": "A"}
+    device = {"@odata.type": "#microsoft.graph.device", "id": "d1", "displayName": "Laptop"}
+    http.add({"value": [user, device], "@odata.nextLink": "https://graph.microsoft.com/v1.0/next?page=2"})
+    http.add({"value": [{**user, "id": "u2", "userPrincipalName": "b@x"}]})
+
+    members = entra.group_members(GROUP, nested=True)
+
+    assert [m.username for m in members] == ["a@x", "b@x"]  # the device is left out
+    assert http.calls[1].url.endswith("/groups/g1/transitiveMembers")
+    assert http.calls[2].url == "https://graph.microsoft.com/v1.0/next?page=2"
+    assert http.calls[2].params is None
+
+
+def test_a_next_page_on_another_host_is_not_followed(entra, http):
+    user = {"@odata.type": "#microsoft.graph.user", "id": "u1", "userPrincipalName": "a@x"}
+    http.add({"value": [user], "@odata.nextLink": "https://evil.example.com/steal"})
+    assert [m.id for m in entra.group_members(GROUP)] == ["u1"]
+    assert len(http.calls) == 1  # the token never went to evil.example.com
+
+
+def test_paging_stops_after_the_limit(entra, http, monkeypatch):
+    from keyenroll.providers import base
+
+    monkeypatch.setattr(base, "MAX_PAGES", 3)
+    for _ in range(3):
+        http.add({"value": [], "@odata.nextLink": "https://graph.microsoft.com/v1.0/again"})
+    assert entra.group_members(GROUP) == []
+    assert len(http.calls) == 3
+
+
+def test_okta_groups_and_members_follow_the_link_header(okta, http):
+    http.add([{"id": "g1", "profile": {"name": "Finance", "description": "d"}}])
+    assert okta.search_groups("Fin") == [DirectoryGroup("g1", "Finance", "d")]
+    assert http.calls[0].params == {"limit": "25", "q": "Fin"}
+
+    person = {"id": "00u1", "profile": {"login": "a@x", "firstName": "A", "lastName": "B"}}
+    http.add([person], links={"next": {"url": "https://acme.okta.com/api/v1/groups/g1/users?after=00u1"}})
+    http.add([{**person, "id": "00u2", "profile": {"login": "b@x"}}])
+
+    assert [m.username for m in okta.group_members(GROUP)] == ["a@x", "b@x"]
+    assert http.calls[1].url == "https://acme.okta.com/api/v1/groups/g1/users"
+    assert http.calls[2].url.endswith("users?after=00u1")
+
+
+def test_pingone_groups_members_and_device_pages(pingone, http):
+    http.add({"_embedded": {"groups": [{"id": "g1", "name": "Finance"}]}})
+    assert pingone.search_groups('Fin"x') == [DirectoryGroup("g1", "Finance", "")]
+    assert http.calls[0].params["filter"] == 'name sw "Fin\\"x"'
+
+    http.add({
+        "_embedded": {"users": [{"id": "u1", "username": "a"}]},
+        "_links": {"next": {"href": "https://api.pingone.eu/v1/environments/ENV/users?cursor=2"}},
+    })  # fmt: skip
+    http.add({"_embedded": {"users": [{"id": "u2", "username": "b"}]}, "_links": {}})
+    assert [m.username for m in pingone.group_members(GROUP)] == ["a", "b"]
+    assert http.calls[1].params["filter"] == 'memberOfGroups[id eq "g1"]'
+
+
+def test_aic_groups_and_members_use_the_paged_results_cookie(aic, http):
+    http.add({"result": [{"_id": "g1", "name": "Finance"}]})
+    assert aic.search_groups("") == [DirectoryGroup("g1", "Finance", "")]
+    assert http.calls[0].url.endswith("/openidm/managed/alpha_group")
+    assert http.calls[0].params["_queryFilter"] == "true"
+
+    http.add({"result": [{"_id": "u1", "userName": "a"}], "pagedResultsCookie": "c2"})
+    http.add({"result": [{"_id": "u2", "userName": "b"}], "pagedResultsCookie": None})
+    assert [m.username for m in aic.group_members(GROUP)] == ["a", "b"]
+    assert http.calls[1].params["_queryFilter"] == 'groups/_refResourceId eq "g1"'
+    assert http.calls[2].params["_pagedResultsCookie"] == "c2"
