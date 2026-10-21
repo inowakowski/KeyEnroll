@@ -736,4 +736,89 @@ PL = {
     "{provider} does not list the FIDO methods of a user.": (
         "{provider} nie udostępnia listy metod FIDO użytkownika."
     ),
+    # -- updates from the application (0.7.0)
+    "An enrollment is in progress. Finish or cancel it before updating.": (
+        "Trwa rejestracja. Dokończ ją albo anuluj przed aktualizacją."
+    ),
+    "An update is installed only after you confirm it, and only if the downloaded file matches the published one.": (
+        "Aktualizacja instaluje się dopiero po Twoim potwierdzeniu i tylko wtedy, gdy pobrany plik zgadza się z opublikowanym."
+    ),
+    "Check for updates when the application starts": (
+        "Sprawdzaj aktualizacje przy uruchomieniu aplikacji"
+    ),
+    "Do not allow the update until they are exported": (
+        "Nie pozwalaj na aktualizację, dopóki nie zostaną wyeksportowane"
+    ),
+    "Download version {version}": (
+        "Pobierz wersję {version}"
+    ),
+    "Downloading version {version}…": (
+        "Pobieranie wersji {version}…"
+    ),
+    "Include preview versions": (
+        "Uwzględniaj wersje testowe"
+    ),
+    "Install version {version}": (
+        "Zainstaluj wersję {version}"
+    ),
+    "It is a preview version.": (
+        "To wersja testowa."
+    ),
+    "KeyEnroll {version} is available.": (
+        "Dostępna jest wersja KeyEnroll {version}."
+    ),
+    "Later": (
+        "Później"
+    ),
+    "Previews have the newest features before they were tested on real keys and tenants.": (
+        "Wersje testowe mają najnowsze funkcje, zanim zostaną sprawdzone na prawdziwych kluczach i tenantach."
+    ),
+    "Saved to {path}. Quit KeyEnroll and install it with your package manager, for example: sudo apt install {path}": (
+        "Zapisano w {path}. Zamknij KeyEnroll i zainstaluj plik menedżerem pakietów, np.: sudo apt install {path}"
+    ),
+    "Saved to {path}. Quit KeyEnroll and unpack the archive over the current installation.": (
+        "Zapisano w {path}. Zamknij KeyEnroll i rozpakuj archiwum w miejsce obecnej instalacji."
+    ),
+    "Show": (
+        "Pokaż"
+    ),
+    "Temporary PINs not exported yet": (
+        "Tymczasowe PIN-y jeszcze niewyeksportowane"
+    ),
+    "The bulk enrollment list has temporary PINs that were not exported. Export them, or clear the list, before updating.": (
+        "Na liście wdrożenia masowego są tymczasowe PIN-y, których nie wyeksportowano. Przed aktualizacją wyeksportuj je albo wyczyść listę."
+    ),
+    "The bulk enrollment list has temporary PINs that were not exported. If you update now, they are lost for good and the keys concerned have to be enrolled again.": (
+        "Na liście wdrożenia masowego są tymczasowe PIN-y, których nie wyeksportowano. Jeśli zaktualizujesz teraz, przepadną bezpowrotnie, a te klucze trzeba będzie zarejestrować ponownie."
+    ),
+    "The disk image is open. Quit KeyEnroll, drag the new KeyEnroll onto the Applications folder to replace the old one, and start it again.": (
+        "Obraz dysku jest otwarty. Zamknij KeyEnroll, przeciągnij nowy KeyEnroll do folderu Aplikacje, zastępując stary, i uruchom go ponownie."
+    ),
+    "The download failed. Check the connection and try again.": (
+        "Pobieranie się nie powiodło. Sprawdź połączenie i spróbuj ponownie."
+    ),
+    "The download was cancelled.": (
+        "Pobieranie anulowano."
+    ),
+    "The downloaded file is not the one that was published. It was deleted.": (
+        "Pobrany plik nie jest tym, który opublikowano. Został usunięty."
+    ),
+    "The signature of this release is not valid. Do not install it; report it to the project.": (
+        "Podpis tego wydania jest nieprawidłowy. Nie instaluj go i zgłoś to w projekcie."
+    ),
+    "The update server did not provide a checksum for this file. Install it from the download page.": (
+        "Serwer aktualizacji nie podał sumy kontrolnej tego pliku. Zainstaluj go ze strony pobierania."
+    ),
+    "This release is not signed with the project's key. Install it from the download page.": (
+        "To wydanie nie jest podpisane kluczem projektu. Zainstaluj je ze strony pobierania."
+    ),
+    "Update and lose the PINs": (
+        "Aktualizuj i utrać PIN-y"
+    ),
+    "Updates": (
+        "Aktualizacje"
+    ),
+    "Warn me; I can still update and lose them": (
+        "Ostrzeż mnie; mogę mimo to zaktualizować i je utracić"
+    ),
 }

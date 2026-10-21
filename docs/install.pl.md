@@ -84,15 +84,19 @@ Linux wymaga trzech rzeczy, których instalator nie zagwarantuje w każdej dystr
 | Secret Service (GNOME Keyring, KWallet) | Przechowuje logowanie. Bez niego trzeba logować się po każdym uruchomieniu aplikacji. | Część środowisk GNOME i KDE. |
 | `pcscd` | Tylko dla kluczy używanych przez czytnik NFC. | `sudo apt install pcscd` |
 
-## Aktualizacje
+## Aktualizacje { #updating }
 
-*Ustawienia → O programie → Sprawdź aktualizacje* pyta GitHuba o najnowsze
-opublikowane wydanie. Jeśli jest nowsze, pojawia się przycisk otwierający stronę
-pobierania. KeyEnroll niczego sam nie pobiera ani nie instaluje i nie sprawdza
-aktualizacji w tle.
+*Ustawienia → Aktualizacje → Sprawdź aktualizacje* pyta GitHuba o najnowsze
+opublikowane wydanie. Na Windows **Zainstaluj wersję …** pobiera je, sprawdza,
+instaluje i ponownie uruchamia KeyEnroll; na macOS i Linuksie **Pobierz wersję …**
+zapisuje właściwy plik i go otwiera. Zobacz [Ustawienia → Aktualizacje](settings.md#updates).
+Nic nie jest pobierane ani instalowane bez Twojego potwierdzenia.
 
-Aby zaktualizować, zainstaluj nową wersję na starą. Ustawienia, instancje i profile
-zostają zachowane.
+Można też zaktualizować ręcznie: zainstaluj nową wersję na starą. Ustawienia,
+instancje i profile zostają zachowane.
+
+Wersje z dopiskiem *preview* są proponowane tylko po włączeniu **Uwzględniaj wersje
+testowe**.
 
 !!! info "Ta dokumentacja opisuje wersję rozwojową"
     Strona jest aktualizowana przy każdej zmianie w projekcie, więc może opisywać

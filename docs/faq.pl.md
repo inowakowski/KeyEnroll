@@ -74,8 +74,9 @@ usunięte.
 
 ## Czy aplikacja wysyła jakieś dane autorowi?
 
-Nie. Nie ma telemetrii. Jedyne połączenie poza Twoim dostawcą tożsamości to
-sprawdzanie aktualizacji — i tylko po kliknięciu przycisku. Zobacz
+Nie. Nie ma telemetrii. Jedyne połączenia poza Twoim dostawcą tożsamości to
+sprawdzanie aktualizacji — po kliknięciu przycisku albo przy starcie, jeśli to
+włączysz — i pobranie aktualizacji, którą potwierdzisz. Zobacz
 [Dane i bezpieczeństwo](data.md#what-keyenroll-communicates-with).
 
 ## Jakie języki są dostępne?

@@ -84,12 +84,17 @@ Linux needs three things that the installer cannot guarantee on every distributi
 
 ## Updating
 
-*Settings → About → Check for updates* asks GitHub for the latest published release.
-If a newer one exists, a button opens its download page. KeyEnroll never downloads or
-installs anything by itself and does not check in the background.
+*Settings → Updates → Check for updates* asks GitHub for the latest published
+release. On Windows, **Install version …** then downloads, checks and installs it and
+starts KeyEnroll again; on macOS and Linux, **Download version …** saves the right
+file and opens it. See [Settings → Updates](settings.md#updates). Nothing is
+downloaded or installed without your confirmation.
 
-To update, install the new version over the old one. Settings, instances and
-profiles are kept.
+You can also update by hand: install the new version over the old one. Settings,
+instances and profiles are kept.
+
+Versions with *preview* in their number are only offered when **Include preview
+versions** is switched on.
 
 !!! info "This documentation follows the development version"
     The site is updated with every change to the project, so it can describe

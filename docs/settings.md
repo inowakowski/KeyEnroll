@@ -65,6 +65,24 @@ after changing the template.
 | **Keep entries for (months)** | Months older than this are deleted when the application starts. Default 12. |
 | **Open the deployment log folder** | Opens the folder with the monthly CSV files. |
 
+## Updates
+
+!!! info "Since version 0.7.0"
+
+| Control | What it is for |
+|---|---|
+| **Check for updates** | Asks GitHub whether a newer release has been published. |
+| **Install version …** (Windows) | Downloads the installer, checks that it is the published file, closes KeyEnroll, installs the new version and starts it again. Settings, instances and profiles are kept. |
+| **Download version …** (macOS, Linux) | Downloads the right file for your computer, checks it and opens it, with a note on what to do next: drag the app to *Applications* on macOS, install the `.deb` with your package manager, or unpack the archive. |
+| **Open the download page** | The release page on GitHub, to download any file yourself. |
+| **Include preview versions** | Also offers [preview versions](install.md#updating), which have the newest features before they were tested on real keys and tenants. Off by default. |
+| **Check for updates when the application starts** | Asks GitHub once at every start and shows a bar at the top of the window if there is something new. Off by default: without it, KeyEnroll makes no connection you did not ask for. |
+| **Temporary PINs not exported yet** | What happens if the [bulk list](bulk.md) still holds PINs you have not exported: **Warn me** asks first and says that they are lost for good if you go on; **Do not allow the update** refuses until you export them or clear the list. |
+
+An update is never installed while an enrollment is running, and never without your
+confirmation. How a download is checked is described in
+[Data and security](data.md#updates).
+
 ## About
 
 ![The About section](assets/screenshots/en/settings-about.png){ .shot }
@@ -74,5 +92,4 @@ after changing the template.
 | **Version**, **License** | The version you are running. Quote it when you report a problem. |
 | **Project page** | The source code and the issue tracker on GitHub. |
 | **Documentation** | Opens the section of the project page that says where this documentation is published. |
-| **Check for updates** | Asks GitHub whether a newer release has been published. If so, **Open the download page** appears. Nothing is downloaded or installed automatically, and the application never checks by itself. |
 | **Open the folder with settings and logs** | Opens the folder that holds the settings file and the `logs` folder. See [Data and security](data.md). |

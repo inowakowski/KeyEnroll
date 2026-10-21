@@ -91,9 +91,12 @@ kodu (Windows) i konta Apple Developer z notaryzacją (macOS).
 
 ### Aktualizacje
 
-*Ustawienia → Sprawdź aktualizacje* pyta GitHuba o najnowsze opublikowane wydanie
-i, jeśli jest nowsze, pokazuje przycisk otwierający stronę pobierania. Aplikacja sama
-niczego nie pobiera ani nie instaluje i nie sprawdza aktualizacji w tle.
+*Ustawienia → Aktualizacje* pyta GitHuba o najnowsze opublikowane wydanie. Na Windows
+aplikacja po potwierdzeniu pobiera instalator, sprawdza go i instaluje nową wersję;
+na macOS i Linuksie pobiera i otwiera właściwy plik. Pobrany plik musi mieć sumę
+SHA-256 podaną przez GitHub, a gdy w aplikacji jest klucz wydań projektu, także
+ważny podpis (patrz [RELEASING.md](RELEASING.md)). Sprawdzanie przy starcie i wersje
+testowe włącza się w ustawieniach; domyślnie aplikacja nie łączy się w tle.
 
 Sprawdzanie korzysta z publicznego API GitHuba, więc działa tylko wtedy, gdy
 repozytorium i jego wydania są publiczne; w przeciwnym razie GitHub odpowiada
@@ -279,6 +282,8 @@ w kodzie. Po zmianie adresu wystarczy poprawić pole *Website* w opisie repozyto
 Wynik trafia do `dist/installer/`. Każdą platformę trzeba budować na niej samej.
 
 ### Wydawanie wersji
+
+Pełna procedura, z podpisywaniem wydań: [RELEASING.md](RELEASING.md).
 
 1. Zmień numer wersji w `src/keyenroll/__init__.py` i `pyproject.toml`.
 2. Wypchnij tag, np. `v0.3.0`. Workflow `.github/workflows/build.yml` uruchomi testy,

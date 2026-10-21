@@ -199,6 +199,11 @@ class ConfigStore:
         # Deployment log (journal.py) and how many months it is kept.
         self.journal_enabled: bool = True
         self.journal_months: int = 12
+        # Updates: offer pre-releases, check at start-up, and what to do
+        # with temporary PINs that were not exported ("warn" or "block").
+        self.update_previews: bool = False
+        self.update_on_start: bool = False
+        self.update_unexported: str = "warn"
         # Hand-over message templates; empty means the built-in text.
         self.message_subject: str = ""
         self.message_body: str = ""
@@ -259,6 +264,10 @@ class ConfigStore:
         except (TypeError, ValueError):
             months = 12
         self.journal_months = min(max(months, 1), 120)
+        self.update_previews = bool(data.get("update_previews", False))
+        self.update_on_start = bool(data.get("update_on_start", False))
+        mode = data.get("update_unexported", "warn")
+        self.update_unexported = mode if mode in ("warn", "block") else "warn"
         self.message_subject = str(data.get("message_subject", ""))
         self.message_body = str(data.get("message_body", ""))
         ui = data.get("ui", {})
@@ -278,6 +287,9 @@ class ConfigStore:
             "append_serial": self.append_serial,
             "journal_enabled": self.journal_enabled,
             "journal_months": self.journal_months,
+            "update_previews": self.update_previews,
+            "update_on_start": self.update_on_start,
+            "update_unexported": self.update_unexported,
             "message_subject": self.message_subject,
             "message_body": self.message_body,
             "ui": self.ui,

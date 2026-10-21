@@ -950,7 +950,7 @@ def test_update_check_button(gui, monkeypatch):
     assert page.download_update.isHidden() and page.update_note.isHidden()
 
     newer = updates.UpdateInfo("0.3.0", "0.4.0", "https://github.com/inowakowski/KeyEnroll/releases/tag/v0.4.0")
-    monkeypatch.setattr(updates, "check", lambda: newer)
+    monkeypatch.setattr(updates, "check", lambda **kw: newer)
     page.check_updates.click()
     assert not page.check_updates.isEnabled()  # no double clicks while it runs
     wait_until(lambda: page.check_updates.isEnabled())
@@ -961,12 +961,12 @@ def test_update_check_button(gui, monkeypatch):
     page.download_update.click()
     assert opened == ["https://github.com/inowakowski/KeyEnroll/releases/tag/v0.4.0"]
 
-    monkeypatch.setattr(updates, "check", lambda: updates.UpdateInfo("0.3.0", "0.3.0", "x"))
+    monkeypatch.setattr(updates, "check", lambda **kw: updates.UpdateInfo("0.3.0", "0.3.0", "x"))
     page.check_updates.click()
     wait_until(lambda: page.check_updates.isEnabled())
     assert "latest version" in page.update_note.text() and page.download_update.isHidden()
 
-    def unavailable():
+    def unavailable(**kw):
         raise updates.UpdateError("No published release was found.")
 
     monkeypatch.setattr(updates, "check", unavailable)
@@ -1144,3 +1144,78 @@ def test_enroll_page_tells_how_many_keys_the_user_has(gui):
     assert not page.user_note.isVisible()
     page.picker.table.selectRow(0)
     wait_until(lambda: "no FIDO method yet" in page.user_note.text())
+
+
+def test_update_is_installed_only_after_the_pins_question(gui, monkeypatch, tmp_path):
+    from keyenroll import updates
+
+    window, ctx, key, source, shown = gui
+    asset = updates.Asset("KeyEnroll-0.9.0-windows-x64-setup.exe", "u", 10, "0" * 64)
+    newer = updates.UpdateInfo("0.8.0", "0.9.0", f"{updates.PROJECT_URL}/releases/tag/v0.9.0", [asset])
+    downloaded, launched = [], []
+    monkeypatch.setattr(updates, "check", lambda **kw: newer)
+    monkeypatch.setattr(updates, "installer_kind", lambda: "windows")
+    monkeypatch.setattr(updates, "machine_arch", lambda: "x64")
+
+    def fake_download(info, asset, folder, progress=None, cancel=None, **kw):
+        progress(5, 10)
+        downloaded.append(asset.name)
+        return tmp_path / asset.name
+
+    monkeypatch.setattr(updates, "download", fake_download)
+    monkeypatch.setattr(updates, "launch_windows_installer", launched.append)
+
+    window.nav.setCurrentRow(PAGE_SETTINGS)
+    page = window.pages.currentWidget()
+    page.check_updates.click()
+    wait_until(lambda: page.install_update.isVisible())
+    assert page.install_update.text() == "Install version 0.9.0"
+
+    # An enrollment in progress: nothing happens.
+    ctx.set_busy(True)
+    page.install_update.click()
+    assert "in progress" in shown["boxes"][-1] and downloaded == []
+    ctx.set_busy(False)
+
+    # Unexported PINs, the update is blocked by the setting.
+    ctx.unexported_pins = True
+    page.update_unexported.setCurrentIndex(page.update_unexported.findData("block"))
+    assert ConfigStore(ctx.config.path).update_unexported == "block"
+    page.install_update.click()
+    assert "before updating" in shown["boxes"][-1] and downloaded == []
+
+    # Only a warning: the operator accepts losing them, the update runs.
+    page.update_unexported.setCurrentIndex(page.update_unexported.findData("warn"))
+    page.install_update.click()
+    assert "lost for good" in shown["boxes"][-1]
+    wait_until(lambda: launched)
+    assert downloaded == [asset.name] and launched == [tmp_path / asset.name]
+    assert ctx.closing_for_update and not window.isVisible()
+
+
+def test_update_options_are_remembered_and_checked_at_start(gui, app, monkeypatch):
+    from keyenroll import updates
+
+    window, ctx, key, source, shown = gui
+    window.nav.setCurrentRow(PAGE_SETTINGS)
+    page = window.pages.currentWidget()
+    page.update_previews.setChecked(True)
+    page.update_on_start.setChecked(True)
+    stored = ConfigStore(ctx.config.path)
+    assert stored.update_previews and stored.update_on_start
+
+    asked = []
+
+    def check(**kw):
+        asked.append(kw)
+        return updates.UpdateInfo("0.8.0", "0.9.0-preview.1", "x", prerelease=True)
+
+    monkeypatch.setattr(updates, "check", check)
+    second = MainWindow(ctx)
+    wait_until(lambda: second.update_banner.isVisibleTo(second))
+    assert asked == [{"previews": True}]
+    assert "0.9.0-preview.1" in second.update_text.text()
+    second.update_banner.findChildren(QPushButton)[0].click()  # Show
+    settings = second.pages.currentWidget()
+    assert "preview version" in settings.update_note.text()
+    second.close()
