@@ -103,5 +103,6 @@ gdy wygaśnie, aplikacja poprosi o ponowne zalogowanie.
 
 Zalogowany administrator musi mieć prawo odczytywać użytkowników i zarządzać ich
 metodami uwierzytelniania. Konkretna rola zależy od dostawcy, patrz
-[Dostawcy tożsamości](providers.md). Brak uprawnienia objawia się błędem dostawcy
+[Role administratorów w skrócie](providers.md#administrator-roles-at-a-glance);
+również sam tenant musi pozwalać użytkownikom na klucze bezpieczeństwa. Brak uprawnienia objawia się błędem dostawcy
 przy wyszukiwaniu użytkownika albo na początku rejestracji.

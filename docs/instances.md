@@ -104,5 +104,6 @@ provider; when it expires you are asked to sign in again.
 
 The signed-in administrator must be permitted to read users and to manage their
 authentication methods. The exact role differs per provider, see
-[Identity providers](providers.md). A missing permission shows up as an error from
+[Administrator roles at a glance](providers.md#administrator-roles-at-a-glance);
+the tenant itself has to allow security keys for the users as well. A missing permission shows up as an error from
 the provider when you search for a user or start an enrollment.

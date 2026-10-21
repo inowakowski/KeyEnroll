@@ -5,7 +5,8 @@ From an empty application to the first enrolled key. You need:
 - KeyEnroll [installed](install.md),
 - an application registered for key enrollment at your identity provider
   ([what is needed](providers.md)),
-- an administrator account that is allowed to manage users' authentication methods,
+- an administrator account that is allowed to manage users' authentication methods
+  ([which role](providers.md#administrator-roles-at-a-glance)),
 - a security key and a test user.
 
 ## 1. Add an instance
