@@ -29,6 +29,7 @@ NOT_FOUND = "not_found"
 RUNNING = "running"
 DONE = "done"
 FAILED = "failed"
+HAS_KEY = "has_key"  # skipped: the user already has a FIDO method
 
 STATUS_LABELS = {
     NEW: N_("Checking…"),
@@ -37,6 +38,7 @@ STATUS_LABELS = {
     RUNNING: N_("In progress"),
     DONE: N_("Enrolled"),
     FAILED: N_("Failed"),
+    HAS_KEY: N_("Has a key"),
 }
 
 _HEADER_NAMES = {
@@ -61,6 +63,8 @@ class BulkRow:
     pin: str | None = None
     must_change_pin: bool = False
     finished: str = ""
+    # FIDO methods the user had before this batch; None: not checked.
+    existing: int | None = None
 
     @property
     def message_text(self) -> str:
@@ -179,26 +183,65 @@ def write_results(
     write_private(path, text.encode("utf-8-sig"))  # BOM: Excel needs it
 
 
+def rows_from_users(users: list[DirectoryUser]) -> list[BulkRow]:
+    """Rows for users the directory already returned (a group): they need no
+    lookup, only the check for existing keys. Each user is listed once."""
+    seen: set[str] = set()
+    rows = []
+    for user in users:
+        if user.id not in seen:
+            seen.add(user.id)
+            rows.append(BulkRow(user.username or user.email or user.id, user=user))
+    return rows
+
+
+def apply_skip(rows: list[BulkRow], skip: bool) -> list[int]:
+    """Moves users who already have a FIDO method out of the queue, or back
+    into it. Returns the indexes of the rows that changed."""
+    changed = []
+    for index, row in enumerate(rows):
+        if skip and row.status == READY and row.existing:
+            row.status = HAS_KEY
+        elif not skip and row.status == HAS_KEY:
+            row.status = READY
+        else:
+            continue
+        changed.append(index)
+    return changed
+
+
 def resolve_rows(
     provider: Provider,
     rows: list[BulkRow],
     on_change,
     cancel: threading.Event | None = None,
+    check_existing: bool = False,
+    skip_existing: bool = False,
 ) -> None:
-    """Looks up every imported identifier in the directory."""
+    """Looks up every imported identifier in the directory and, if asked,
+    counts the FIDO methods each user already has."""
+    check_existing = check_existing and provider.supports_credential_list
     for index, row in enumerate(rows):
         if cancel is not None and cancel.is_set():
             return
         if row.status != NEW:
             continue
         try:
-            row.user = provider.find_user(row.identifier)
+            if row.user is None:
+                row.user = provider.find_user(row.identifier)
+            if row.user is not None and check_existing:
+                row.existing = len(provider.list_credentials(row.user))
         except AuthRequired:
             raise
         except ProviderError as e:
             row.status, row.message, row.message_params = FAILED, str(e), {}
         else:
-            row.status = READY if row.user else NOT_FOUND
+            if row.user is None:
+                row.status = NOT_FOUND
+            elif skip_existing and row.existing:
+                row.status = HAS_KEY
+            else:
+                row.status = READY
         on_change(index)
 
 

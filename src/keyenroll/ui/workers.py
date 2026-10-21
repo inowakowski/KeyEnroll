@@ -134,10 +134,32 @@ class BulkWorker(_Worker):
 class ResolveWorker(_Worker):
     """Looks up imported user identifiers in the directory."""
 
-    def __init__(self, provider, rows):
+    def __init__(self, provider, rows, check_existing=False, skip_existing=False):
         super().__init__()
         self._provider = provider
         self._rows = rows
+        self._check = check_existing
+        self._skip = skip_existing
 
     def job(self):
-        resolve_rows(self._provider, self._rows, _Bridge(self).row_changed, self.cancel)
+        resolve_rows(
+            self._provider,
+            self._rows,
+            _Bridge(self).row_changed,
+            self.cancel,
+            check_existing=self._check,
+            skip_existing=self._skip,
+        )
+
+
+class GroupWorker(_Worker):
+    """Reads the members of a directory group."""
+
+    def __init__(self, provider, group, nested):
+        super().__init__()
+        self._provider = provider
+        self._group = group
+        self._nested = nested
+
+    def job(self):
+        return self._provider.group_members(self._group, self._nested)

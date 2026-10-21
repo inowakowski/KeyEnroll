@@ -657,4 +657,83 @@ PL = {
     "The file was made by a newer version of KeyEnroll. Update the application first.": (
         "Plik powstał w nowszej wersji KeyEnroll. Najpierw zaktualizuj aplikację."
     ),
+    # -- groups and existing keys (0.7.0)
+    "Beginning of the group name": (
+        "Początek nazwy grupy"
+    ),
+    "Bulk lists from groups": (
+        "Listy masowe z grup"
+    ),
+    "Check for existing FIDO methods": (
+        "Sprawdzaj istniejące metody FIDO"
+    ),
+    "Description": (
+        "Opis"
+    ),
+    "FIDO methods": (
+        "Metody FIDO"
+    ),
+    "FIDO methods the user already had when the list was loaded.": (
+        "Metody FIDO, które użytkownik miał już w chwili wczytania listy."
+    ),
+    "Group": (
+        "Grupa"
+    ),
+    "Has a key": (
+        "Ma już klucz"
+    ),
+    "Include members of nested groups": (
+        "Uwzględnij członków podgrup"
+    ),
+    "Lets bulk enrollment load the members of a directory group. Needs an additional permission in the application registration; see the documentation.": (
+        "Pozwala wczytać do wdrożenia masowego członków grupy z katalogu. Wymaga dodatkowego uprawnienia w rejestracji aplikacji; zobacz dokumentację."
+    ),
+    "Load from group": (
+        "Wczytaj z grupy"
+    ),
+    "Load from group…": (
+        "Wczytaj z grupy…"
+    ),
+    "Load members": (
+        "Wczytaj członków"
+    ),
+    "Loading lists from groups is switched off for this instance. Turn on 'Bulk lists from groups' in the instance settings, grant the additional permission described in the documentation, and sign in again.": (
+        "Wczytywanie list z grup jest wyłączone dla tej instancji. Włącz „Listy masowe z grup” w ustawieniach instancji, nadaj dodatkowe uprawnienie opisane w dokumentacji i zaloguj się ponownie."
+    ),
+    "Off": (
+        "Wyłączone"
+    ),
+    "On": (
+        "Włączone"
+    ),
+    "Reading the members of {group}…": (
+        "Odczytywanie członków grupy {group}…"
+    ),
+    "Skip users who already have one": (
+        "Pomiń użytkowników, którzy już je mają"
+    ),
+    "Takes the members of a group in the directory as the list.": (
+        "Używa członków grupy z katalogu jako listy."
+    ),
+    "The group {group} has no users.": (
+        "Grupa {group} nie ma użytkowników."
+    ),
+    "When a list is loaded, counts the FIDO methods each user already has.": (
+        "Przy wczytywaniu listy liczy metody FIDO, które każdy użytkownik już ma."
+    ),
+    "{count} group(s) found": (
+        "Znaleziono grup: {count}"
+    ),
+    "{count} skipped (has a key)": (
+        "pominięto (mają klucz): {count}"
+    ),
+    "{name} already has {count} FIDO method(s).": (
+        "{name} ma już metody FIDO: {count}."
+    ),
+    "{name} has no FIDO method yet.": (
+        "{name} nie ma jeszcze żadnej metody FIDO."
+    ),
+    "{provider} does not list the FIDO methods of a user.": (
+        "{provider} nie udostępnia listy metod FIDO użytkownika."
+    ),
 }

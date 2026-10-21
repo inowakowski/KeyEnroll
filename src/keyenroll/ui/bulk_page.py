@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -25,15 +26,105 @@ from ..bulk import BulkRow
 from ..fido.enroll import EnrollCancelled
 from ..handover import Handover
 from ..i18n import tr
-from ..providers import AuthRequired
-from .common import AppContext, SortItem, error_text, fit_columns, make_table, paused_sorting
+from ..providers import AuthRequired, DirectoryGroup, Provider
+from .common import (
+    AppContext,
+    SortItem,
+    error_text,
+    fill_row,
+    fit_columns,
+    make_table,
+    paused_sorting,
+    run_task,
+    selected_data,
+)
 from .dialogs import ExportDialog, ResultDialog
 from .profile_form import profile_summary
 from .theme import Card
-from .workers import BulkWorker, PinPrompt, ResolveWorker, answer_prompt
+from .workers import BulkWorker, GroupWorker, PinPrompt, ResolveWorker, answer_prompt
 
-COL_USER, COL_NAME, COL_STATUS, COL_SERIAL, COL_PIN, COL_MESSAGE = range(6)
+COL_USER, COL_NAME, COL_STATUS, COL_EXISTING, COL_SERIAL, COL_PIN, COL_MESSAGE = range(7)
 MASK = "••••••"
+
+
+class GroupDialog(QDialog):
+    """Finds a directory group whose members become the bulk list."""
+
+    def __init__(self, provider: Provider, parent: QWidget):
+        super().__init__(parent)
+        self.provider = provider
+        self._search_id = 0
+        self.setWindowTitle(tr("Load from group"))
+        self.setMinimumSize(560, 420)
+        self.query = QLineEdit()
+        self.query.setPlaceholderText(tr("Beginning of the group name"))
+        self.query.setClearButtonEnabled(True)
+        self.query.returnPressed.connect(self.search)
+        self.button = QPushButton(tr("Search"))
+        self.button.clicked.connect(self.search)
+        top = QHBoxLayout()
+        top.addWidget(self.query, 1)
+        top.addWidget(self.button)
+        self.table = make_table([tr("Group"), tr("Description")])
+        self.table.itemSelectionChanged.connect(self._update)
+        self.table.doubleClicked.connect(lambda _: self.accept())
+        self.hint = QLabel()
+        self.hint.setObjectName("hint")
+        self.nested = QCheckBox(tr("Include members of nested groups"))
+        self.nested.setVisible(provider.supports_nested_groups)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        self.ok = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        self.ok.setText(tr("Load members"))
+        self.ok.setObjectName("primary")
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Cancel"))
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout = QVBoxLayout(self)
+        layout.addLayout(top)
+        layout.addWidget(self.table, 1)
+        layout.addWidget(self.hint)
+        layout.addWidget(self.nested)
+        layout.addWidget(buttons)
+        self._update()
+
+    def selected(self) -> DirectoryGroup | None:
+        return selected_data(self.table)
+
+    def _update(self) -> None:
+        self.ok.setEnabled(self.selected() is not None)
+
+    def accept(self) -> None:
+        if self.selected() is not None:
+            super().accept()
+
+    def search(self) -> None:
+        query = self.query.text()
+        self._search_id += 1
+        search_id = self._search_id
+        self.button.setEnabled(False)
+        self.hint.setText(tr("Searching…"))
+
+        def done(groups):
+            if search_id != self._search_id:
+                return
+            self.button.setEnabled(True)
+            self.table.setRowCount(0)
+            for g in groups:
+                fill_row(self.table, [g.name, g.description], g)
+            self.hint.setText(tr("{count} group(s) found", count=len(groups)))
+            if len(groups) == 1:
+                self.table.selectRow(0)
+            self._update()
+
+        def failed(exc):
+            if search_id != self._search_id:
+                return
+            self.button.setEnabled(True)
+            self.hint.setText(error_text(exc))
+
+        run_task(self, lambda: self.provider.search_groups(query), done, failed)
 
 
 class BulkPage(QWidget):
@@ -50,6 +141,11 @@ class BulkPage(QWidget):
         # user list
         self.load = QPushButton(tr("Load from file…"))
         self.load.clicked.connect(self._load_file)
+        self.load_group = QPushButton(tr("Load from group…"))
+        self.load_group.setToolTip(
+            tr("Takes the members of a group in the directory as the list.")
+        )
+        self.load_group.clicked.connect(self._load_from_group)
         self.clear = QPushButton(tr("Clear list"))
         self.clear.clicked.connect(self._clear)
         self.summary = QLabel()
@@ -58,6 +154,7 @@ class BulkPage(QWidget):
         self.show_pins.toggled.connect(self._refresh_all)
         list_buttons = QHBoxLayout()
         list_buttons.addWidget(self.load)
+        list_buttons.addWidget(self.load_group)
         list_buttons.addWidget(self.clear)
         list_buttons.addSpacing(10)
         list_buttons.addWidget(self.show_pins)
@@ -68,11 +165,15 @@ class BulkPage(QWidget):
                 tr("User"),
                 tr("Display name"),
                 tr("Status"),
+                tr("FIDO methods"),
                 tr("Serial number"),
                 tr("Temporary PIN"),
                 tr("Message"),
             ],
             scrollable=True,
+        )
+        self.table.horizontalHeaderItem(COL_EXISTING).setToolTip(
+            tr("FIDO methods the user already had when the list was loaded.")
         )
         self.table.itemSelectionChanged.connect(self._update_state)
         list_card = Card(
@@ -106,8 +207,22 @@ class BulkPage(QWidget):
         options.addWidget(self.key_name, 1)
         options.addSpacing(10)
         options.addWidget(self.append_serial)
+        self.check_existing = QCheckBox(tr("Check for existing FIDO methods"))
+        self.check_existing.setChecked(True)
+        self.check_existing.setToolTip(
+            tr("When a list is loaded, counts the FIDO methods each user already has.")
+        )
+        self.check_existing.toggled.connect(self._update_state)
+        self.skip_existing = QCheckBox(tr("Skip users who already have one"))
+        self.skip_existing.toggled.connect(self._skip_toggled)
+        existing = QHBoxLayout()
+        existing.setSpacing(18)
+        existing.addWidget(self.check_existing)
+        existing.addWidget(self.skip_existing)
+        existing.addStretch(1)
         options_card = Card(tr("Enrollment options"))
         options_card.body.addLayout(options)
+        options_card.body.addLayout(existing)
         options_card.body.addWidget(self.profile_info)
 
         # actions
@@ -173,7 +288,19 @@ class BulkPage(QWidget):
         idle = self._worker is None and not self.ctx.busy
         foreign = self._foreign_list()
         self.load.setEnabled(idle)
+        self.load_group.setEnabled(idle)
         self.clear.setEnabled(idle and bool(self.rows))
+        provider = self.ctx.provider
+        can_list = provider is not None and provider.supports_credential_list
+        self.check_existing.setEnabled(idle and can_list)
+        self.skip_existing.setEnabled(idle and can_list and self.check_existing.isChecked())
+        if provider is not None and not can_list:
+            note = tr("{provider} does not list the FIDO methods of a user.", provider=provider.label)
+        else:
+            note = ""
+        self.check_existing.setToolTip(
+            note or tr("When a list is loaded, counts the FIDO methods each user already has.")
+        )
         self.start.setEnabled(idle and counts[bulk.READY] > 0 and not foreign)
         self.stop.setVisible(self._running)
         self.stop.setEnabled(self._running)
@@ -192,6 +319,8 @@ class BulkPage(QWidget):
             parts.append(tr("{count} failed", count=counts[bulk.FAILED]))
         if counts[bulk.NOT_FOUND]:
             parts.append(tr("{count} not found", count=counts[bulk.NOT_FOUND]))
+        if counts[bulk.HAS_KEY]:
+            parts.append(tr("{count} skipped (has a key)", count=counts[bulk.HAS_KEY]))
         self.summary.setText(" · ".join(parts) if self.rows else "")
 
         total = sum(counts[s] for s in (bulk.READY, bulk.RUNNING, bulk.DONE, bulk.FAILED))
@@ -247,6 +376,7 @@ class BulkPage(QWidget):
             user.username if user else row.identifier,
             user.display_name if user else "",
             tr(bulk.STATUS_LABELS[row.status]),
+            "" if row.existing is None else str(row.existing),
             str(row.serial) if row.serial else "",
             pin,
             row.message_text,
@@ -356,7 +486,10 @@ class BulkPage(QWidget):
         if provider is None or not any(r.status == bulk.NEW for r in self.rows):
             return
         self.step.setText(tr("Looking up users in the directory…"))
-        worker = ResolveWorker(provider, self.rows)
+        check = self.check_existing.isChecked()
+        worker = ResolveWorker(
+            provider, self.rows, check, check and self.skip_existing.isChecked()
+        )
         worker.row_changed.connect(self._on_row_changed)
         worker.succeeded.connect(lambda _: self._resolved(None))
         worker.failed.connect(self._resolved)
@@ -368,6 +501,65 @@ class BulkPage(QWidget):
             self._report(exc)
         else:
             self.step.setText(tr("Ready. Insert the first security key and press Start."))
+
+    def _skip_toggled(self, skip: bool) -> None:
+        if self._worker is None:
+            for index in bulk.apply_skip(self.rows, skip):
+                self._refresh_row(index)
+        self._update_state()
+
+    def _load_from_group(self) -> None:
+        provider = self.ctx.provider
+        if provider is None:
+            QMessageBox.information(
+                self, tr("No instance"), tr("Add an identity provider instance first.")
+            )
+            return
+        if not provider.groups_enabled:
+            QMessageBox.information(
+                self,
+                tr("Load from group"),
+                tr(
+                    "Loading lists from groups is switched off for this instance. Turn on "
+                    "'Bulk lists from groups' in the instance settings, grant the additional "
+                    "permission described in the documentation, and sign in again."
+                ),
+            )
+            return
+        if not provider.has_session():
+            QMessageBox.information(
+                self, tr("Not signed in"), tr("Sign in to the identity provider first.")
+            )
+            return
+        if not self._confirm_discard():
+            return
+        dialog = GroupDialog(provider, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted or dialog.selected() is None:
+            return
+        group = dialog.selected()
+        self.step.setText(tr("Reading the members of {group}…", group=group.name))
+        worker = GroupWorker(provider, group, dialog.nested.isChecked())
+        worker.succeeded.connect(lambda users: self._group_loaded(provider, group, users))
+        worker.failed.connect(self._resolved)
+        self._begin(worker, running=False)
+
+    def _group_loaded(self, provider: Provider, group: DirectoryGroup, users) -> None:
+        self._end()
+        if not users:
+            QMessageBox.information(
+                self, tr("Load from group"), tr("The group {group} has no users.", group=group.name)
+            )
+            self.step.setText("")
+            self._update_state()
+            return
+        self.rows = bulk.rows_from_users(users)
+        self._instance_id = self.ctx.config.active_instance_id
+        self._provider_label = provider.label
+        self._unexported = False
+        self._refresh_all()
+        self._resolve()
+        if not any(r.status == bulk.NEW for r in self.rows):  # nothing to check
+            self._resolved(None)
 
     def _clear(self) -> None:
         if not self._confirm_discard():

@@ -8,7 +8,9 @@ from urllib.parse import quote
 from .. import oauth
 from ..i18n import N_
 from .base import (
+    GROUPS_FIELD,
     Credential,
+    DirectoryGroup,
     DirectoryUser,
     FieldSpec,
     Provider,
@@ -39,6 +41,7 @@ def _scim_quote(value: str) -> str:
 class PingOneProvider(Provider):
     kind = "pingone"
     label = "PingOne PingID"
+    supports_groups = True
     fields = [
         FieldSpec("environment_id", N_("Environment ID")),
         FieldSpec("client_id", N_("Client ID")),
@@ -61,6 +64,7 @@ class PingOneProvider(Provider):
             required=False,
             help=N_("Leave empty to use the default MFA policy."),
         ),
+        GROUPS_FIELD,
     ]
 
     @property
@@ -118,21 +122,48 @@ class PingOneProvider(Provider):
 
     def _users(self, params: dict) -> list[DirectoryUser]:
         data = self._request("GET", f"{self._api}/users", params=params).json()
-        users = []
-        for u in (data.get("_embedded") or {}).get("users", []):
-            name = u.get("name") or {}
-            display = name.get("formatted") or " ".join(
-                p for p in (name.get("given"), name.get("family")) if p
-            )
-            users.append(
-                DirectoryUser(
-                    id=u["id"],
-                    username=u.get("username") or "",
-                    display_name=display,
-                    email=u.get("email") or "",
-                )
-            )
-        return users
+        return [self._to_user(u) for u in (data.get("_embedded") or {}).get("users", [])]
+
+    @staticmethod
+    def _to_user(u: dict) -> DirectoryUser:
+        name = u.get("name") or {}
+        display = name.get("formatted") or " ".join(
+            p for p in (name.get("given"), name.get("family")) if p
+        )
+        return DirectoryUser(
+            id=u["id"],
+            username=u.get("username") or "",
+            display_name=display,
+            email=u.get("email") or "",
+        )
+
+    @staticmethod
+    def _pages(key: str):
+        def page(resp) -> tuple[list, str | None, None]:
+            data = resp.json()
+            items = (data.get("_embedded") or {}).get(key, [])
+            next_url = ((data.get("_links") or {}).get("next") or {}).get("href")
+            return items, next_url, None
+
+        return page
+
+    def search_groups(self, query: str) -> list[DirectoryGroup]:
+        params = {"limit": "25"}
+        if query.strip():
+            params["filter"] = f"name sw {_scim_quote(query.strip())}"
+        data = self._request("GET", f"{self._api}/groups", params=params).json()
+        return [
+            DirectoryGroup(g["id"], g.get("name") or "", g.get("description") or "")
+            for g in (data.get("_embedded") or {}).get("groups", [])
+        ]
+
+    def group_members(self, group: DirectoryGroup, nested: bool = False) -> list[DirectoryUser]:
+        users = self._collect(
+            f"{self._api}/users",
+            {"filter": f"memberOfGroups[id eq {_scim_quote(group.id)}]", "limit": "200"},
+            self._pages("users"),
+        )
+        return [self._to_user(u) for u in users]
 
     def _origin(self, rp_id: str) -> str:
         host = self._auth_host
@@ -197,9 +228,9 @@ class PingOneProvider(Provider):
         )
 
     def list_credentials(self, user: DirectoryUser) -> list[Credential]:
-        data = self._request("GET", self._devices_url(user.id)).json()
+        devices = self._collect(self._devices_url(user.id), None, self._pages("devices"))
         out = []
-        for d in (data.get("_embedded") or {}).get("devices", []):
+        for d in devices:
             if d.get("type") != "FIDO2":
                 continue
             out.append(

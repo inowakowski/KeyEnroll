@@ -7,7 +7,9 @@ from urllib.parse import quote
 from .. import oauth
 from ..i18n import N_
 from .base import (
+    GROUPS_FIELD,
     Credential,
+    DirectoryGroup,
     DirectoryUser,
     FieldSpec,
     Provider,
@@ -36,6 +38,7 @@ def _user_handle(user_id: str) -> str:
 class OktaProvider(Provider):
     kind = "okta"
     label = "Okta"
+    supports_groups = True
     fields = [
         FieldSpec(
             "domain",
@@ -49,6 +52,7 @@ class OktaProvider(Provider):
             N_("Redirect URI"),
             default="http://localhost:8080/yubienroll-redirect",
         ),
+        GROUPS_FIELD,
     ]
 
     @property
@@ -66,7 +70,13 @@ class OktaProvider(Provider):
             revoke_url=f"{self._base}/oauth2/v1/revoke",
             client_id=self.settings["client_id"],
             redirect_uri=self.settings["redirect_uri"],
-            scopes=["openid", "offline_access", "okta.users.read", "okta.users.manage"],
+            scopes=[
+                "openid",
+                "offline_access",
+                "okta.users.read",
+                "okta.users.manage",
+                *(["okta.groups.read"] if self.groups_enabled else []),
+            ],
         )
 
     def _error_detail(self, body: dict) -> str | None:
@@ -173,6 +183,32 @@ class OktaProvider(Provider):
             for f in data
             if f.get("factorType") == "webauthn"
         ]
+
+    @staticmethod
+    def _page(resp) -> tuple[list, str | None, None]:
+        # Okta pages with a Link header: <https://…/users?after=…>; rel="next"
+        links = getattr(resp, "links", None) or {}
+        return resp.json(), (links.get("next") or {}).get("url"), None
+
+    def search_groups(self, query: str) -> list[DirectoryGroup]:
+        params = {"limit": "25"}
+        if query.strip():
+            params["q"] = query.strip()
+        data = self._request("GET", f"{self._base}/api/v1/groups", params=params).json()
+        return [
+            DirectoryGroup(
+                g["id"],
+                (g.get("profile") or {}).get("name") or "",
+                (g.get("profile") or {}).get("description") or "",
+            )
+            for g in data
+        ]
+
+    def group_members(self, group: DirectoryGroup, nested: bool = False) -> list[DirectoryUser]:
+        users = self._collect(
+            f"{self._base}/api/v1/groups/{quote(group.id)}/users", {"limit": "200"}, self._page
+        )
+        return [self._to_user(u) for u in users]
 
     def delete_credential(self, user: DirectoryUser, credential_id: str) -> None:
         self._request("DELETE", f"{self._factors_url(user.id)}/{quote(credential_id)}")

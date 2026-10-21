@@ -694,4 +694,83 @@ IT = {
     "The file was made by a newer version of KeyEnroll. Update the application first.": (
         "Il file è stato creato da una versione più recente di KeyEnroll. Aggiornare prima l’applicazione."
     ),
+    # -- groups and existing keys (0.7.0)
+    "Beginning of the group name": (
+        "Inizio del nome del gruppo"
+    ),
+    "Bulk lists from groups": (
+        "Elenchi massivi da gruppi"
+    ),
+    "Check for existing FIDO methods": (
+        "Verificare i metodi FIDO esistenti"
+    ),
+    "Description": (
+        "Descrizione"
+    ),
+    "FIDO methods": (
+        "Metodi FIDO"
+    ),
+    "FIDO methods the user already had when the list was loaded.": (
+        "Metodi FIDO che l’utente aveva già al caricamento dell’elenco."
+    ),
+    "Group": (
+        "Gruppo"
+    ),
+    "Has a key": (
+        "Ha già una chiave"
+    ),
+    "Include members of nested groups": (
+        "Includere i membri dei gruppi annidati"
+    ),
+    "Lets bulk enrollment load the members of a directory group. Needs an additional permission in the application registration; see the documentation.": (
+        "Consente alla registrazione massiva di caricare i membri di un gruppo della directory. Richiede un’autorizzazione aggiuntiva nella registrazione dell’applicazione; vedere la documentazione."
+    ),
+    "Load from group": (
+        "Carica da un gruppo"
+    ),
+    "Load from group…": (
+        "Carica da un gruppo…"
+    ),
+    "Load members": (
+        "Carica i membri"
+    ),
+    "Loading lists from groups is switched off for this instance. Turn on 'Bulk lists from groups' in the instance settings, grant the additional permission described in the documentation, and sign in again.": (
+        "Il caricamento di elenchi da gruppi è disattivato per questa istanza. Attivare «Elenchi massivi da gruppi» nelle impostazioni dell’istanza, concedere l’autorizzazione aggiuntiva descritta nella documentazione e accedere di nuovo."
+    ),
+    "Off": (
+        "Disattivato"
+    ),
+    "On": (
+        "Attivato"
+    ),
+    "Reading the members of {group}…": (
+        "Lettura dei membri di {group}…"
+    ),
+    "Skip users who already have one": (
+        "Saltare gli utenti che ne hanno già uno"
+    ),
+    "Takes the members of a group in the directory as the list.": (
+        "Usa i membri di un gruppo della directory come elenco."
+    ),
+    "The group {group} has no users.": (
+        "Il gruppo {group} non ha utenti."
+    ),
+    "When a list is loaded, counts the FIDO methods each user already has.": (
+        "Al caricamento di un elenco, conta i metodi FIDO che ogni utente ha già."
+    ),
+    "{count} group(s) found": (
+        "Gruppi trovati: {count}"
+    ),
+    "{count} skipped (has a key)": (
+        "saltati (hanno una chiave): {count}"
+    ),
+    "{name} already has {count} FIDO method(s).": (
+        "{name} ha già metodi FIDO: {count}."
+    ),
+    "{name} has no FIDO method yet.": (
+        "{name} non ha ancora alcun metodo FIDO."
+    ),
+    "{provider} does not list the FIDO methods of a user.": (
+        "{provider} non elenca i metodi FIDO di un utente."
+    ),
 }
