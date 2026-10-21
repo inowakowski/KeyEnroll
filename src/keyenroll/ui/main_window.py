@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import APP_NAME, __version__
+from .. import APP_NAME, __version__, updates
 from ..fido.devices import is_admin, relaunch_as_admin
 from ..i18n import tr
 from ..oauth import LoginCancelled
@@ -129,6 +129,8 @@ class MainWindow(QMainWindow):
         banner = self._admin_banner()
         if banner:
             content.addWidget(banner)
+        self.update_banner = self._make_update_banner()
+        content.addWidget(self.update_banner)
         content.addWidget(self.pages, 1)
 
         central = QWidget()
@@ -150,6 +152,10 @@ class MainWindow(QMainWindow):
             self.restoreGeometry(QByteArray.fromBase64(geometry.encode()))
         # First run: nothing to enroll against yet, start on the instances page.
         self.nav.setCurrentRow(PAGE_ENROLL if ctx.config.instances else PAGE_INSTANCES)
+        self._update_found: updates.UpdateInfo | None = None
+        if ctx.config.update_on_start:
+            previews = ctx.config.update_previews
+            run_task(self, lambda: updates.check(previews=previews), self._update_checked, None)
 
     def _retint_icons(self) -> None:
         for row, name in enumerate(self._icons):
@@ -180,6 +186,40 @@ class MainWindow(QMainWindow):
         row.addWidget(text, 1)
         row.addWidget(button)
         return banner
+
+    # -- update found at start-up -----------------------------------------
+
+    def _make_update_banner(self) -> QFrame:
+        banner = QFrame()
+        banner.setObjectName("banner")
+        self.update_text = QLabel()
+        self.update_text.setWordWrap(True)
+        show = QPushButton(tr("Show"))
+        show.clicked.connect(self._show_update)
+        later = QPushButton(tr("Later"))
+        later.clicked.connect(lambda: banner.setVisible(False))
+        row = QHBoxLayout(banner)
+        row.setContentsMargins(14, 10, 10, 10)
+        row.addWidget(self.update_text, 1)
+        row.addWidget(show)
+        row.addWidget(later)
+        banner.setVisible(False)
+        return banner
+
+    def _update_checked(self, info: updates.UpdateInfo) -> None:
+        if not info.newer:
+            return
+        self._update_found = info
+        self.update_text.setText(
+            tr("KeyEnroll {version} is available.", version=info.latest)
+        )
+        self.update_banner.setVisible(True)
+
+    def _show_update(self) -> None:
+        self.update_banner.setVisible(False)
+        self.nav.setCurrentRow(PAGE_SETTINGS)
+        if self._update_found is not None:
+            self.pages.widget(PAGE_SETTINGS).show_update(self._update_found)
 
     def _elevate(self) -> None:
         if relaunch_as_admin():
@@ -287,7 +327,7 @@ class MainWindow(QMainWindow):
             if answer != QMessageBox.StandardButton.Yes:
                 event.ignore()
                 return
-        if self.bulk_page.has_unexported_pins():
+        if self.bulk_page.has_unexported_pins() and not self.ctx.closing_for_update:
             answer = QMessageBox.question(
                 self,
                 tr("Unsaved PINs"),

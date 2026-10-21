@@ -73,3 +73,6 @@ jobs:
           files: installers/*
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
+          # With the repository variable SIGN_RELEASES=true the release stays a
+          # draft until it is signed with the project's key (RELEASING.md).
+          draft: ${{ vars.SIGN_RELEASES == 'true' }}

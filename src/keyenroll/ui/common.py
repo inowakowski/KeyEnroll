@@ -72,6 +72,10 @@ class AppContext(QObject):
         self._factory = provider_factory
         self._providers: dict[str, Provider] = {}
         self._busy = False
+        # Temporary PINs on the bulk list that were not exported yet.
+        self.unexported_pins = False
+        # Set when the window closes for an update the operator confirmed.
+        self.closing_for_update = False
 
     def provider_for(self, instance: Instance) -> Provider:
         provider = self._providers.get(instance.id)

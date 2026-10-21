@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QUrl
+import logging
+import tempfile
+import threading
+from pathlib import Path
+
+from PySide6.QtCore import QStandardPaths, Qt, QUrl, Signal
 from PySide6.QtGui import QColor, QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
@@ -13,7 +18,9 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPlainTextEdit,
+    QProgressDialog,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -24,8 +31,40 @@ from PySide6.QtWidgets import (
 from .. import APP_NAME, DOCS_URL, PROJECT_URL, __version__, handover, journal, updates
 from ..config import config_dir
 from ..i18n import LANGUAGES, tr
-from .common import AppContext, run_task
+from .common import AppContext, Background, run_task
 from .theme import PRESETS, Card, apply_theme
+
+logger = logging.getLogger(__name__)
+
+
+class DownloadTask(Background):
+    """Downloads and verifies an update off the UI thread."""
+
+    progress = Signal(int, int)
+    succeeded = Signal(object)
+    failed = Signal(object)
+
+    def __init__(self, info: updates.UpdateInfo, asset: updates.Asset, folder: Path):
+        super().__init__()
+        self.cancel = threading.Event()
+        self._info, self._asset, self._folder = info, asset, folder
+        self._shown = -1
+
+    def _report(self, done: int, total: int) -> None:
+        percent = done * 100 // total if total else 0
+        if percent != self._shown:  # a signal per percent, not per chunk
+            self._shown = percent
+            self.post(lambda: self.progress.emit(done, total))
+
+    def work(self) -> None:
+        try:
+            path = updates.download(
+                self._info, self._asset, self._folder, progress=self._report, cancel=self.cancel
+            )
+        except Exception as e:
+            self.post(lambda exc=e: self.failed.emit(exc))
+        else:
+            self.post(lambda: self.succeeded.emit(path))
 
 
 class SettingsPage(QWidget):
@@ -166,10 +205,21 @@ class SettingsPage(QWidget):
         disclaimer.setObjectName("hint")
         disclaimer.setWordWrap(True)
         about.body.addWidget(disclaimer)
+        self.open_logs = QPushButton(tr("Open the folder with settings and logs"))
+        self.open_logs.clicked.connect(self._open_data_folder)
+        about_buttons = QHBoxLayout()
+        about_buttons.addWidget(self.open_logs)
+        about_buttons.addStretch(1)
+        about.body.addLayout(about_buttons)
+
+        # -- updates -------------------------------------------------------
         self.check_updates = QPushButton(tr("Check for updates"))
         self.check_updates.clicked.connect(self._check_updates)
+        self.install_update = QPushButton()
+        self.install_update.setObjectName("primary")
+        self.install_update.setVisible(False)
+        self.install_update.clicked.connect(self._install_update)
         self.download_update = QPushButton(tr("Open the download page"))
-        self.download_update.setObjectName("primary")
         self.download_update.setVisible(False)
         self.download_update.clicked.connect(self._open_release)
         self.update_note = QLabel()
@@ -177,21 +227,48 @@ class SettingsPage(QWidget):
         self.update_note.setWordWrap(True)
         self.update_note.setVisible(False)
         self._release_url = ""
-        self.open_logs = QPushButton(tr("Open the folder with settings and logs"))
-        self.open_logs.clicked.connect(self._open_data_folder)
-        about_buttons = QHBoxLayout()
-        about_buttons.addWidget(self.check_updates)
-        about_buttons.addWidget(self.download_update)
-        about_buttons.addWidget(self.open_logs)
-        about_buttons.addStretch(1)
-        about.body.addLayout(about_buttons)
-        about.body.addWidget(self.update_note)
+        self._update: updates.UpdateInfo | None = None
+        self._asset: updates.Asset | None = None
+        self._download: DownloadTask | None = None
+        self.update_previews = QCheckBox(tr("Include preview versions"))
+        self.update_previews.setToolTip(
+            tr("Previews have the newest features before they were tested on real keys and tenants.")
+        )
+        self.update_previews.setChecked(config.update_previews)
+        self.update_previews.toggled.connect(self._set_update_options)
+        self.update_on_start = QCheckBox(tr("Check for updates when the application starts"))
+        self.update_on_start.setChecked(config.update_on_start)
+        self.update_on_start.toggled.connect(self._set_update_options)
+        self.update_unexported = QComboBox()
+        self.update_unexported.addItem(tr("Warn me; I can still update and lose them"), "warn")
+        self.update_unexported.addItem(tr("Do not allow the update until they are exported"), "block")
+        self.update_unexported.setCurrentIndex(max(0, self.update_unexported.findData(config.update_unexported)))
+        self.update_unexported.currentIndexChanged.connect(self._set_update_options)
+        update_card = Card(
+            tr("Updates"),
+            tr(
+                "An update is installed only after you confirm it, and only if the "
+                "downloaded file matches the published one."
+            ),
+        )
+        update_buttons = QHBoxLayout()
+        update_buttons.addWidget(self.check_updates)
+        update_buttons.addWidget(self.install_update)
+        update_buttons.addWidget(self.download_update)
+        update_buttons.addStretch(1)
+        update_card.body.addLayout(update_buttons)
+        update_card.body.addWidget(self.update_note)
+        update_form = QFormLayout()
+        update_form.addRow(self.update_previews)
+        update_form.addRow(self.update_on_start)
+        update_form.addRow(tr("Temporary PINs not exported yet"), self.update_unexported)
+        update_card.body.addLayout(update_form)
 
         host = QWidget()
         column = QVBoxLayout(host)
         column.setContentsMargins(0, 0, 6, 0)
         column.setSpacing(14)
-        for card in (appearance, language, message, log, about):
+        for card in (appearance, language, message, log, update_card, about):
             column.addWidget(card)
         column.addStretch(1)
         scroll = QScrollArea()
@@ -283,30 +360,60 @@ class SettingsPage(QWidget):
         folder.mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
-    # -- about -------------------------------------------------------------
+    # -- updates -----------------------------------------------------------
+
+    def _set_update_options(self) -> None:
+        config = self.ctx.config
+        config.update_previews = self.update_previews.isChecked()
+        config.update_on_start = self.update_on_start.isChecked()
+        config.update_unexported = self.update_unexported.currentData()
+        config.save()
 
     def _check_updates(self) -> None:
         self.check_updates.setEnabled(False)
         self.download_update.setVisible(False)
+        self.install_update.setVisible(False)
         self._show_update_note(tr("Checking for updates…"))
-        run_task(self, updates.check, self._update_checked, self._update_failed)
+        previews = self.ctx.config.update_previews
+        run_task(
+            self,
+            lambda: updates.check(previews=previews),
+            self._update_checked,
+            self._update_failed,
+        )
 
     def _show_update_note(self, text: str) -> None:
         self.update_note.setText(text)
         self.update_note.setVisible(True)
 
+    def show_update(self, info: updates.UpdateInfo) -> None:
+        """Shows a release found by the check at start-up."""
+        self._update_checked(info)
+
     def _update_checked(self, info: updates.UpdateInfo) -> None:
         self.check_updates.setEnabled(True)
         if info.newer:
             self._release_url = info.url
+            self._update = info
+            kind = updates.installer_kind()
+            self._asset = updates.pick_asset(info, kind, updates.machine_arch())
             self.download_update.setVisible(True)
-            self._show_update_note(
-                tr(
-                    "Version {latest} is available (you have {current}).",
-                    latest=info.latest,
-                    current=info.current,
+            if self._asset is not None:
+                text = (
+                    tr("Install version {version}", version=info.latest)
+                    if kind == "windows"
+                    else tr("Download version {version}", version=info.latest)
                 )
+                self.install_update.setText(text)
+                self.install_update.setVisible(True)
+            note = tr(
+                "Version {latest} is available (you have {current}).",
+                latest=info.latest,
+                current=info.current,
             )
+            if info.prerelease:
+                note += " " + tr("It is a preview version.")
+            self._show_update_note(note)
         else:
             self._show_update_note(
                 tr("You have the latest version ({current}).", current=info.current)
@@ -318,6 +425,129 @@ class SettingsPage(QWidget):
             self._show_update_note(tr(str(exc)))
         else:
             self._show_update_note(tr("The update server returned an unexpected answer."))
+
+    def _may_update(self) -> bool:
+        """Nothing in progress is lost without the operator knowing."""
+        if self.ctx.busy:
+            QMessageBox.information(
+                self,
+                tr("Updates"),
+                tr("An enrollment is in progress. Finish or cancel it before updating."),
+            )
+            return False
+        if not self.ctx.unexported_pins:
+            return True
+        if self.ctx.config.update_unexported == "block":
+            QMessageBox.warning(
+                self,
+                tr("Updates"),
+                tr(
+                    "The bulk enrollment list has temporary PINs that were not exported. "
+                    "Export them, or clear the list, before updating."
+                ),
+            )
+            return False
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(tr("Unsaved PINs"))
+        box.setText(
+            tr(
+                "The bulk enrollment list has temporary PINs that were not exported. "
+                "If you update now, they are lost for good and the keys concerned "
+                "have to be enrolled again."
+            )
+        )
+        lose = box.addButton(tr("Update and lose the PINs"), QMessageBox.ButtonRole.DestructiveRole)
+        box.addButton(tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        return box.clickedButton() is lose
+
+    def _install_update(self) -> None:
+        info, asset = self._update, self._asset
+        if info is None or asset is None or self._download is not None:
+            return
+        if not self._may_update():
+            return
+        kind = updates.installer_kind()
+        if kind == "windows":
+            folder = Path(tempfile.gettempdir()) / "KeyEnroll-update"
+        else:
+            downloads = QStandardPaths.writableLocation(
+                QStandardPaths.StandardLocation.DownloadLocation
+            )
+            folder = Path(downloads or tempfile.gettempdir())
+        progress = QProgressDialog(
+            tr("Downloading version {version}…", version=info.latest), tr("Cancel"), 0, 100, self
+        )
+        progress.setWindowTitle(tr("Updates"))
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
+        task = DownloadTask(info, asset, folder)
+        progress.canceled.connect(task.cancel.set)
+        task.progress.connect(
+            lambda done, total: progress.setValue(done * 100 // total if total else 0)
+        )
+
+        def finished() -> None:
+            self._download = None
+            progress.canceled.disconnect(task.cancel.set)
+            progress.close()
+            self.install_update.setEnabled(True)
+
+        def failed(exc) -> None:
+            finished()
+            if isinstance(exc, updates.UpdateCancelled):
+                return
+            text = tr(str(exc)) if isinstance(exc, updates.UpdateError) else str(exc)
+            QMessageBox.warning(self, tr("Updates"), text)
+
+        def done(path: Path) -> None:
+            finished()
+            self._downloaded(path, kind, info)
+
+        task.succeeded.connect(done)
+        task.failed.connect(failed)
+        self._download = task
+        self.install_update.setEnabled(False)
+        task.start()
+        progress.show()
+
+    def _downloaded(self, path: Path, kind: str | None, info: updates.UpdateInfo) -> None:
+        if kind == "windows":
+            try:
+                updates.launch_windows_installer(path)
+            except OSError as e:
+                QMessageBox.warning(self, tr("Updates"), str(e))
+                return
+            logger.info("Installing version %s; closing", info.latest)
+            self.ctx.closing_for_update = True
+            self.window().close()
+            return
+        if kind == "macos":
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+            text = tr(
+                "The disk image is open. Quit KeyEnroll, drag the new KeyEnroll onto the "
+                "Applications folder to replace the old one, and start it again."
+            )
+        elif kind == "deb":
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.parent)))
+            text = tr(
+                "Saved to {path}. Quit KeyEnroll and install it with your package manager, "
+                "for example: sudo apt install {path}",
+                path=str(path),
+            )
+        else:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.parent)))
+            text = tr(
+                "Saved to {path}. Quit KeyEnroll and unpack the archive over the current "
+                "installation.",
+                path=str(path),
+            )
+        QMessageBox.information(self, tr("Updates"), text)
+
+    # -- about -------------------------------------------------------------
 
     def _open_release(self) -> None:
         if self._release_url:

@@ -274,6 +274,15 @@ class BulkPage(QWidget):
 
     # -- state -------------------------------------------------------------
 
+    # The update in Settings asks before PINs that were not exported are lost.
+    @property
+    def _unexported(self) -> bool:
+        return self.ctx.unexported_pins
+
+    @_unexported.setter
+    def _unexported(self, value: bool) -> None:
+        self.ctx.unexported_pins = value
+
     def is_running(self) -> bool:
         return self._worker is not None
 

@@ -773,4 +773,89 @@ IT = {
     "{provider} does not list the FIDO methods of a user.": (
         "{provider} non elenca i metodi FIDO di un utente."
     ),
+    # -- updates from the application (0.7.0)
+    "An enrollment is in progress. Finish or cancel it before updating.": (
+        "È in corso una registrazione. Completarla o annullarla prima di aggiornare."
+    ),
+    "An update is installed only after you confirm it, and only if the downloaded file matches the published one.": (
+        "Un aggiornamento viene installato solo dopo la conferma e solo se il file scaricato corrisponde a quello pubblicato."
+    ),
+    "Check for updates when the application starts": (
+        "Cercare aggiornamenti all’avvio dell’applicazione"
+    ),
+    "Do not allow the update until they are exported": (
+        "Non consentire l’aggiornamento finché non vengono esportati"
+    ),
+    "Download version {version}": (
+        "Scarica la versione {version}"
+    ),
+    "Downloading version {version}…": (
+        "Download della versione {version}…"
+    ),
+    "Include preview versions": (
+        "Includere le versioni di anteprima"
+    ),
+    "Install version {version}": (
+        "Installa la versione {version}"
+    ),
+    "It is a preview version.": (
+        "È una versione di anteprima."
+    ),
+    "KeyEnroll {version} is available.": (
+        "È disponibile KeyEnroll {version}."
+    ),
+    "Later": (
+        "Più tardi"
+    ),
+    "Previews have the newest features before they were tested on real keys and tenants.": (
+        "Le versioni di anteprima hanno le funzioni più recenti prima che vengano provate su chiavi e tenant reali."
+    ),
+    "Saved to {path}. Quit KeyEnroll and install it with your package manager, for example: sudo apt install {path}": (
+        "Salvato in {path}. Chiudere KeyEnroll e installarlo con il gestore di pacchetti, ad esempio: sudo apt install {path}"
+    ),
+    "Saved to {path}. Quit KeyEnroll and unpack the archive over the current installation.": (
+        "Salvato in {path}. Chiudere KeyEnroll e decomprimere l’archivio sopra l’installazione attuale."
+    ),
+    "Show": (
+        "Mostra"
+    ),
+    "Temporary PINs not exported yet": (
+        "PIN temporanei non ancora esportati"
+    ),
+    "The bulk enrollment list has temporary PINs that were not exported. Export them, or clear the list, before updating.": (
+        "L’elenco della registrazione massiva contiene PIN temporanei non esportati. Esportarli o svuotare l’elenco prima di aggiornare."
+    ),
+    "The bulk enrollment list has temporary PINs that were not exported. If you update now, they are lost for good and the keys concerned have to be enrolled again.": (
+        "L’elenco della registrazione massiva contiene PIN temporanei non esportati. Aggiornando ora andranno persi definitivamente e le chiavi interessate dovranno essere registrate di nuovo."
+    ),
+    "The disk image is open. Quit KeyEnroll, drag the new KeyEnroll onto the Applications folder to replace the old one, and start it again.": (
+        "L’immagine disco è aperta. Chiudere KeyEnroll, trascinare il nuovo KeyEnroll nella cartella Applicazioni sostituendo il vecchio e avviarlo di nuovo."
+    ),
+    "The download failed. Check the connection and try again.": (
+        "Il download non è riuscito. Controllare la connessione e riprovare."
+    ),
+    "The download was cancelled.": (
+        "Il download è stato annullato."
+    ),
+    "The downloaded file is not the one that was published. It was deleted.": (
+        "Il file scaricato non è quello pubblicato. È stato eliminato."
+    ),
+    "The signature of this release is not valid. Do not install it; report it to the project.": (
+        "La firma di questa versione non è valida. Non installarla e segnalarlo al progetto."
+    ),
+    "The update server did not provide a checksum for this file. Install it from the download page.": (
+        "Il server degli aggiornamenti non ha fornito un checksum per questo file. Installarlo dalla pagina di download."
+    ),
+    "This release is not signed with the project's key. Install it from the download page.": (
+        "Questa versione non è firmata con la chiave del progetto. Installarla dalla pagina di download."
+    ),
+    "Update and lose the PINs": (
+        "Aggiorna e perdi i PIN"
+    ),
+    "Updates": (
+        "Aggiornamenti"
+    ),
+    "Warn me; I can still update and lose them": (
+        "Avvisarmi; posso comunque aggiornare e perderli"
+    ),
 }
