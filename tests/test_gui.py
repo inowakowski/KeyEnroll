@@ -963,3 +963,13 @@ def test_update_check_button(gui, monkeypatch):
     wait_until(lambda: page.check_updates.isEnabled())
     assert page.update_note.text() == "No published release was found."
     assert page.download_update.isHidden()
+
+
+def test_instance_redirect_uri_must_be_local():
+    local_redirect = dialogs.local_redirect
+    assert local_redirect("http://localhost/yubienroll-redirect")
+    assert local_redirect("http://localhost:8080/yubienroll-redirect")
+    assert not local_redirect("http://localhost.example.com/callback")
+    assert not local_redirect("https://localhost/callback")
+    assert not local_redirect("http://localhost:80a/callback")
+    assert not local_redirect("")

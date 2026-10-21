@@ -19,12 +19,13 @@ Wyszukiwanie wymaga [zalogowania](instances.md#signing-in).
 
 | Element | Do czego służy |
 |---|---|
-| Lista kluczy | Podłączone klucze bezpieczeństwa. Włożony lub wyjęty klucz sam pojawia się lub znika w ciągu paru sekund. |
+| Lista kluczy | Podłączone klucze bezpieczeństwa. Włożony lub wyjęty klucz USB sam pojawia się lub znika w ciągu paru sekund. |
 | **Odśwież** | Od razu szuka kluczy ponownie. |
 | **Numer seryjny**, **Firmware** | Odczytane z klucza, żeby można było sprawdzić, czy to właściwy egzemplarz. Klucze z serii *Security Key* nie udostępniają numeru seryjnego. |
 | Wiersz stanu | Stan klucza przed rejestracją: czy ma ustawiony PIN, jaka jest minimalna długość PIN-u oraz czy włączone są „zawsze wymagaj UV”, atestacja Enterprise lub wymuszona zmiana PIN-u. |
 
-Klucze na czytniku NFC są oznaczone dopiskiem **NFC**.
+Klucze na czytniku NFC są oznaczone dopiskiem **NFC**. Nie są wykrywane
+automatycznie: połóż klucz na czytniku i kliknij **Odśwież**.
 
 ## 3. Opcje rejestracji
 

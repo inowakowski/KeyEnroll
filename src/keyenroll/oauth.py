@@ -36,6 +36,11 @@ class LoginCancelled(OAuthError):
     pass
 
 
+class ProviderUnavailable(OAuthError):
+    """The token endpoint could not be reached or failed on its side. Unlike a
+    rejected token, this says nothing about whether the sign-in is still valid."""
+
+
 @dataclass
 class OAuthConfig:
     authorize_url: str
@@ -190,10 +195,12 @@ def _token_request(cfg: OAuthConfig, data: dict, http) -> TokenSet:
             timeout=HTTP_TIMEOUT,
         )
     except requests.RequestException as e:
-        raise OAuthError(f"Token request failed: {e}") from e
+        raise ProviderUnavailable(f"Token request failed: {e}") from e
     try:
         payload = resp.json()
     except ValueError:
+        payload = {}
+    if not isinstance(payload, dict):
         payload = {}
     if resp.status_code != 200 or "access_token" not in payload:
         detail = (
@@ -201,7 +208,10 @@ def _token_request(cfg: OAuthConfig, data: dict, http) -> TokenSet:
             or payload.get("error")
             or f"HTTP {resp.status_code}"
         )
-        raise OAuthError(f"Token request failed: {detail}")
+        transient = resp.status_code == 429 or resp.status_code >= 500
+        raise (ProviderUnavailable if transient else OAuthError)(
+            f"Token request failed: {detail}"
+        )
     return TokenSet.from_response(payload)
 
 

@@ -173,6 +173,8 @@ class EntraProvider(Provider):
                         response.response.attestation_object
                     ),
                 },
+                # Sent empty, as in Microsoft's example request.
+                "clientExtensionResults": {},
             },
         }
         user = DirectoryUser(id=registration.state["user_id"], username="")

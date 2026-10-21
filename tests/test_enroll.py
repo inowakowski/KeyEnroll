@@ -489,3 +489,50 @@ def test_key_already_used_in_the_batch_is_refused_before_any_change():
         enroller.run()
     assert "reset" not in key.log and key.pin == "135790"
     assert "begin" not in provider.events
+
+
+class SwappingOperator(FakeUI):
+    """Takes the key out when asked and puts a different one back in."""
+
+    def __init__(self, source, replacement):
+        super().__init__(source)
+        self.replacement = replacement
+
+    def status(self, template, **params):
+        self.messages.append(template.format(**params) if params else template)
+        if "remove the security key" in template:
+            self.source.devices = []
+        elif "insert the security key" in template:
+            self.replacement.fresh = True
+            self.source.devices = [self.replacement]
+
+
+def test_a_different_key_inserted_for_the_reset_is_left_untouched():
+    chosen, other = FakeAuthenticator("chosen"), FakeAuthenticator("other")
+    chosen.serial, other.serial = 111, 222
+    other.pin = "135790"
+    source = FakeSource(chosen)
+    provider = FakeProvider()
+    enroller = Enroller(
+        provider, Profile(), USER, "", None, SwappingOperator(source, other), source=source
+    )
+
+    with pytest.raises(EnrollError, match="different security key"):
+        enroller.run()
+    assert "reset" not in other.log and other.pin == "135790"
+    assert "begin" not in provider.events
+
+
+def test_a_key_of_the_batch_inserted_for_the_reset_is_left_untouched():
+    current, enrolled = FakeAuthenticator("current"), FakeAuthenticator("enrolled")
+    enrolled.serial = 111  # the key that was enrolled for the previous user
+    enrolled.pin = "135790"
+    source = FakeSource(current)  # no readable serial, so it cannot be compared
+    enroller = Enroller(
+        FakeProvider(), Profile(), USER, "", None, SwappingOperator(source, enrolled),
+        source=source, try_reset_first=True, used_serials={111},
+    )
+
+    with pytest.raises(EnrollError, match="already enrolled in this batch"):
+        enroller.run()
+    assert "reset" not in enrolled.log and enrolled.pin == "135790"

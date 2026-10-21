@@ -102,7 +102,7 @@ order of the file.
 - The previous key has to be removed before the next user is started, so one key
   cannot be enrolled twice by accident.
 - A key whose serial number was already used in this batch is refused **before** it
-  is reset.
+  is reset, also when it is the one you insert again for the reset.
 - The batch works with exactly one connected key. If several are connected when you
   press Start, it stops and asks you to leave only one.
 - After a failure the batch **stops** rather than moving on, so that a wrong key or

@@ -5,6 +5,7 @@ import json
 import time
 
 import pytest
+import requests
 from fido2.webauthn import PublicKeyCredentialCreationOptions
 
 from keyenroll import oauth
@@ -81,6 +82,26 @@ def test_rejected_refresh_token_ends_the_session(http, store):
         p.search_users("")
     assert store.get("i1") is None
     assert not p.has_session()
+
+
+@pytest.mark.parametrize("status", [None, 500, 503, 429])
+def test_unreachable_token_endpoint_keeps_the_sign_in(http, store, status):
+    store.set("i1", "STILL-VALID")
+    p = OktaProvider("i1", {"domain": "x.okta.com", "client_id": "c"}, store, http)
+    if status is None:
+
+        def offline(*args, **kwargs):
+            raise requests.ConnectionError("network is unreachable")
+
+        http.post = offline
+    else:
+        http.add(None, status=status)
+
+    with pytest.raises(ProviderError, match="could not be reached") as caught:
+        p.search_users("")
+    assert not isinstance(caught.value, AuthRequired)
+    assert store.get("i1") == "STILL-VALID"
+    assert p.has_session()
 
 
 def test_401_triggers_one_refresh_and_retry(http, store, signed_in):
@@ -190,6 +211,7 @@ def test_entra_registration_roundtrip(entra, http, response):
     assert b64url_decode(cred["response"]["attestationObject"]) == bytes(
         response.response.attestation_object
     )
+    assert cred["clientExtensionResults"] == {}
 
 
 def test_entra_error_message_is_surfaced(entra, http):

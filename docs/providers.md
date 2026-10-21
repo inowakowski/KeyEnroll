@@ -47,7 +47,13 @@ the tenant.
 - If the policy restricts keys by AAGUID or enforces attestation, the keys you hand
   out have to satisfy it.
 
-**Good to know:** the name of a key is limited to 30 characters.
+**Good to know:**
+
+- The name of a key is limited to 30 characters.
+- Microsoft offers the FIDO2 provisioning API that KeyEnroll uses only in the
+  global cloud; the US Government and China (21Vianet) clouds do not support it
+  (state of the Microsoft Graph documentation, July 2026). The two endpoint fields
+  are there for when that changes.
 
 ## Okta
 

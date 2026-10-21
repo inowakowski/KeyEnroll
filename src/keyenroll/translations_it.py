@@ -16,6 +16,9 @@ IT = {
     "Not signed in. Sign in to the identity provider first.": (
         "Accesso non eseguito. Accedere prima al provider di identità."
     ),
+    "The identity provider could not be reached. Check the connection and try again.": (
+        "Impossibile contattare il provider di identità. Controllare la connessione e riprovare."
+    ),
     "The session has expired. Sign in to the identity provider again.": (
         "La sessione è scaduta. Accedere di nuovo al provider di identità."
     ),
@@ -397,6 +400,10 @@ IT = {
         "Sono collegate più chiavi di sicurezza. Lasciarne collegata una sola."
     ),
     "Batch finished.": "Lotto completato.",
+    "A different security key was inserted (S/N {found}). Start again "
+    "with the key S/N {expected}.": (
+        "È stata inserita un’altra chiave di sicurezza (S/N {found}). Ricominciare con la chiave S/N {expected}."
+    ),
     "Security key {serial} was already enrolled in this batch.": (
         "La chiave di sicurezza {serial} è già stata registrata in questo lotto."
     ),
