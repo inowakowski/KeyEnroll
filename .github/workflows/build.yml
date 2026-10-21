@@ -1,7 +1,9 @@
 name: build
 
 # Pushing a tag like v0.2.0 builds installers for every platform and attaches
-# them to a GitHub release. "Run workflow" builds them as artifacts only.
+# them to a GitHub release. A tag with a hyphen (v0.7.0-preview.1) makes a
+# pre-release: the update check and the "latest" download link skip it.
+# "Run workflow" builds the installers as artifacts only.
 on:
   push:
     tags: ["v*"]
@@ -70,3 +72,4 @@ jobs:
         with:
           files: installers/*
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}

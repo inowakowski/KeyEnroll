@@ -30,7 +30,7 @@ class UpdateInfo:
 
     @property
     def newer(self) -> bool:
-        return parse_version(self.latest) > parse_version(self.current)
+        return version_key(self.latest) > version_key(self.current)
 
 
 def parse_version(text: str) -> tuple[int, ...]:
@@ -42,6 +42,15 @@ def parse_version(text: str) -> tuple[int, ...]:
     while len(parts) > 1 and parts[-1] == 0:
         parts.pop()  # 1.0 and 1.0.0 are the same release
     return tuple(parts)
+
+
+_PRERELEASE = re.compile(r"\s*v?\d+(?:\.\d+)*[-._]?(?:a|alpha|b|beta|c|rc|pre|preview|dev)", re.I)
+
+
+def version_key(text: str) -> tuple[tuple[int, ...], int]:
+    """Orders versions, a preview before the release it leads to:
+    0.7.0-preview.1 < 0.7.0 < 0.7.1."""
+    return parse_version(text), 0 if _PRERELEASE.match(text or "") else 1
 
 
 def api_url(project_url: str = PROJECT_URL) -> str:

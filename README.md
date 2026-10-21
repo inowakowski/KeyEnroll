@@ -284,6 +284,12 @@ Wynik trafia do `dist/installer/`. Każdą platformę trzeba budować na niej sa
 2. Wypchnij tag, np. `v0.3.0`. Workflow `.github/workflows/build.yml` uruchomi testy,
    zbuduje instalatory dla sześciu platform i dołączy je do wydania na GitHubie.
 
+**Wersja testowa (preview):** numer i tag z myślnikiem, np. `0.7.0-preview.1`
+i `v0.7.0-preview.1`. Wydanie dostaje oznaczenie *Pre-release*, więc nie pokazuje go
+ani przycisk „najnowsza wersja”, ani sprawdzanie aktualizacji w aplikacji. Kto ma
+zainstalowaną wersję testową, dostanie informację o wydaniu `0.7.0`. Paczka `.deb`
+ma numer `0.7.0~preview.1`, żeby Debian uznał `0.7.0` za nowszą.
+
 Dokumentację publikuje osobno GitHub Pages, po każdym pushu do `main`.
 
 Każdy push do `main` i każdy pull request uruchamia linter i testy na Windows, macOS

@@ -42,6 +42,17 @@ def test_versions_compare_as_numbers_not_text():
         parse_version("latest")
 
 
+def test_a_preview_comes_before_its_release():
+    assert updates.version_key("0.7.0-preview.1") < updates.version_key("v0.7.0")
+    assert updates.version_key("0.7.0rc2") < updates.version_key("0.7.0")
+    assert updates.version_key("0.7.0") < updates.version_key("0.7.1-preview.1")
+    assert updates.version_key("0.5.0") < updates.version_key("0.7.0-preview.1")
+    # Someone on a preview is told about the release; the release is not
+    # downgraded to an older stable one.
+    assert updates.check(Http(release("v0.7.0")), current="0.7.0-preview.1").newer
+    assert not updates.check(Http(release("v0.5.0")), current="0.7.0-preview.1").newer
+
+
 def test_newer_release_is_reported_with_its_page():
     http = Http(release("v0.4.0"))
     info = updates.check(http, current="0.3.0")
