@@ -152,6 +152,7 @@ class PingOneAicProvider(Provider):
     supports_credential_list = False
     supports_credential_delete = False
     supports_groups = True  # not yet tried against a live tenant
+    session_neutral = Provider.session_neutral | {"journey", "origin"}
     fields = [
         FieldSpec(
             "tenant", N_("Tenant"), placeholder="openam-example.forgeblocks.com"
@@ -174,6 +175,7 @@ class PingOneAicProvider(Provider):
             required=False,
             placeholder="https://sso.example.com",
             help=N_("Leave empty to use the tenant address."),
+            https=True,
         ),
         GROUPS_FIELD,
     ]

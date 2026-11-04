@@ -14,6 +14,7 @@ import time
 import uuid
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
+from typing import Callable
 
 from .i18n import N_
 
@@ -418,7 +419,14 @@ class ImportProblem(ValueError):
     """Carries an untranslated message for the operator."""
 
 
-def parse_import(raw: bytes, known_kinds: set[str]) -> ConfigImport:
+def parse_import(
+    raw: bytes,
+    known_kinds: set[str],
+    acceptable: Callable[[str, dict[str, str]], bool] | None = None,
+) -> ConfigImport:
+    """Reads an exported configuration. ``acceptable(kind, settings)`` can
+    turn down an instance, for example one with a non-https address; it is
+    then listed as skipped."""
     if len(raw) > MAX_IMPORT_BYTES:
         raise ImportProblem(N_("The file is too large to be a KeyEnroll configuration."))
     try:
@@ -441,14 +449,16 @@ def parse_import(raw: bytes, known_kinds: set[str]) -> ConfigImport:
             out.skipped.append(name or "?")
             continue
         default = entry.get("default_profile")
-        out.instances.append(
-            Instance(
-                name=name,
-                kind=entry["kind"],
-                settings={str(k): str(v) for k, v in settings.items() if v is not None},
-                default_profile=str(default) if default else None,
-            )
+        instance = Instance(
+            name=name,
+            kind=entry["kind"],
+            settings={str(k): str(v) for k, v in settings.items() if v is not None},
+            default_profile=str(default) if default else None,
         )
+        if acceptable is not None and not acceptable(instance.kind, instance.settings):
+            out.skipped.append(name)
+            continue
+        out.instances.append(instance)
     for entry in data.get("profiles") or []:
         try:
             profile = Profile.from_dict(entry)
@@ -470,8 +480,10 @@ class ImportOutcome:
     added: int = 0
     replaced: int = 0
     skipped: int = 0
-    # Instances whose settings were replaced: (id, the provider type changed).
-    replaced_instances: list[tuple[str, bool]] = field(default_factory=list)
+    # Instances whose settings were replaced: (id, previous provider type,
+    # previous settings). The caller decides whether the saved sign-in may
+    # stay (providers.keeps_sign_in).
+    replaced_instances: list[tuple[str, str, dict[str, str]]] = field(default_factory=list)
 
 
 def _free_name(name: str, taken: set[str]) -> str:
@@ -522,8 +534,11 @@ def apply_import(
                 store.instances.append(instance)
                 outcome.added += 1
             elif clash == "replace":
-                # Keeps the ID, and with it the sign-in, unless the provider changed.
-                outcome.replaced_instances.append((existing.id, existing.kind != instance.kind))
+                # Keeps the ID; whether the sign-in filed under it survives
+                # depends on what changed.
+                outcome.replaced_instances.append(
+                    (existing.id, existing.kind, dict(existing.settings))
+                )
                 existing.kind = instance.kind
                 existing.settings = instance.settings
                 existing.default_profile = instance.default_profile

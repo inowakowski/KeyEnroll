@@ -162,6 +162,7 @@ PL = {
     "Instance name cannot be empty.": "Nazwa instancji nie może być pusta.",
     "An instance with this name already exists.": "Instancja o tej nazwie już istnieje.",
     "Required field is empty: {field}": "Wymagane pole jest puste: {field}",
+    "{field} must be an https:// address.": "{field} musi być adresem https://.",
     "The redirect URI must start with http://localhost.": (
         "Redirect URI musi zaczynać się od http://localhost."
     ),

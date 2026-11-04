@@ -56,6 +56,8 @@ class FieldSpec:
     placeholder: str = ""
     help: str = ""
     choices: list[tuple[str, str]] | None = None  # (value, label)
+    # An address the application sends tokens to: only https is accepted.
+    https: bool = False
 
 
 @dataclass
@@ -133,6 +135,12 @@ GROUPS_FIELD = FieldSpec(
 )
 
 
+def is_https(url: str) -> bool:
+    """True for an https address with a host. Tokens are sent nowhere else."""
+    parts = urlsplit(url.strip())
+    return parts.scheme.lower() == "https" and bool(parts.hostname)
+
+
 def clean_host(value: str) -> str:
     """Accepts 'https://host/path' or 'host' and returns the bare host."""
     value = value.strip()
@@ -150,6 +158,11 @@ class Provider:
     max_display_name: ClassVar[int | None] = None  # limit for credential names
     supports_groups: ClassVar[bool] = False
     supports_nested_groups: ClassVar[bool] = False
+    # Settings that can change without the saved sign-in going anywhere else.
+    # A change to any other setting (a host, a tenant, a client ID) makes the
+    # application forget the sign-in: the refresh token must never be sent to
+    # an address it was not issued by.
+    session_neutral: ClassVar[frozenset[str]] = frozenset({"redirect_uri", "groups"})
 
     def __init__(
         self,
@@ -159,9 +172,7 @@ class Provider:
         http: requests.Session | None = None,
     ):
         self.instance_id = instance_id
-        self.settings = {
-            f.key: (settings.get(f.key) or f.default).strip() for f in self.fields
-        }
+        self.settings = self.normalized(settings)
         self._store = token_store
         self._http = http or requests.Session()
         self._tokens: oauth.TokenSet | None = None
@@ -169,6 +180,24 @@ class Provider:
         self._operator = ""  # who is signed in, for the deployment log
 
     # -- configuration -----------------------------------------------------
+
+    @classmethod
+    def normalized(cls, settings: dict[str, str]) -> dict[str, str]:
+        """The settings as the provider uses them: defaults filled in, trimmed."""
+        return {f.key: (settings.get(f.key) or f.default).strip() for f in cls.fields}
+
+    @classmethod
+    def insecure_settings(cls, settings: dict[str, str]) -> list[FieldSpec]:
+        """Address fields that are filled in but are not https addresses."""
+        values = cls.normalized(settings)
+        return [f for f in cls.fields if f.https and values[f.key] and not is_https(values[f.key])]
+
+    @classmethod
+    def keeps_sign_in(cls, old: dict[str, str], new: dict[str, str]) -> bool:
+        """Whether a sign-in saved with the ``old`` settings may still be used
+        with the ``new`` ones of the same provider type."""
+        a, b = cls.normalized(old), cls.normalized(new)
+        return all(a[k] == b[k] for k in a if k not in cls.session_neutral)
 
     @classmethod
     def missing_settings(cls, settings: dict[str, str]) -> list[FieldSpec]:
@@ -279,6 +308,9 @@ class Provider:
         ok: tuple[int, ...] = (200, 201, 202, 204),
         retry_auth: bool = True,
     ) -> requests.Response:
+        if not is_https(url):
+            # The request would carry the access token in clear text.
+            raise ProviderError(f"{self.label}: refusing to send the sign-in to {url}")
         hdrs = {"Accept": "application/json", **(headers or {})}
         resp = None
         refreshed = False
@@ -317,17 +349,17 @@ class Provider:
         """Follows a provider's "next page" links and returns every item.
 
         ``page(response)`` returns ``(items, next_url, next_params)``; no
-        next URL ends the list. A next link to another host is not followed:
-        the access token must never be sent anywhere else.
+        next URL ends the list. A next link to another host or scheme is not
+        followed: the access token must never be sent anywhere else.
         """
-        host = urlsplit(url).netloc
+        origin = urlsplit(url)[:2]
         items: list = []
         for _ in range(MAX_PAGES):
             got, next_url, params = page(self._request("GET", url, params=params))
             items.extend(got)
             if not next_url:
                 return items
-            if urlsplit(next_url).netloc != host:
+            if urlsplit(next_url)[:2] != origin:
                 logger.warning("%s: not following a next-page link to another host", self.label)
                 return items
             url = next_url

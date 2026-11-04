@@ -165,6 +165,7 @@ ES = {
     "Instance name cannot be empty.": "El nombre de la instancia no puede estar vacío.",
     "An instance with this name already exists.": "Ya existe una instancia con este nombre.",
     "Required field is empty: {field}": "Campo obligatorio vacío: {field}",
+    "{field} must be an https:// address.": "{field} debe ser una dirección https://.",
     "The redirect URI must start with http://localhost.": (
         "El URI de redirección debe empezar por http://localhost."
     ),

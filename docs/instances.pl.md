@@ -19,7 +19,7 @@ między nimi bez wychodzenia z aplikacji.
 | Przycisk | Do czego służy |
 |---|---|
 | **Dodaj instancję** | Otwiera formularz nowej instancji. |
-| **Edytuj** | Zmienia zaznaczoną instancję. To samo robi dwukrotne kliknięcie wiersza. Dostawcy tożsamości istniejącej instancji nie można zmienić. |
+| **Edytuj** | Zmienia zaznaczoną instancję. To samo robi dwukrotne kliknięcie wiersza. Dostawcy tożsamości istniejącej instancji nie można zmienić. Zmiana miejsca, do którego trafia logowanie (domeny, tenanta, regionu, punktu końcowego albo identyfikatora klienta), usuwa zapisane logowanie: potem zaloguj się ponownie. |
 | **Ustaw jako aktywną** | Czyni zaznaczoną instancję tą, z którą pracujesz. To samo robi lista u góry okna. |
 | **Usuń** | Usuwa z tego komputera instancję **wraz z zapisanym logowaniem**. U dostawcy tożsamości nic się nie zmienia. |
 | **Eksportuj…**, **Importuj…** | Przenoszą instancje i profile na inny komputer, zob. [niżej](#moving-the-configuration). |
@@ -58,15 +58,16 @@ i profilami bez wpisywania ich od nowa.
     | Wybór | Skutek |
     |---|---|
     | **Dodaj je pod nową nazwą** (domyślnie) | Importowany wpis zostaje dodany np. jako *Produkcja (2)*. Nic istniejącego się nie zmienia. |
-    | **Zastąp istniejące** | Istniejąca instancja lub profil przejmuje zaimportowane ustawienia. Instancja zachowuje logowanie, chyba że zmienił się jej dostawca tożsamości. |
+    | **Zastąp istniejące** | Istniejąca instancja lub profil przejmuje zaimportowane ustawienia. Instancja zachowuje logowanie tylko wtedy, gdy jej dostawca tożsamości, adresy i identyfikator klienta pozostają te same; w przeciwnym razie zaloguj się ponownie. |
     | **Zostaw istniejące** | Importowany wpis zostaje pominięty. |
 
     ![Import konfiguracji](assets/screenshots/pl/import-config.png){ .shot .dialog }
 
 3. **Zaloguj się** do każdej zaimportowanej instancji. Plik nie zawiera logowań ani
    sekretów, tylko wartości wpisane w formularzu instancji, więc nie trzeba go
-   traktować jak hasła. Zawiera jednak nazwy Twoich tenantów: przekazuj go zaufanym
-   kanałem.
+   traktować jak hasła. Zawiera jednak nazwy Twoich tenantów i decyduje, dokąd
+   trafia Twoje logowanie: importuj tylko pliki od zaufanych osób, przekazane
+   zaufanym kanałem. Instancja z adresem innym niż `https://` zostaje pominięta.
 
 Wpisy, których aplikacja nie może użyć, np. instancja dostawcy nieznanego tej wersji,
 są wymienione w oknie importu i pomijane. Plik z nowszej wersji KeyEnroll jest

@@ -56,8 +56,8 @@ dostawcy.
 | **Identyfikator katalogu (tenant ID)** | Ze strony *Przegląd* rejestracji aplikacji. |
 | **Identyfikator aplikacji (client ID)** | Z tej samej strony. |
 | **Redirect URI** | Domyślnie `http://localhost/yubienroll-redirect`. |
-| **Punkt końcowy Entra ID** | Zostaw `https://login.microsoftonline.com`. Zmień tylko dla chmur krajowych. |
-| **Punkt końcowy Microsoft Graph** | Zostaw `https://graph.microsoft.com`. Zmień tylko dla chmur krajowych. |
+| **Punkt końcowy Entra ID** | Zostaw `https://login.microsoftonline.com`. Zmień tylko dla chmur krajowych; przyjmowane są tylko adresy `https://`. |
+| **Punkt końcowy Microsoft Graph** | Zostaw `https://graph.microsoft.com`. Zmień tylko dla chmur krajowych; przyjmowane są tylko adresy `https://`. |
 
 ### Rejestracja aplikacji
 
@@ -244,7 +244,7 @@ operatora, więc dodatkowe zakresy ani zasoby nie są potrzebne.
 | **Nazwa journey** | Journey rejestracji WebAuthn utworzona na potrzeby rejestracji kluczy. |
 | **Client ID** | Klienta OAuth 2.0 utworzonego na potrzeby rejestracji. |
 | **Redirect URI** | Domyślnie `http://localhost:8443/yubienroll-redirect`. |
-| **Origin WebAuthn** | Opcjonalnie. Zostaw puste, żeby użyć adresu tenanta. |
+| **Origin WebAuthn** | Opcjonalnie, adres `https://`. Zostaw puste, żeby użyć adresu tenanta. |
 
 ### Klient OAuth 2.0
 

@@ -53,12 +53,14 @@ class EntraProvider(Provider):
             N_("Entra ID endpoint"),
             default="https://login.microsoftonline.com",
             help=N_("Change only for national cloud deployments."),
+            https=True,
         ),
         FieldSpec(
             "graph",
             N_("Microsoft Graph endpoint"),
             default="https://graph.microsoft.com",
             help=N_("Change only for national cloud deployments."),
+            https=True,
         ),
         GROUPS_FIELD,
     ]

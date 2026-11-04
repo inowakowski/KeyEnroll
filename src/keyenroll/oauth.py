@@ -99,6 +99,13 @@ def _b64url(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
 
+def _require_https(url: str) -> None:
+    """Codes and tokens travel to the provider over https only."""
+    parts = urlsplit(url)
+    if parts.scheme.lower() != "https" or not parts.hostname:
+        raise OAuthError(f"Refusing to send the sign-in to a non-https address: {url}")
+
+
 def make_pkce() -> tuple[str, str]:
     verifier = _b64url(secrets.token_bytes(48))
     challenge = _b64url(hashlib.sha256(verifier.encode()).digest())
@@ -211,6 +218,7 @@ class CallbackListener:
 
 
 def _token_request(cfg: OAuthConfig, data: dict, http) -> TokenSet:
+    _require_https(cfg.token_url)
     try:
         resp = http.post(
             cfg.token_url,
@@ -248,6 +256,8 @@ def authorize(
 ) -> TokenSet:
     """Runs the interactive sign-in and returns the resulting tokens."""
     http = http or requests
+    _require_https(cfg.authorize_url)
+    _require_https(cfg.token_url)
     verifier, challenge = make_pkce()
     state = _b64url(secrets.token_bytes(16))
     listener = CallbackListener(cfg.redirect_uri)
@@ -305,6 +315,12 @@ def refresh(cfg: OAuthConfig, refresh_token: str, http=None) -> TokenSet:
 
 def revoke(cfg: OAuthConfig, token: str, http=None) -> None:
     if not cfg.revoke_url:
+        return
+    try:
+        _require_https(cfg.revoke_url)
+    except OAuthError:
+        # Signing out must still forget the token on this computer.
+        logger.warning("Not revoking the sign-in at a non-https address")
         return
     try:
         (http or requests).post(

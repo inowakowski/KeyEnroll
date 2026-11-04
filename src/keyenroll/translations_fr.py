@@ -174,6 +174,7 @@ FR = {
         "Une instance portant ce nom existe déjà."
     ),
     "Required field is empty: {field}": "Champ obligatoire vide\u00a0: {field}",
+    "{field} must be an https:// address.": "{field} doit être une adresse https://.",
     "The redirect URI must start with http://localhost.": (
         "L’URI de redirection doit commencer par http://localhost."
     ),
