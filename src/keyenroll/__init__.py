@@ -1,4 +1,4 @@
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 APP_NAME = "KeyEnroll"
 PROJECT_URL = "https://github.com/inowakowski/KeyEnroll"
