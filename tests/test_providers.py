@@ -9,7 +9,13 @@ import requests
 from fido2.webauthn import PublicKeyCredentialCreationOptions
 
 from keyenroll import oauth
-from keyenroll.providers import PROVIDERS, AuthRequired, ProviderError
+from keyenroll.providers import (
+    PROVIDERS,
+    AuthRequired,
+    ProviderError,
+    acceptable_settings,
+    keeps_sign_in,
+)
 from keyenroll.providers.base import DirectoryUser, b64url_decode, to_b64url
 from keyenroll.providers.entra import EntraProvider
 from keyenroll.providers.okta import OktaProvider
@@ -813,3 +819,76 @@ def test_aic_groups_and_members_use_the_paged_results_cookie(aic, http):
     assert [m.username for m in aic.group_members(GROUP)] == ["a", "b"]
     assert http.calls[1].params["_queryFilter"] == 'groups/_refResourceId eq "g1"'
     assert http.calls[2].params["_pagedResultsCookie"] == "c2"
+
+
+# -- where the sign-in may be sent ---------------------------------------------
+
+
+OKTA = {"domain": "corp.okta.com", "client_id": "abc"}
+
+
+@pytest.mark.parametrize(
+    "change, kept",
+    [
+        ({}, True),
+        ({"domain": " corp.okta.com "}, True),  # the same once trimmed
+        ({"redirect_uri": "http://localhost:9000/cb"}, True),
+        ({"groups": "on"}, True),
+        ({"domain": "attacker.example"}, False),
+        ({"client_id": "other"}, False),
+    ],
+)
+def test_sign_in_is_kept_only_while_it_goes_to_the_same_place(change, kept):
+    assert keeps_sign_in("okta", OKTA, "okta", {**OKTA, **change}) is kept
+
+
+def test_sign_in_is_dropped_with_another_provider_or_endpoint():
+    assert not keeps_sign_in("okta", OKTA, "entra", OKTA)
+    assert not keeps_sign_in("okta", OKTA, "unknown", OKTA)
+    entra = {"tenant_id": "t", "client_id": "c"}
+    assert keeps_sign_in("entra", entra, "entra", {**entra, "authority": ""})  # the default
+    assert not keeps_sign_in(
+        "entra", entra, "entra", {**entra, "authority": "https://login.example"}
+    )
+    assert not keeps_sign_in("entra", entra, "entra", {**entra, "graph": "https://api.example"})
+    ping = {"environment_id": "e", "client_id": "c", "region": "eu"}
+    assert keeps_sign_in("pingone", ping, "pingone", {**ping, "policy_id": "p"})
+    assert not keeps_sign_in("pingone", ping, "pingone", {**ping, "region": "com"})
+    assert not keeps_sign_in("pingone", ping, "pingone", {**ping, "custom_domain": "x.example"})
+    aic = {"tenant": "t.example", "realm": "alpha", "journey": "j", "client_id": "c"}
+    assert keeps_sign_in("pingone_aic", aic, "pingone_aic", {**aic, "journey": "k"})
+    assert not keeps_sign_in("pingone_aic", aic, "pingone_aic", {**aic, "tenant": "u.example"})
+
+
+def test_addresses_must_use_https():
+    assert [f.key for f in EntraProvider.insecure_settings({"authority": "http://idp"})] == [
+        "authority"
+    ]
+    assert [f.key for f in EntraProvider.insecure_settings({"graph": "graph.example"})] == [
+        "graph"
+    ]
+    assert EntraProvider.insecure_settings({}) == []  # the defaults are https
+    assert PingOneAicProvider.insecure_settings({"origin": ""}) == []  # optional
+    assert PingOneAicProvider.insecure_settings({"origin": "http://sso"})
+    assert acceptable_settings("entra", {"authority": "https://login.example"})
+    assert not acceptable_settings("entra", {"authority": "http://login.example"})
+    assert not acceptable_settings("unknown", {})
+
+
+def test_token_is_never_sent_over_plain_http(http, store, signed_in):
+    provider = signed_in(
+        EntraProvider("i", {"tenant_id": "t", "client_id": "c", "graph": "http://graph"}, store, http)
+    )
+    with pytest.raises(ProviderError, match="refusing"):
+        provider.search_users("")
+    assert http.calls == []
+
+
+def test_plain_http_token_endpoint_is_refused(http, store):
+    store.set("i", "REFRESH")
+    provider = EntraProvider(
+        "i", {"tenant_id": "t", "client_id": "c", "authority": "http://login"}, store, http
+    )
+    with pytest.raises(AuthRequired):
+        provider.access_token()
+    assert http.calls == []

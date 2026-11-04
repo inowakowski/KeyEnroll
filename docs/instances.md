@@ -19,7 +19,7 @@ leaving the application.
 | Button | What it is for |
 |---|---|
 | **Add instance** | Opens the form for a new instance. |
-| **Edit** | Changes the selected instance. Double-clicking a row does the same. The identity provider of an existing instance cannot be changed. |
+| **Edit** | Changes the selected instance. Double-clicking a row does the same. The identity provider of an existing instance cannot be changed. Changing where the sign-in goes (a domain, tenant, region, endpoint or client ID) removes the stored sign-in: sign in again afterwards. |
 | **Set as active** | Makes the selected instance the one you work with. The selector at the top of the window does the same. |
 | **Delete** | Removes the instance **and its stored sign-in** from this computer. Nothing is changed at the identity provider. |
 | **Export…**, **Import…** | Move instances and profiles to another computer, see [below](#moving-the-configuration). |
@@ -58,15 +58,17 @@ profiles without typing them in again.
     | Choice | Result |
     |---|---|
     | **Add them with a new name** (default) | The imported entry is added as, for example, *Production (2)*. Nothing existing changes. |
-    | **Replace the existing ones** | The existing instance or profile takes the imported settings. An instance keeps its sign-in, unless its identity provider changed. |
+    | **Replace the existing ones** | The existing instance or profile takes the imported settings. An instance keeps its sign-in only if its identity provider, addresses and client ID stay the same; otherwise sign in again. |
     | **Keep the existing ones** | The imported entry is left out. |
 
     ![Importing a configuration](assets/screenshots/en/import-config.png){ .shot .dialog }
 
 3. **Sign in** to each imported instance. The file contains no sign-ins and no
    secrets, only the values you typed into the instance form, so it does not have
-   to be treated like a password. Still, it names your tenants: send it through a
-   channel you trust.
+   to be treated like a password. Still, it names your tenants and decides where
+   your sign-in is sent: import only files from someone you trust, received
+   through a channel you trust. An instance with an address that is not `https://`
+   is left out.
 
 Entries the application cannot use, such as an instance of an identity provider this
 version does not know, are listed in the import window and left out. A file made by

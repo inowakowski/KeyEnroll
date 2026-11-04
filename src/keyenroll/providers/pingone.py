@@ -42,6 +42,7 @@ class PingOneProvider(Provider):
     kind = "pingone"
     label = "PingOne PingID"
     supports_groups = True
+    session_neutral = Provider.session_neutral | {"policy_id"}
     fields = [
         FieldSpec("environment_id", N_("Environment ID")),
         FieldSpec("client_id", N_("Client ID")),

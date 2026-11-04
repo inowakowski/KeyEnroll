@@ -128,3 +128,30 @@ def test_refresh_keeps_old_refresh_token_when_not_rotated(http):
     http.add({"access_token": "AT2", "expires_in": "3600"})
     tokens = oauth.refresh(cfg(), "RT", http)
     assert tokens.refresh_token == "RT"
+
+
+def test_sign_in_goes_to_https_addresses_only(http):
+    plain = oauth.OAuthConfig(
+        authorize_url="http://idp.example/authorize",
+        token_url="https://idp.example/token",
+        client_id="CLIENT",
+        redirect_uri="http://localhost/cb",
+        scopes=["openid"],
+    )
+    opened = []
+    with pytest.raises(oauth.OAuthError, match="non-https"):
+        oauth.authorize(plain, opened.append, http=http)
+    assert opened == []  # the browser was never sent there
+
+    plain.authorize_url = "https://idp.example/authorize"
+    plain.token_url = "http://idp.example/token"
+    with pytest.raises(oauth.OAuthError, match="non-https"):
+        oauth.refresh(plain, "RT", http)
+    assert http.calls == []
+
+
+def test_sign_out_does_not_send_the_token_over_plain_http(http):
+    plain = cfg()
+    plain.revoke_url = "http://idp.example/revoke"
+    oauth.revoke(plain, "RT", http)  # no exception: signing out must still work
+    assert http.calls == []

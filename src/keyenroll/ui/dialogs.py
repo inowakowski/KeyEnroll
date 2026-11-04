@@ -154,6 +154,14 @@ class InstanceDialog(QDialog):
                 tr("Required field is empty: {field}", field=tr(missing[0].label)),
             )
             return
+        insecure = PROVIDERS[kind].insecure_settings(settings)
+        if insecure:
+            QMessageBox.warning(
+                self,
+                tr("Error"),
+                tr("{field} must be an https:// address.", field=tr(insecure[0].label)),
+            )
+            return
         if not local_redirect(settings.get("redirect_uri", "")):
             QMessageBox.warning(
                 self, tr("Error"), tr("The redirect URI must start with http://localhost.")

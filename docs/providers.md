@@ -55,8 +55,8 @@ The details, and what the tenant itself has to allow, follow per provider.
 | **Directory (tenant) ID** | From the *Overview* page of the app registration. |
 | **Application (client) ID** | From the same page. |
 | **Redirect URI** | Default `http://localhost/yubienroll-redirect`. |
-| **Entra ID endpoint** | Leave `https://login.microsoftonline.com`. Change only for national clouds. |
-| **Microsoft Graph endpoint** | Leave `https://graph.microsoft.com`. Change only for national clouds. |
+| **Entra ID endpoint** | Leave `https://login.microsoftonline.com`. Change only for national clouds; only `https://` addresses are accepted. |
+| **Microsoft Graph endpoint** | Leave `https://graph.microsoft.com`. Change only for national clouds; only `https://` addresses are accepted. |
 
 ### App registration
 
@@ -240,7 +240,7 @@ operator's roles, so no further scopes or resources are needed.
 | **Journey name** | The WebAuthn registration journey created for enrollment. |
 | **Client ID** | Of the OAuth 2.0 client created for enrollment. |
 | **Redirect URI** | Default `http://localhost:8443/yubienroll-redirect`. |
-| **WebAuthn origin** | Optional. Leave empty to use the address of the tenant. |
+| **WebAuthn origin** | Optional, an `https://` address. Leave empty to use the address of the tenant. |
 
 ### OAuth 2.0 client
 

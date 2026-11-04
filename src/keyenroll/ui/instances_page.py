@@ -23,7 +23,7 @@ from ..config import (
     write_private,
 )
 from ..i18n import tr
-from ..providers import PROVIDERS
+from ..providers import PROVIDERS, acceptable_settings, keeps_sign_in
 from .common import AppContext, fill_row, make_table, selected_data
 from .dialogs import ExportConfigDialog, ImportConfigDialog, InstanceDialog
 from .theme import Card
@@ -136,11 +136,16 @@ class InstancesPage(QWidget):
         inst = self._selected()
         if inst is None or self.ctx.busy:
             return
+        old_kind, old_settings = inst.kind, dict(inst.settings)
         dialog = InstanceDialog(self.ctx.config, inst, self)
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
         self.ctx.config.upsert_instance(dialog.instance)
-        # Endpoints may have changed: rebuild the provider with new settings.
+        # Endpoints may have changed: rebuild the provider with new settings,
+        # and drop a sign-in that would otherwise be sent somewhere else.
+        new = dialog.instance
+        if not keeps_sign_in(old_kind, old_settings, new.kind, new.settings):
+            self.ctx.tokens.delete(inst.id)
         self.ctx.forget_provider(inst.id)
         self.ctx.instances_changed.emit()
         if inst.id == self.ctx.config.active_instance_id:
@@ -194,7 +199,7 @@ class InstancesPage(QWidget):
         try:
             with open(path, "rb") as f:
                 raw = f.read(MAX_IMPORT_BYTES + 1)  # enough to tell it is too large
-            imported = parse_import(raw, set(PROVIDERS))
+            imported = parse_import(raw, set(PROVIDERS), acceptable_settings)
         except OSError as e:
             QMessageBox.warning(self, tr("Error"), str(e))
             return
@@ -214,16 +219,17 @@ class InstancesPage(QWidget):
             profiles=dialog.profiles.isChecked(),
             message=dialog.message.isChecked(),
         )
-        for instance_id, kind_changed in outcome.replaced_instances:
-            # New settings: rebuild the provider; another provider type
-            # cannot use the old sign-in.
-            if kind_changed:
+        for instance_id, old_kind, old_settings in outcome.replaced_instances:
+            # New settings: rebuild the provider. A sign-in issued for another
+            # provider, host, tenant or client must not be used with them.
+            new = config.instance(instance_id)
+            if new is None or not keeps_sign_in(old_kind, old_settings, new.kind, new.settings):
                 self.ctx.tokens.delete(instance_id)
             self.ctx.forget_provider(instance_id)
         self.ctx.profiles_changed.emit()
         self.ctx.instances_changed.emit()
         replaced_active = any(
-            i == config.active_instance_id for i, _ in outcome.replaced_instances
+            i == config.active_instance_id for i, _, _ in outcome.replaced_instances
         )
         if not had_active or replaced_active:
             self.ctx.active_changed.emit()

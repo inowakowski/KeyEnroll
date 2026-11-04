@@ -164,6 +164,7 @@ IT = {
     "Instance name cannot be empty.": "Il nome dell’istanza non può essere vuoto.",
     "An instance with this name already exists.": "Esiste già un’istanza con questo nome.",
     "Required field is empty: {field}": "Campo obbligatorio vuoto: {field}",
+    "{field} must be an https:// address.": "{field} deve essere un indirizzo https://.",
     "The redirect URI must start with http://localhost.": (
         "L’URI di reindirizzamento deve iniziare con http://localhost."
     ),

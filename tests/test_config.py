@@ -258,7 +258,9 @@ def test_name_clashes_are_kept_replaced_or_renamed(tmp_path):
     outcome = apply_import(replaced, parse_import(data, KINDS), clash="replace")
     (prod,) = replaced.instances
     assert (prod.id, prod.kind, prod.settings["tenant_id"]) == (old_id, "entra", "t")
-    assert outcome.replaced_instances == [(old_id, True)]  # provider type changed
+    # What the instance was before, so the caller can tell whether its
+    # saved sign-in may stay.
+    assert outcome.replaced_instances == [(old_id, "okta", {"domain": "old"})]
 
     renamed = target("rename")
     apply_import(renamed, parse_import(data, KINDS), clash="rename")
@@ -293,3 +295,21 @@ def test_unusable_entries_are_left_out_and_named(tmp_path):
     imported = parse_import(raw, KINDS)
     assert [i.name for i in imported.instances] == ["Ok"]
     assert imported.skipped == ["Odd", "Broken", "bad", "?"]
+
+
+def test_import_can_turn_down_instances(tmp_path):
+    data = {
+        "format": "keyenroll-config",
+        "version": 1,
+        "instances": [
+            {"name": "Plain", "kind": "entra", "settings": {"authority": "http://idp"}},
+            {"name": "Fine", "kind": "entra", "settings": {"authority": "https://idp"}},
+        ],
+    }
+    imported = parse_import(
+        json.dumps(data).encode(),
+        KINDS,
+        lambda kind, settings: settings["authority"].startswith("https://"),
+    )
+    assert [i.name for i in imported.instances] == ["Fine"]
+    assert imported.skipped == ["Plain"]

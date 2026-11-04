@@ -174,6 +174,7 @@ DE = {
         "Eine Instanz mit diesem Namen ist bereits vorhanden."
     ),
     "Required field is empty: {field}": "Pflichtfeld ist leer: {field}",
+    "{field} must be an https:// address.": "{field} muss eine https://-Adresse sein.",
     "The redirect URI must start with http://localhost.": (
         "Die Umleitungs-URI muss mit http://localhost beginnen."
     ),

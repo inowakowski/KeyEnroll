@@ -1219,3 +1219,115 @@ def test_update_options_are_remembered_and_checked_at_start(gui, app, monkeypatc
     settings = second.pages.currentWidget()
     assert "preview version" in settings.update_note.text()
     second.close()
+
+
+# -- sign-ins and changed instance settings -------------------------------------
+
+
+@pytest.fixture
+def instances(app, tmp_path, monkeypatch):
+    from keyenroll.ui.instances_page import InstancesPage
+
+    config = ConfigStore(tmp_path / "config.json")
+    prod = Instance(name="Prod", kind="okta", settings={"domain": "corp.okta.com", "client_id": "c"})
+    config.upsert_instance(prod)
+    tokens = TokenStore()
+    tokens.set(prod.id, "REFRESH")
+    ctx = AppContext(config, tokens, source=FakeSource())
+    page = InstancesPage(ctx)
+    boxes = []
+    monkeypatch.setattr(
+        QMessageBox, "information", staticmethod(lambda p, t, text, *a: boxes.append(text))
+    )
+    monkeypatch.setattr(
+        QMessageBox, "warning", staticmethod(lambda p, t, text, *a: boxes.append(text))
+    )
+    yield page, config, tokens, prod, boxes
+    page.close()
+
+
+def import_file(page, tmp_path, monkeypatch, settings):
+    import json
+
+    path = tmp_path / "import.json"
+    path.write_text(
+        json.dumps(
+            {
+                "format": "keyenroll-config",
+                "version": 1,
+                "instances": [{"name": "Prod", "kind": "okta", "settings": settings}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        QFileDialog, "getOpenFileName", staticmethod(lambda *a, **k: (str(path), ""))
+    )
+
+    def replace(dialog):
+        dialog.clash.setCurrentIndex(dialog.clash.findData("replace"))
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(dialogs.ImportConfigDialog, "exec", replace)
+    page._import()
+
+
+def test_import_that_moves_an_instance_elsewhere_forgets_its_sign_in(
+    instances, tmp_path, monkeypatch
+):
+    page, config, tokens, prod, _ = instances
+    import_file(page, tmp_path, monkeypatch, {"domain": "attacker.example", "client_id": "c"})
+    assert config.instance(prod.id).settings["domain"] == "attacker.example"
+    assert tokens.get(prod.id) is None
+
+
+def test_import_with_the_same_addresses_keeps_the_sign_in(instances, tmp_path, monkeypatch):
+    page, config, tokens, prod, _ = instances
+    import_file(
+        page, tmp_path, monkeypatch, {"domain": "corp.okta.com", "client_id": "c", "groups": "on"}
+    )
+    assert config.instance(prod.id).settings["groups"] == "on"
+    assert tokens.get(prod.id) == "REFRESH"
+
+
+def edit_instance(page, monkeypatch, **changes):
+    def save(dialog):
+        for key, value in changes.items():
+            dialog._inputs[key].setText(value)
+        dialog._save()
+        return dialog.result()
+
+    monkeypatch.setattr(dialogs.InstanceDialog, "exec", save)
+    page.table.selectRow(0)
+    page._edit()
+
+
+def test_editing_the_domain_forgets_the_sign_in(instances, monkeypatch):
+    page, config, tokens, prod, _ = instances
+    edit_instance(page, monkeypatch, domain="other.okta.com")
+    assert config.instance(prod.id).settings["domain"] == "other.okta.com"
+    assert tokens.get(prod.id) is None
+
+
+def test_editing_the_redirect_uri_keeps_the_sign_in(instances, monkeypatch):
+    page, config, tokens, prod, _ = instances
+    edit_instance(page, monkeypatch, redirect_uri="http://localhost:9000/cb")
+    assert tokens.get(prod.id) == "REFRESH"
+
+
+def test_instance_dialog_refuses_plain_http_endpoints(app, tmp_path, monkeypatch):
+    config = ConfigStore(tmp_path / "config.json")
+    boxes = []
+    monkeypatch.setattr(
+        QMessageBox, "warning", staticmethod(lambda p, t, text, *a: boxes.append(text))
+    )
+    dialog = dialogs.InstanceDialog(config, None, None)
+    dialog.name.setText("Gov")
+    dialog.kind.setCurrentIndex(dialog.kind.findData("entra"))
+    dialog._inputs["tenant_id"].setText("t")
+    dialog._inputs["client_id"].setText("c")
+    dialog._inputs["authority"].setText("http://login.example")
+    dialog._save()
+    assert dialog.result() != QDialog.DialogCode.Accepted
+    assert boxes == ["Entra ID endpoint must be an https:// address."]
+    dialog.close()
