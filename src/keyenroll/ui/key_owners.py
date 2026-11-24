@@ -42,6 +42,12 @@ def owner_text(found: KeyOwnership, serial: int | None = None) -> str:
         )
     if found.provider_records:
         return tr("Connected key S/N {serial} is not assigned to any user.", serial=serial)
+    if found.searched_provider:
+        return tr(
+            "Connected key S/N {serial} was not found at the identity provider "
+            "or in the deployment log of this computer.",
+            serial=serial,
+        )
     return tr(
         "Connected key S/N {serial} is not in the deployment log of this computer.",
         serial=serial,

@@ -60,6 +60,10 @@ PL = {
         "Wyświetlono pierwszych {count} użytkowników. Pozostałych znajdziesz wyszukiwarką."
     ),
     "{count} user(s)": "Użytkownicy: {count}",
+    "Connected key S/N {serial} was not found at the identity provider "
+    "or in the deployment log of this computer.": (
+        "Podłączonego klucza S/N {serial} nie znaleziono u dostawcy tożsamości ani w dzienniku wdrożeń tego komputera."
+    ),
     "Double-click a user to see their security keys.": (
         "Kliknij dwukrotnie użytkownika, aby zobaczyć jego klucze bezpieczeństwa."
     ),

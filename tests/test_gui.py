@@ -479,6 +479,26 @@ def test_owner_of_a_key_comes_from_the_deployment_log_with_any_provider(gui):
     wait_until(lambda: "not in the deployment log" in banner_text(page.owner_banner))
 
 
+def test_a_key_enrolled_elsewhere_is_found_by_its_name_at_the_provider(gui, monkeypatch):
+    window, ctx, key, source, shown = gui
+    provider = ctx.provider
+    provider.serials_in_key_names = True  # as Entra ID and PingOne
+    key.serial = 23851693
+    keys = {"u2": [Credential("m2", "Serial: 23851693", "2026-11-20", "", serial="23851693")]}
+    monkeypatch.setattr(provider, "list_credentials", lambda user: keys.get(user.id, []))
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    wait_until(lambda: "belongs to" in banner_text(page.owner_banner))
+    assert "Connected key S/N 23851693 belongs to: Bob Example" in banner_text(page.owner_banner)
+    assert "deployment log" not in banner_text(page.owner_banner)
+
+    # Not at the provider and not in the log.
+    key.serial = 11111111
+    page._owners.reset()
+    page._watcher.rescan()
+    wait_until(lambda: "not found at the identity provider" in banner_text(page.owner_banner))
+
+
 def test_unconfirmed_owner_is_marked_as_coming_from_the_log(gui):
     window, ctx, key, source, shown = gui
     key.serial = 32445513

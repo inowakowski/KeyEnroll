@@ -477,7 +477,9 @@ def test_serial_number_is_read_from_the_key_name():
     assert serial_in_name("YubiKey 32445513") == "32445513"
     assert serial_in_name("Finance 5C 23456789 ") == "23456789"
     assert serial_in_name("YubiKey 5 NFC") == ""
-    assert serial_in_name("Key-32445513") == ""  # not what KeyEnroll writes
+    assert serial_in_name("Serial: 23851693") == "23851693"  # named by another tool
+    assert serial_in_name("YubiKey 5C NFC (23851693)") == "23851693"
+    assert serial_in_name("FW 5.7.4") == ""  # a version is not a serial number
 
 
 def test_entra_and_pingone_credentials_carry_the_serial_in_their_name(entra, pingone, http):
