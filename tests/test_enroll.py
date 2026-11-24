@@ -722,3 +722,16 @@ def test_failing_to_record_the_serial_number_only_warns():
     [(template, params)] = result.warnings
     assert "could not be saved in the user profile" in template
     assert "Api validation failed" in params["detail"]
+
+
+def test_a_provider_notice_becomes_the_warning_itself():
+    from keyenroll.providers.base import ProviderNotice
+
+    class MissingAttribute(RecordingProvider):
+        def record_key(self, user, registration, serial):
+            raise ProviderNotice("Attribute '{attribute}' is missing.", 400, attribute="keys")
+
+    key = FakeAuthenticator()
+    enroller, ui, _ = make(Profile(), key, provider=MissingAttribute())
+    result = enroller.run()
+    assert result.warnings == [("Attribute '{attribute}' is missing.", {"attribute": "keys"})]

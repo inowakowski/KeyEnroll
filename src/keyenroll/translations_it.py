@@ -305,6 +305,14 @@ IT = {
         "La connessione con la chiave di sicurezza si è interrotta. Chiudere gli altri programmi "
         "che usano la chiave, come Yubico Authenticator, e riprovare."
     ),
+    "The credential was registered, but Okta does not know the profile attribute '{attribute}' "
+    "for this user, so the serial number was not saved. Add the attribute in Profile Editor, to "
+    "the profile of the user's type, with exactly this variable name (it is case-sensitive).": (
+        "La credenziale è stata registrata, ma Okta non conosce l’attributo del profilo "
+        "«{attribute}» per questo utente, quindi il numero di serie non è stato salvato. "
+        "Aggiungere l’attributo in Profile Editor, al profilo del tipo di utente, con "
+        "esattamente questo nome variabile (distingue maiuscole e minuscole)."
+    ),
     "Profile attribute for key serial numbers": (
         "Attributo del profilo per i numeri di serie delle chiavi"
     ),

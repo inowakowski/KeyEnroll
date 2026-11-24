@@ -586,6 +586,7 @@ class Enroller:
                     self.provider.record_key(self.user, registration, result.key.serial)
                 except Exception as e:
                     logger.warning("Recording the key failed", exc_info=True)
+                    template = getattr(e, "template", None)
                     result.warnings.append(
                         (
                             N_(
@@ -594,6 +595,8 @@ class Enroller:
                             ),
                             {"detail": str(e)},
                         )
+                        if template is None
+                        else (template, e.params)
                     )
 
             if p.force_pin_change:

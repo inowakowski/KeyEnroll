@@ -41,6 +41,15 @@ class ProviderError(Exception):
         self.status = status
 
 
+class ProviderNotice(ProviderError):
+    """A provider error explained by a translatable message of its own."""
+
+    def __init__(self, template: str, status: int | None = None, **params):
+        super().__init__(template.format(**params) if params else template, status)
+        self.template = template
+        self.params = params
+
+
 class AuthRequired(ProviderError):
     """No valid session; the operator has to sign in (again)."""
 

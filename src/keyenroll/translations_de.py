@@ -321,6 +321,14 @@ DE = {
         "Programme, die den Schlüssel verwenden, etwa Yubico Authenticator, und versuchen Sie es "
         "erneut."
     ),
+    "The credential was registered, but Okta does not know the profile attribute '{attribute}' "
+    "for this user, so the serial number was not saved. Add the attribute in Profile Editor, to "
+    "the profile of the user's type, with exactly this variable name (it is case-sensitive).": (
+        "Die Anmeldeinformationen wurden registriert, aber Okta kennt das Profilattribut "
+        "„{attribute}“ für diesen Benutzer nicht, daher wurde die Seriennummer nicht "
+        "gespeichert. Fügen Sie das Attribut im Profile Editor zum Profil des Benutzertyps "
+        "hinzu, mit genau diesem Variablennamen (Groß- und Kleinschreibung beachten)."
+    ),
     "Profile attribute for key serial numbers": "Profilattribut für Seriennummern der Schlüssel",
     "Variable name of a string array attribute in the Okta user profile. KeyEnroll writes the "
     "serial number of every key it enrolls into it, so that you can tell the keys of a user "

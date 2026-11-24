@@ -35,13 +35,14 @@ from ..i18n import tr
 from ..journal import Journal, JournalContext, journal_dir
 from ..oauth import OAuthError
 from ..providers import AuthRequired, DirectoryUser, Provider, ProviderError, create_provider
+from ..providers.base import ProviderNotice
 from ..secrets_store import TokenStore
 
 logger = logging.getLogger(__name__)
 
 
 def error_text(exc: BaseException) -> str:
-    if isinstance(exc, EnrollError):
+    if isinstance(exc, (EnrollError, ProviderNotice)):
         return tr(exc.template, **exc.params)
     if isinstance(exc, (ProviderError, OAuthError)):
         return tr(str(exc))

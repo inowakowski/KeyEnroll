@@ -391,6 +391,25 @@ def test_okta_record_key_adds_an_entry_and_drops_stale_ones(okta_serials, http):
     assert len(entries) == 3
 
 
+def test_okta_explains_a_profile_attribute_it_does_not_know(okta_serials, http):
+    from keyenroll.providers.base import ProviderNotice, Registration
+
+    http.add({"profile": {}})
+    http.add(webauthn(F_NEW))
+    http.add({
+        "errorCode": "E0000001",
+        "errorSummary": "Api validation failed: userProfile",
+        "errorCauses": [{"errorSummary": "Property name 'securityKeys' is not defined in profile"}],
+    }, status=400)  # fmt: skip
+    registration = Registration(options={}, origin="", state={"user_id": "user-1", "factor_id": F_NEW})
+
+    with pytest.raises(ProviderNotice) as info:
+        okta_serials.record_key(USER, registration, 32445513)
+
+    assert info.value.params == {"attribute": "securityKeys"}
+    assert "Profile Editor" in info.value.template
+
+
 def test_okta_credentials_show_the_recorded_serial_numbers(okta_serials, http):
     http.add(webauthn(F_OLD, F_NEW))
     http.add({"profile": {"securityKeys": [f"22222222 · 2026-02-01 08:00 UTC · {F_OLD}"]}})

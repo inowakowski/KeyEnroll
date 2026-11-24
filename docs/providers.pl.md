@@ -223,6 +223,10 @@ nie da się odczytać (czytniki NFC, klucze innych producentów), mają wpis `un
   atrybutu nie da się zapisać (nie istnieje albo użytkownicy pochodzą z Active
   Directory i atrybut jest stamtąd), rejestracja i tak się udaje i kończy
   ostrzeżeniem.
+- *Okta nie zna atrybutu profilu …*: porównaj **Variable name** w Profile Editor
+  z ustawieniem instancji (wielkość liter ma znaczenie). Przy kilku typach
+  użytkowników atrybut trzeba dodać do profilu typu, do którego należy użytkownik.
+  Właśnie zarejestrowany klucz dostanie wpis dopiero po ponownej rejestracji.
 
 ## PingOne PingID
 

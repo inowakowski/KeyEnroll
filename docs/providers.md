@@ -220,6 +220,10 @@ serial number cannot be read (NFC readers, keys of other vendors) are listed as
   attribute cannot be written (it does not exist, or users are mastered by Active
   Directory and the attribute comes from there), the enrollment still succeeds and
   ends with a warning.
+- *Okta does not know the profile attribute …*: compare the **Variable name** in
+  Profile Editor with the instance setting (it is case-sensitive). With several user
+  types, the attribute has to be added to the profile of the user's type. The key
+  that was just enrolled gets its entry only when it is enrolled again.
 
 ## PingOne PingID
 

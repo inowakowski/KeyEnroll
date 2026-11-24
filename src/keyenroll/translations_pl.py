@@ -284,6 +284,14 @@ PL = {
         "Połączenie z kluczem zostało przerwane. Zamknij inne programy, które korzystają z "
         "klucza, np. Yubico Authenticator, i spróbuj ponownie."
     ),
+    "The credential was registered, but Okta does not know the profile attribute '{attribute}' "
+    "for this user, so the serial number was not saved. Add the attribute in Profile Editor, to "
+    "the profile of the user's type, with exactly this variable name (it is case-sensitive).": (
+        "Poświadczenie zostało zarejestrowane, ale Okta nie zna atrybutu profilu „{attribute}” "
+        "dla tego użytkownika, więc numer seryjny nie został zapisany. Dodaj atrybut w Profile "
+        "Editor, w profilu typu tego użytkownika, z dokładnie taką nazwą zmiennej (wielkość "
+        "liter ma znaczenie)."
+    ),
     "Profile attribute for key serial numbers": "Atrybut profilu na numery seryjne kluczy",
     "Variable name of a string array attribute in the Okta user profile. KeyEnroll writes the "
     "serial number of every key it enrolls into it, so that you can tell the keys of a user "

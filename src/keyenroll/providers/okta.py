@@ -17,6 +17,7 @@ from .base import (
     FieldSpec,
     Provider,
     ProviderError,
+    ProviderNotice,
     Registration,
     b64_encode,
     b64url_decode,
@@ -171,12 +172,27 @@ class OktaProvider(Provider):
         return [str(v) for v in value or []]
 
     def _write_entries(self, user_id: str, entries: list[str]) -> None:
-        # POST updates only the attributes it names.
-        self._request(
-            "POST",
-            f"{self._base}/api/v1/users/{quote(user_id)}",
-            json={"profile": {self._checked_attribute(): entries}},
-        )
+        attribute = self._checked_attribute()
+        try:
+            # POST updates only the attributes it names.
+            self._request(
+                "POST",
+                f"{self._base}/api/v1/users/{quote(user_id)}",
+                json={"profile": {attribute: entries}},
+            )
+        except ProviderError as e:
+            if e.status == 400 and "not defined in profile" in str(e).lower():
+                raise ProviderNotice(
+                    N_(
+                        "The credential was registered, but Okta does not know the profile "
+                        "attribute '{attribute}' for this user, so the serial number was not "
+                        "saved. Add the attribute in Profile Editor, to the profile of the "
+                        "user's type, with exactly this variable name (it is case-sensitive)."
+                    ),
+                    e.status,
+                    attribute=attribute,
+                ) from e
+            raise
 
     def _webauthn_factor_ids(self, user_id: str) -> set[str]:
         data = self._request("GET", self._factors_url(user_id)).json()

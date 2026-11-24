@@ -302,6 +302,14 @@ ES = {
         "Se interrumpió la conexión con la llave de seguridad. Cierre otros programas que usen "
         "la llave, como Yubico Authenticator, e inténtelo de nuevo."
     ),
+    "The credential was registered, but Okta does not know the profile attribute '{attribute}' "
+    "for this user, so the serial number was not saved. Add the attribute in Profile Editor, to "
+    "the profile of the user's type, with exactly this variable name (it is case-sensitive).": (
+        "La credencial se registró, pero Okta no conoce el atributo de perfil «{attribute}» para "
+        "este usuario, así que no se guardó el número de serie. Añada el atributo en Profile "
+        "Editor, al perfil del tipo de usuario, con exactamente este nombre de variable "
+        "(distingue mayúsculas y minúsculas)."
+    ),
     "Profile attribute for key serial numbers": (
         "Atributo del perfil para los números de serie de las llaves"
     ),
