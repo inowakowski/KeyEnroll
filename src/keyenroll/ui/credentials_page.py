@@ -23,7 +23,7 @@ from .common import (
     selected_data,
     show_error,
 )
-from .key_owners import KeyOwners, KeyWatcher, OwnerBanner, owner_names
+from .key_owners import KeyOwners, KeyWatcher, OwnerBanner, owner_text
 from .theme import Card
 
 
@@ -100,20 +100,9 @@ class CredentialsPage(QWidget):
         rows = []
         if self._owners.available:
             for info in self._keys:
-                owners = self._owners.owners(info.serial)
-                if owners:
-                    text = tr(
-                        "Connected key S/N {serial} belongs to: {users}",
-                        serial=info.serial,
-                        users=owner_names(owners),
-                    )
-                    rows.append((text, owners))
-                elif owners is not None:
-                    text = tr(
-                        "Connected key S/N {serial} is not assigned to any user.",
-                        serial=info.serial,
-                    )
-                    rows.append((text, []))
+                found = self._owners.ownership(info.serial)
+                if found is not None:
+                    rows.append((owner_text(found, info.serial), found.users))
                 elif self._owners.pending(info.serial):
                     text = tr(
                         "Connected key S/N {serial}: looking for its owner…", serial=info.serial
@@ -227,9 +216,17 @@ class CredentialsPage(QWidget):
         if box.clickedButton() is not confirm:
             return
         self.delete.setEnabled(False)
+
+        def deleted(_) -> None:
+            # Recorded so that the key is no longer suggested as this user's.
+            self.ctx.journal(provider, "").deleted(user, cred)
+            self._owners.reset()
+            self._watcher.rescan()
+            self._load(user)
+
         run_task(
             self,
             lambda: provider.delete_credential(user, cred.id),
-            lambda _: self._load(user),
+            deleted,
             lambda exc: (show_error(self, self.ctx, exc), self._update_buttons()),
         )

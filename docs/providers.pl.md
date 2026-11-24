@@ -213,15 +213,9 @@ nie da się odczytać (czytniki NFC, klucze innych producentów), mają wpis `un
 
 - [Strona Poświadczenia](credentials.md) pokazuje numer seryjny przy każdym kluczu.
   Usunięcie klucza na tej stronie usuwa też jego wpis.
-- **Liczba wpisana w wyszukiwarkę użytkowników** jest też szukana jako numer
-  seryjny: właściciel klucza pojawia się na górze listy. Przydaje się przy zgubionym
-  kluczu.
-- **Podłączony klucz** jest sprawdzany sam: [strona Poświadczenia](credentials.md)
-  mówi, do kogo należy, i zaznacza jego poświadczenie, a [strona
-  Rejestracja](enroll.md) pokazuje właściciela na banerze pod kluczem
-  i w potwierdzeniu, żeby przez pomyłkę nie zresetować klucza wciąż przypisanego
-  komuś innemu. Oba banery mają przycisk otwierający klucze właściciela. Wymaga YubiKeya podłączonego przez USB; klucze na czytniku NFC nie
-  podają numeru seryjnego.
+- Sprawdzanie, [do kogo należy klucz](credentials.md#key-owner), działa u każdego
+  dostawcy dzięki dziennikowi wdrożeń; z atrybutem Okta odpowiada też za klucze
+  zarejestrowane z innych komputerów.
 - Wpisy kluczy usuniętych w konsoli Okta są sprzątane przy najbliższej rejestracji
   albo usunięciu klucza tego użytkownika w KeyEnroll. Tekstu, którego KeyEnroll nie
   zapisał, aplikacja nie rusza.

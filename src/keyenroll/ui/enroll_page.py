@@ -30,9 +30,10 @@ from ..i18n import tr
 from ..providers import AuthRequired
 from .common import AppContext, UserPicker, error_text, run_task
 from .dialogs import ResultDialog, check_key_apps
-from .key_owners import KeyOwners, OwnerBanner, owner_names
+from .key_owners import KeyOwners, OwnerBanner, owner_text
 from .profile_form import ProfileForm
 from .theme import Card
+from .user_dialog import UserProfileDialog
 from .workers import EnrollWorker, PinPrompt, answer_prompt
 
 KEY_POLL_MS = 2000
@@ -69,6 +70,8 @@ class EnrollPage(QWidget):
         # 1. user
         self.picker = UserPicker(ctx)
         self.picker.selection_changed.connect(self._check_existing)
+        self.picker.activated.connect(self._show_profile)
+        self.picker.table.setToolTip(tr("Double-click a user to see their security keys."))
         self._existing_id = 0
         self.user_note = QLabel()
         self.user_note.setObjectName("hint")
@@ -278,6 +281,9 @@ class EnrollPage(QWidget):
 
     # -- existing keys of the user -----------------------------------------
 
+    def _show_profile(self, user) -> None:
+        UserProfileDialog(self.ctx, user, self).exec()
+
     def _check_existing(self, user) -> None:
         """Says how many FIDO methods the selected user has already, so that a
         second key is not handed out by mistake."""
@@ -369,11 +375,9 @@ class EnrollPage(QWidget):
 
     def _show_key_info(self) -> None:
         info = self._selected_key()
-        owners = self._owners.owners(info.serial) if info else None
+        found = self._owners.ownership(info.serial) if info else None
         self.owner_banner.set_rows(
-            [(tr("This key is registered to: {users}", users=owner_names(owners)), owners)]
-            if owners
-            else []
+            [(owner_text(found), found.users)] if found and found.users else []
         )
         self.key_serial.setText(str(info.serial) if info and info.serial else "—")
         self.key_firmware.setText(info.firmware if info and info.firmware else "—")
@@ -471,9 +475,9 @@ class EnrollPage(QWidget):
         ]
         if issue is not None:
             lines.append(tr(issue.template, **issue.params))
-        owners = self._owners.owners(key.serial)
-        if owners:
-            lines.append(tr("This key is registered to: {users}", users=owner_names(owners)))
+        found = self._owners.ownership(key.serial)
+        if found and found.users:
+            lines.append(owner_text(found))
         name = self._key_name(key)
         if name:
             lines.append(tr("Key name: {name}", name=name))

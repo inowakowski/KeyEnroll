@@ -9,8 +9,8 @@ laid out as three numbered steps and a large button.
 
 | Control | What it is for |
 |---|---|
-| Search field | Type the beginning of a name, user name or e-mail address and press ++enter++ or **Search**. An empty search lists the first users of the directory. |
-| User list | Select the user who will receive the key. Click a column header to sort. |
+| Search field | Type the beginning of a name, user name or e-mail address and press ++enter++ or **Search**. A number is also looked up as a [key serial number](credentials.md#key-owner). An empty search lists the first users of the directory. |
+| User list | Select the user who will receive the key. Click a column header to sort. **Double-click** a user to see their profile and the security keys registered to them (with serial numbers where known); **Open on the Credentials page** takes you there to delete one (since 0.8.1). |
 | Counter below the list | How many users matched. At most 25 are shown, so make the search more specific if the user is missing. |
 | Note under the list | How many FIDO methods the selected user already has, so that a second key is not handed out by mistake (since 0.7.0; not with PingOne AIC). |
 
@@ -23,7 +23,7 @@ You have to be [signed in](instances.md#signing-in) to search.
 | Key selector | The connected security keys. A USB key that is plugged in or removed appears or disappears by itself within a couple of seconds. |
 | **Refresh** | Looks for keys again immediately. |
 | **Serial number**, **Firmware** | Read from the key, so that you can check you are holding the right one. Keys of the *Security Key* series do not reveal a serial number. |
-| Status line | The state of the key before enrollment: whether a PIN is set, its minimum PIN length, and whether "always UV", Enterprise Attestation or a forced PIN change are active. With Okta [keeping serial numbers](providers.md#key-serial-numbers), a highlighted banner says who the key is registered to, and **Show the user's keys** opens them on the [Credentials page](credentials.md). |
+| Status line | The state of the key before enrollment: whether a PIN is set, its minimum PIN length, and whether "always UV", Enterprise Attestation or a forced PIN change are active. A highlighted banner says [who the key is registered to](credentials.md#key-owner), and **Show the user's keys** opens them on the [Credentials page](credentials.md). |
 
 Keys on an NFC reader are listed with the mark **NFC**. They are not detected
 automatically: place the key on the reader, then press **Refresh**.

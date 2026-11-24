@@ -18,6 +18,7 @@ from .base import (
     ProviderError,
     Registration,
     b64url_encode,
+    serial_in_name,
     to_b64url,
 )
 
@@ -211,6 +212,7 @@ class EntraProvider(Provider):
                 name=m.get("displayName") or "",
                 created=m.get("createdDateTime") or "",
                 detail=m.get("model") or m.get("aaGuid") or "",
+                serial=serial_in_name(m.get("displayName") or ""),
             )
             for m in methods
         ]

@@ -51,7 +51,6 @@ IT = {
     "Username": "Nome utente",
     "Display name": "Nome visualizzato",
     "E-mail": "E-mail",
-    "Name, username or e-mail": "Nome, nome utente o e-mail",
     "{count} user(s) found": "Utenti trovati: {count}",
     "Refresh list": "Aggiorna elenco",
     "Clears the search and lists all users again.": (
@@ -62,6 +61,23 @@ IT = {
         "Sono mostrati i primi {count} utenti. Cercare per trovare gli altri."
     ),
     "{count} user(s)": "Utenti: {count}",
+    "Double-click a user to see their security keys.": (
+        "Fare doppio clic su un utente per vedere le sue chiavi di sicurezza."
+    ),
+    "Loading…": "Caricamento…",
+    "Open on the Credentials page": "Apri nella pagina Credenziali",
+    "Security keys": "Chiavi di sicurezza",
+    "There you can delete a key of the user.": "Lì è possibile eliminare una chiave dell’utente.",
+    "{count} FIDO method(s).": "Metodi FIDO: {count}.",
+    "According to the deployment log, this key is registered to: {users}": (
+        "Secondo il registro delle distribuzioni, questa chiave è registrata per: {users}"
+    ),
+    "According to the deployment log, connected key S/N {serial} belongs to: {users}": (
+        "Secondo il registro delle distribuzioni, la chiave collegata S/N {serial} appartiene a: {users}"
+    ),
+    "Connected key S/N {serial} is not in the deployment log of this computer.": (
+        "La chiave collegata S/N {serial} non è nel registro delle distribuzioni di questo computer."
+    ),
     "Show the user's keys": "Mostra le chiavi dell’utente",
     "Show the keys of {user}": "Mostra le chiavi di {user}",
     "This key is registered to: {users}": "Questa chiave è registrata per: {users}",

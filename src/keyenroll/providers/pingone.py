@@ -20,6 +20,7 @@ from .base import (
     b64_encode,
     b64url_encode,
     clean_host,
+    serial_in_name,
     to_b64url,
 )
 
@@ -241,12 +242,14 @@ class PingOneProvider(Provider):
         for d in devices:
             if d.get("type") != "FIDO2":
                 continue
+            name = d.get("nickname") or d.get("displayName") or d.get("name") or ""
             out.append(
                 Credential(
                     id=d["id"],
-                    name=d.get("nickname") or d.get("displayName") or d.get("name") or "",
+                    name=name,
                     created=d.get("createdAt") or "",
                     detail=d.get("status") or "",
+                    serial=serial_in_name(name),
                 )
             )
         return out

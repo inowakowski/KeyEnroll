@@ -456,19 +456,42 @@ def test_okta_finds_the_owner_of_a_key_by_its_serial_number(okta_serials, http):
     bob = {"id": "00u2", "profile": {"login": "bob@x", "securityKeys": [
         f"132445513 · 2026-11-24 10:41 UTC · {F_OLD}"
     ]}}  # fmt: skip
-    http.add([bob])  # the ordinary search
     http.add([bob, alice])  # everyone with the attribute
 
-    users = okta_serials.search_users("32445513")
+    users = okta_serials.users_with_key("32445513")
 
-    assert [u.username for u in users] == ["alice@x", "bob@x"]
-    assert http.calls[1].params == {"search": "profile.securityKeys pr", "limit": "200"}
+    assert [u.username for u in users] == ["alice@x"]  # not a part of 132445513
+    assert http.calls[0].params == {"search": "profile.securityKeys pr", "limit": "200"}
 
 
-def test_okta_search_by_name_does_not_read_the_serial_numbers(okta_serials, http):
+def test_okta_search_does_not_read_the_serial_numbers_itself(okta_serials, http):
+    # The user search of the window combines it with the key owner lookup.
     http.add([])
-    assert okta_serials.search_users("Alice") == []
+    assert okta_serials.search_users("32445513") == []
     assert len(http.calls) == 1
+
+
+def test_serial_number_is_read_from_the_key_name():
+    from keyenroll.providers.base import serial_in_name
+
+    assert serial_in_name("YubiKey 32445513") == "32445513"
+    assert serial_in_name("Finance 5C 23456789 ") == "23456789"
+    assert serial_in_name("YubiKey 5 NFC") == ""
+    assert serial_in_name("Key-32445513") == ""  # not what KeyEnroll writes
+
+
+def test_entra_and_pingone_credentials_carry_the_serial_in_their_name(entra, pingone, http):
+    http.add({"value": [
+        {"id": "m1", "displayName": "YubiKey 32445513", "model": "YubiKey 5"},
+        {"id": "m2", "displayName": "Spare key"},
+    ]})  # fmt: skip
+    assert [c.serial for c in entra.list_credentials(USER)] == ["32445513", ""]
+
+    http.add({"_embedded": {"devices": [
+        {"id": "d1", "type": "FIDO2", "nickname": "YubiKey 23456789"},
+        {"id": "d2", "type": "SMS"},
+    ]}})  # fmt: skip
+    assert [c.serial for c in pingone.list_credentials(USER)] == ["23456789"]
 
 
 def test_okta_refuses_an_attribute_name_okta_cannot_have(store, http, signed_in):

@@ -9,8 +9,8 @@ jednego użytkownika. Składa się z trzech ponumerowanych kroków i dużego prz
 
 | Element | Do czego służy |
 |---|---|
-| Pole wyszukiwania | Wpisz początek imienia, nazwiska, nazwy użytkownika lub adresu e-mail i naciśnij ++enter++ albo **Szukaj**. Puste wyszukiwanie pokazuje pierwszych użytkowników katalogu. |
-| Lista użytkowników | Zaznacz użytkownika, który dostanie klucz. Kliknięcie nagłówka kolumny sortuje listę. |
+| Pole wyszukiwania | Wpisz początek imienia, nazwiska, nazwy użytkownika lub adresu e-mail i naciśnij ++enter++ albo **Szukaj**. Liczba jest też szukana jako [numer seryjny klucza](credentials.md#key-owner). Puste wyszukiwanie pokazuje pierwszych użytkowników katalogu. |
+| Lista użytkowników | Zaznacz użytkownika, który dostanie klucz. Kliknięcie nagłówka kolumny sortuje listę. **Dwuklik** na użytkowniku pokazuje jego profil i przypisane mu klucze bezpieczeństwa (z numerami seryjnymi, gdy są znane); **Otwórz na stronie Poświadczenia** przenosi tam, gdzie można klucz usunąć (od wersji 0.8.1). |
 | Licznik pod listą | Ilu użytkowników znaleziono. Lista pokazuje najwyżej 25 osób, więc jeśli brakuje szukanej, zawęź wyszukiwanie. |
 | Informacja pod listą | Ile metod FIDO ma już zaznaczony użytkownik, żeby nie wydać mu przez pomyłkę drugiego klucza (od wersji 0.7.0; nie dla PingOne AIC). |
 
@@ -23,7 +23,7 @@ Wyszukiwanie wymaga [zalogowania](instances.md#signing-in).
 | Lista kluczy | Podłączone klucze bezpieczeństwa. Włożony lub wyjęty klucz USB sam pojawia się lub znika w ciągu paru sekund. |
 | **Odśwież** | Od razu szuka kluczy ponownie. |
 | **Numer seryjny**, **Firmware** | Odczytane z klucza, żeby można było sprawdzić, czy to właściwy egzemplarz. Klucze z serii *Security Key* nie udostępniają numeru seryjnego. |
-| Wiersz stanu | Stan klucza przed rejestracją: czy ma ustawiony PIN, jaka jest minimalna długość PIN-u oraz czy włączone są „zawsze wymagaj UV”, atestacja Enterprise lub wymuszona zmiana PIN-u. Gdy Okta [przechowuje numery seryjne](providers.md#key-serial-numbers), wyróżniony baner mówi, do kogo klucz jest przypisany, a **Pokaż klucze użytkownika** otwiera je na [stronie Poświadczenia](credentials.md). |
+| Wiersz stanu | Stan klucza przed rejestracją: czy ma ustawiony PIN, jaka jest minimalna długość PIN-u oraz czy włączone są „zawsze wymagaj UV”, atestacja Enterprise lub wymuszona zmiana PIN-u. Wyróżniony baner mówi, [do kogo klucz jest przypisany](credentials.md#key-owner), a **Pokaż klucze użytkownika** otwiera je na [stronie Poświadczenia](credentials.md). |
 
 Klucze na czytniku NFC są oznaczone dopiskiem **NFC**. Nie są wykrywane
 automatycznie: połóż klucz na czytniku i kliknij **Odśwież**.

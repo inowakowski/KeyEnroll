@@ -51,7 +51,6 @@ FR = {
     "Username": "Nom d’utilisateur",
     "Display name": "Nom d’affichage",
     "E-mail": "E-mail",
-    "Name, username or e-mail": "Nom, nom d’utilisateur ou e-mail",
     "{count} user(s) found": "Utilisateurs trouvés\u00a0: {count}",
     "Refresh list": "Actualiser la liste",
     "Clears the search and lists all users again.": (
@@ -62,6 +61,23 @@ FR = {
         "Affichage des {count} premiers utilisateurs. Recherchez pour trouver les autres."
     ),
     "{count} user(s)": "Utilisateurs\u00a0: {count}",
+    "Double-click a user to see their security keys.": (
+        "Double-cliquez sur un utilisateur pour voir ses clés de sécurité."
+    ),
+    "Loading…": "Chargement…",
+    "Open on the Credentials page": "Ouvrir sur la page Identifiants",
+    "Security keys": "Clés de sécurité",
+    "There you can delete a key of the user.": "Vous pouvez y supprimer une clé de l’utilisateur.",
+    "{count} FIDO method(s).": "Méthodes FIDO\u00a0: {count}.",
+    "According to the deployment log, this key is registered to: {users}": (
+        "D’après le journal de déploiement, cette clé est enregistrée pour\u00a0: {users}"
+    ),
+    "According to the deployment log, connected key S/N {serial} belongs to: {users}": (
+        "D’après le journal de déploiement, la clé connectée S/N {serial} appartient à\u00a0: {users}"
+    ),
+    "Connected key S/N {serial} is not in the deployment log of this computer.": (
+        "La clé connectée S/N {serial} ne figure pas dans le journal de déploiement de cet ordinateur."
+    ),
     "Show the user's keys": "Afficher les clés de l’utilisateur",
     "Show the keys of {user}": "Afficher les clés de {user}",
     "This key is registered to: {users}": "Cette clé est enregistrée pour\u00a0: {users}",

@@ -9,8 +9,9 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLay
 
 from ..fido.devices import KeyInfo, close
 from ..i18n import tr
+from ..key_lookup import KeyOwnership
 from ..providers import DirectoryUser
-from .common import AppContext, run_task
+from .common import AppContext, owner_search, run_task
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +22,43 @@ def owner_names(users: list[DirectoryUser]) -> str:
     return ", ".join(u.display_name or u.username for u in users)
 
 
+def owner_text(found: KeyOwnership, serial: int | None = None) -> str:
+    """What to tell the operator about a key; ``serial`` names it when
+    several keys may be connected."""
+    users = owner_names(found.users)
+    if serial is None:
+        if found.confirmed:
+            return tr("This key is registered to: {users}", users=users)
+        return tr("According to the deployment log, this key is registered to: {users}", users=users)
+    if found.users:
+        if found.confirmed:
+            return tr(
+                "Connected key S/N {serial} belongs to: {users}", serial=serial, users=users
+            )
+        return tr(
+            "According to the deployment log, connected key S/N {serial} belongs to: {users}",
+            serial=serial,
+            users=users,
+        )
+    if found.provider_records:
+        return tr("Connected key S/N {serial} is not assigned to any user.", serial=serial)
+    return tr(
+        "Connected key S/N {serial} is not in the deployment log of this computer.",
+        serial=serial,
+    )
+
+
 class KeyOwners(QObject):
-    """Asks the provider, in the background, who has the key with a given
-    serial number. Only providers that keep serial numbers (Okta with a
-    profile attribute) can answer; for the others nothing is looked up."""
+    """Finds out, in the background, who has the key with a given serial
+    number: from the provider where it keeps serial numbers (Okta), else from
+    this computer's deployment log, checked against the provider."""
 
     changed = Signal()
 
     def __init__(self, ctx: AppContext, parent: QObject | None = None):
         super().__init__(parent)
         self.ctx = ctx
-        self._owners: dict[int, list[DirectoryUser]] = {}
+        self._owners: dict[int, KeyOwnership] = {}
         self._pending: set[int] = set()
         self._generation = 0
         ctx.active_changed.connect(self.reset)
@@ -39,8 +66,7 @@ class KeyOwners(QObject):
 
     @property
     def available(self) -> bool:
-        provider = self.ctx.provider
-        return provider is not None and bool(getattr(provider, "records_keys", False))
+        return self.ctx.provider is not None
 
     def reset(self) -> None:
         """Forgets every answer, e.g. after an enrollment changed one."""
@@ -49,16 +75,20 @@ class KeyOwners(QObject):
         self._pending.clear()
         self.changed.emit()
 
-    def owners(self, serial: int | None) -> list[DirectoryUser] | None:
-        """The users listed for the key; None while unknown."""
+    def ownership(self, serial: int | None) -> KeyOwnership | None:
+        """What is known about the key; None while unknown."""
         return self._owners.get(serial) if serial else None
+
+    def owners(self, serial: int | None) -> list[DirectoryUser] | None:
+        found = self.ownership(serial)
+        return None if found is None else found.users
 
     def pending(self, serial: int | None) -> bool:
         return serial in self._pending
 
     def find(self, user_id: str) -> DirectoryUser | None:
-        for users in self._owners.values():
-            for user in users:
+        for found in self._owners.values():
+            for user in found.users:
                 if user.id == user_id:
                     return user
         return None
@@ -66,7 +96,7 @@ class KeyOwners(QObject):
     def lookup(self, serials) -> None:
         if not self.available:
             return
-        provider = self.ctx.provider
+        search = owner_search(self.ctx)
         generation = self._generation
         for serial in serials:
             if not serial or serial in self._owners or serial in self._pending:
@@ -74,16 +104,16 @@ class KeyOwners(QObject):
             self._pending.add(serial)
             run_task(
                 self,
-                lambda s=serial: provider.users_with_key(str(s)),
-                lambda users, s=serial: self._done(generation, s, users),
+                lambda s=serial: search(s),
+                lambda found, s=serial: self._done(generation, s, found),
                 lambda exc, s=serial: self._failed(generation, s, exc),
             )
 
-    def _done(self, generation: int, serial: int, users) -> None:
+    def _done(self, generation: int, serial: int, found: KeyOwnership) -> None:
         if generation != self._generation:
             return
         self._pending.discard(serial)
-        self._owners[serial] = list(users)
+        self._owners[serial] = found
         self.changed.emit()
 
     def _failed(self, generation: int, serial: int, exc: BaseException) -> None:

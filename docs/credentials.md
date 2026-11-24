@@ -15,12 +15,11 @@ the search and reads the users again; the selected user stays selected. An empty
 search lists everyone too. Very large directories show the first 5000 users; search
 for the others.
 
-With Okta [keeping serial numbers](providers.md#key-serial-numbers), plugging in a
-YubiKey shows a highlighted banner at the top of the page saying who it belongs to,
-for example *Connected key S/N 32445513 belongs to: Alice Example*. **Show the
-user's keys** selects that user, and the credential on the plugged-in key is
-selected, ready to be deleted. The same banner on the [Enroll page](enroll.md)
-brings you here.
+Plugging in a YubiKey shows a highlighted banner at the top of the page saying
+[who it belongs to](#key-owner), for example *Connected key S/N 32445513 belongs to:
+Alice Example*. **Show the user's keys** selects that user, and the credential on
+the plugged-in key is selected, ready to be deleted. The same banner on the
+[Enroll page](enroll.md) brings you here.
 
 **FIDO credentials of the selected user** (bottom)
 
@@ -41,6 +40,30 @@ brings you here.
     The user can no longer sign in with that key as soon as the credential is
     deleted. To use the key again it has to be enrolled again. Deleting here does
     not touch the key itself: its PIN and its other credentials stay as they are.
+
+## Who a key belongs to { #key-owner }
+
+KeyEnroll reads the serial number of a YubiKey plugged in over USB (keys on an NFC
+reader do not report it) and finds its owner, with every identity provider:
+
+1. **Okta** with a [profile attribute for serial numbers](providers.md#key-serial-numbers)
+   answers itself.
+2. Otherwise the [deployment log](data.md) of this computer says whom the key was
+   last enrolled for. KeyEnroll then asks the provider whether that user still has
+   it: Entra ID and PingOne keep the serial number in the key's name when
+   *Add the serial number to the key name* was on during the enrollment.
+
+| Banner | Meaning |
+|---|---|
+| *… belongs to: Alice Example* | Confirmed by the identity provider. |
+| *According to the deployment log, … belongs to: Alice Example* | Only the log says so: the provider cannot tell the user's keys apart (no serial number in their names), or does not list them (PingOne Advanced Identity Cloud). |
+| *… is not in the deployment log of this computer* | The key was never enrolled from this computer with this instance, or it was deleted on this page since. |
+| *… is not assigned to any user* | Okta with the attribute: nobody has the key. |
+
+A key that the user no longer has (deleted in the admin console, or reset and
+enrolled for someone else elsewhere) is not suggested once the provider shows that
+all of the user's keys are other ones. A number typed in the user search is looked
+up the same way.
 
 ## What each provider supports
 
