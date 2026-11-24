@@ -23,7 +23,7 @@ Wyszukiwanie wymaga [zalogowania](instances.md#signing-in).
 | Lista kluczy | Podłączone klucze bezpieczeństwa. Włożony lub wyjęty klucz USB sam pojawia się lub znika w ciągu paru sekund. |
 | **Odśwież** | Od razu szuka kluczy ponownie. |
 | **Numer seryjny**, **Firmware** | Odczytane z klucza, żeby można było sprawdzić, czy to właściwy egzemplarz. Klucze z serii *Security Key* nie udostępniają numeru seryjnego. |
-| Wiersz stanu | Stan klucza przed rejestracją: czy ma ustawiony PIN, jaka jest minimalna długość PIN-u oraz czy włączone są „zawsze wymagaj UV”, atestacja Enterprise lub wymuszona zmiana PIN-u. Gdy Okta [przechowuje numery seryjne](providers.md#key-serial-numbers), także do kogo klucz jest przypisany. |
+| Wiersz stanu | Stan klucza przed rejestracją: czy ma ustawiony PIN, jaka jest minimalna długość PIN-u oraz czy włączone są „zawsze wymagaj UV”, atestacja Enterprise lub wymuszona zmiana PIN-u. Gdy Okta [przechowuje numery seryjne](providers.md#key-serial-numbers), wyróżniony baner mówi, do kogo klucz jest przypisany, a **Pokaż klucze użytkownika** otwiera je na [stronie Poświadczenia](credentials.md). |
 
 Klucze na czytniku NFC są oznaczone dopiskiem **NFC**. Nie są wykrywane
 automatycznie: połóż klucz na czytniku i kliknij **Odśwież**.

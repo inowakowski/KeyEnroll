@@ -62,6 +62,8 @@ ES = {
         "Se muestran los primeros {count} usuarios. Busque para encontrar los demás."
     ),
     "{count} user(s)": "Usuarios: {count}",
+    "Show the user's keys": "Mostrar las llaves del usuario",
+    "Show the keys of {user}": "Mostrar las llaves de {user}",
     "This key is registered to: {users}": "Esta llave está registrada para: {users}",
     "Connected key S/N {serial}: looking for its owner…": (
         "Llave conectada S/N {serial}: buscando a su propietario…"

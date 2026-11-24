@@ -375,21 +375,44 @@ def test_credentials_page_asks_to_sign_in_instead_of_listing(gui):
     wait_until(lambda: page.picker.table.rowCount() == 2)
 
 
+def banner_text(banner):
+    return " ".join(banner.texts()) if banner.isVisible() else ""
+
+
 def test_enroll_page_says_who_a_connected_key_is_registered_to(gui):
     window, ctx, key, source, shown = gui
     key.serial = 32445513
     ctx.provider.records_keys = True
     ctx.provider.key_owners = {"32445513": ["u2"]}
+    ctx.provider.credentials = [
+        Credential("c1", "YubiKey 5", "2026-01-01", "", serial="11111111"),
+        Credential("c2", "YubiKey 5", "2026-11-24", "", serial="32445513"),
+    ]
     page = window.enroll_page
     window.nav.setCurrentRow(0)
     rescan(page)
-    wait_until(lambda: "registered to" in page.key_info.text())
-    assert "This key is registered to: Bob Example" in page.key_info.text()
+    wait_until(lambda: "registered to" in banner_text(page.owner_banner))
+    assert "This key is registered to: Bob Example" in banner_text(page.owner_banner)
 
     pick_user(page, "Alice")
     page.start.click()  # the confirmation names the current owner
     assert "This key is registered to: Bob Example" in shown["boxes"][0]
     wait_until(lambda: not page.is_running())
+
+    # The banner's button opens the owner's credentials.
+    ctx.provider.key_owners = {"32445513": ["u2"]}
+    rescan(page)
+    wait_until(lambda: page.owner_banner.buttons())
+    page.owner_banner.buttons()[0].click()
+    credentials = window.credentials_page
+    assert window.pages.currentWidget() is credentials
+    assert credentials.picker.selected().id == "u2"
+    wait_until(lambda: credentials.table.rowCount() == 2)
+    wait_until(lambda: selected_data(credentials.table) is not None)
+    assert selected_data(credentials.table).id == "c2"  # the key that is plugged in
+    # The full user list arriving later keeps Bob selected.
+    wait_until(lambda: credentials.picker.loaded)
+    assert credentials.picker.selected().id == "u2"
 
 
 def test_credentials_page_shows_the_owner_of_a_connected_key(gui):
@@ -403,14 +426,16 @@ def test_credentials_page_shows_the_owner_of_a_connected_key(gui):
     ]
     window.nav.setCurrentRow(2)
     page = window.pages.currentWidget()
-    wait_until(lambda: "belongs to" in page.key_note.text())
-    note = page.key_note.text()
-    assert "S/N 32445513" in note and "<b>Alice Example</b>" in note
+    wait_until(lambda: "belongs to" in banner_text(page.owner_banner))
+    assert "Connected key S/N 32445513 belongs to: Alice Example" in banner_text(page.owner_banner)
 
-    page._show_owner("u1")  # what the "Show" link does
+    [button] = page.owner_banner.buttons()
+    assert button.text() == "Show the user's keys"
+    button.click()
     assert page.picker.selected().id == "u1"
     wait_until(lambda: page.table.rowCount() == 2)
     # The credential on the plugged-in key is selected, ready to be deleted.
+    wait_until(lambda: selected_data(page.table) is not None)
     assert selected_data(page.table).id == "c2"
 
 
@@ -420,7 +445,8 @@ def test_credentials_page_says_when_a_connected_key_has_no_owner(gui):
     ctx.provider.records_keys = True
     window.nav.setCurrentRow(2)
     page = window.pages.currentWidget()
-    wait_until(lambda: "not assigned" in page.key_note.text())
+    wait_until(lambda: "not assigned" in banner_text(page.owner_banner))
+    assert page.owner_banner.buttons() == []
 
 
 def test_no_owner_hint_without_serial_numbers_at_the_provider(gui):
@@ -429,7 +455,7 @@ def test_no_owner_hint_without_serial_numbers_at_the_provider(gui):
     window.nav.setCurrentRow(2)
     page = window.pages.currentWidget()
     wait_until(lambda: page.picker.loaded)
-    assert not page.key_note.isVisible()
+    assert not page.owner_banner.isVisible()
 
 
 def test_profiles_page_saves_and_enroll_page_follows(gui):

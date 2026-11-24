@@ -17,9 +17,11 @@ wyszukiwanie też pokazuje wszystkich. Przy bardzo dużych katalogach widać pie
 5000 użytkowników; pozostałych znajdziesz wyszukiwarką.
 
 Gdy Okta [przechowuje numery seryjne](providers.md#key-serial-numbers), po
-podłączeniu YubiKeya nad listą widać, do kogo należy, np. *Podłączony klucz S/N
-32445513 należy do: Alicja Przykład (Pokaż)*. **Pokaż** zaznacza tego użytkownika,
-a poświadczenie z podłączonego klucza zostaje zaznaczone, gotowe do usunięcia.
+podłączeniu YubiKeya u góry strony pojawia się wyróżniony baner z informacją, do kogo
+klucz należy, np. *Podłączony klucz S/N 32445513 należy do: Alicja Przykład*.
+**Pokaż klucze użytkownika** zaznacza tego użytkownika, a poświadczenie
+z podłączonego klucza zostaje zaznaczone, gotowe do usunięcia. Ten sam baner na
+[stronie Rejestracja](enroll.md) przenosi tutaj.
 
 **Poświadczenia FIDO wybranego użytkownika** (na dole)
 

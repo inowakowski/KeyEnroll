@@ -57,6 +57,8 @@ class AppContext(QObject):
     active_changed = Signal()
     session_changed = Signal()
     busy_changed = Signal(bool)
+    # Asks the window to open the Credentials page for this DirectoryUser.
+    open_user_credentials = Signal(object)
     theme_changed = Signal()
 
     def __init__(
@@ -520,11 +522,12 @@ class UserPicker(QWidget):
         provider = self._provider(quiet)
         if provider is None:
             return
-        current = self.selected()
-        keep = current.id if current else None
         self.hint.setText(tr("Loading users…"))
 
         def done(users):
+            # Whoever is selected now: show_user() may have run meanwhile.
+            current = self.selected()
+            keep = current.id if current else None
             self.loaded = True
             users = sorted(users, key=lambda u: (u.display_name or u.username).casefold())
             self._show(users, keep)

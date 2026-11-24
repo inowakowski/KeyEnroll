@@ -218,9 +218,9 @@ nie da się odczytać (czytniki NFC, klucze innych producentów), mają wpis `un
   kluczu.
 - **Podłączony klucz** jest sprawdzany sam: [strona Poświadczenia](credentials.md)
   mówi, do kogo należy, i zaznacza jego poświadczenie, a [strona
-  Rejestracja](enroll.md) pokazuje właściciela w wierszu stanu klucza
+  Rejestracja](enroll.md) pokazuje właściciela na banerze pod kluczem
   i w potwierdzeniu, żeby przez pomyłkę nie zresetować klucza wciąż przypisanego
-  komuś innemu. Wymaga YubiKeya podłączonego przez USB; klucze na czytniku NFC nie
+  komuś innemu. Oba banery mają przycisk otwierający klucze właściciela. Wymaga YubiKeya podłączonego przez USB; klucze na czytniku NFC nie
   podają numeru seryjnego.
 - Wpisy kluczy usuniętych w konsoli Okta są sprzątane przy najbliższej rejestracji
   albo usunięciu klucza tego użytkownika w KeyEnroll. Tekstu, którego KeyEnroll nie

@@ -61,6 +61,8 @@ PL = {
         "Wyświetlono pierwszych {count} użytkowników. Pozostałych znajdziesz wyszukiwarką."
     ),
     "{count} user(s)": "Użytkownicy: {count}",
+    "Show the user's keys": "Pokaż klucze użytkownika",
+    "Show the keys of {user}": "Pokaż klucze: {user}",
     "This key is registered to: {users}": "Ten klucz jest przypisany do: {users}",
     "Connected key S/N {serial}: looking for its owner…": (
         "Podłączony klucz S/N {serial}: szukanie właściciela…"

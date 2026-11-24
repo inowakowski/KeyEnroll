@@ -16,9 +16,11 @@ search lists everyone too. Very large directories show the first 5000 users; sea
 for the others.
 
 With Okta [keeping serial numbers](providers.md#key-serial-numbers), plugging in a
-YubiKey shows above the list who it belongs to, for example *Connected key S/N
-32445513 belongs to: Alice Example (Show)*. **Show** selects that user, and the
-credential on the plugged-in key is selected, ready to be deleted.
+YubiKey shows a highlighted banner at the top of the page saying who it belongs to,
+for example *Connected key S/N 32445513 belongs to: Alice Example*. **Show the
+user's keys** selects that user, and the credential on the plugged-in key is
+selected, ready to be deleted. The same banner on the [Enroll page](enroll.md)
+brings you here.
 
 **FIDO credentials of the selected user** (bottom)
 

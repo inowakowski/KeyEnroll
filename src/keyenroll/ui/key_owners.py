@@ -5,8 +5,10 @@ from __future__ import annotations
 import logging
 
 from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from ..fido.devices import KeyInfo, close
+from ..i18n import tr
 from ..providers import DirectoryUser
 from .common import AppContext, run_task
 
@@ -155,3 +157,52 @@ class KeyWatcher(QObject):
             self._paths = None  # try again on the next tick
 
         run_task(self, scan, done, failed)
+
+
+class OwnerBanner(QFrame):
+    """A banner that stands out: who the connected keys belong to, with a
+    button per user that opens the user's credentials."""
+
+    open_user = Signal(object)  # DirectoryUser
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setObjectName("banner")
+        self._rows = QVBoxLayout(self)
+        self._rows.setContentsMargins(14, 10, 14, 10)
+        self._rows.setSpacing(8)
+        self.setVisible(False)
+
+    def texts(self) -> list[str]:
+        return [label.text() for label in self.findChildren(QLabel)]
+
+    def buttons(self) -> list[QPushButton]:
+        return self.findChildren(QPushButton)
+
+    def set_rows(self, rows: list[tuple[str, list[DirectoryUser]]]) -> None:
+        """One line per key: its text and the users to offer a button for."""
+        while self._rows.count():
+            widget = self._rows.takeAt(0).widget()
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
+        for text, users in rows:
+            line = QWidget()
+            row = QHBoxLayout(line)
+            row.setContentsMargins(0, 0, 0, 0)
+            label = QLabel(text)
+            label.setWordWrap(True)
+            font = label.font()
+            font.setBold(True)
+            label.setFont(font)
+            row.addWidget(label, 1)
+            for user in users:
+                name = user.display_name or user.username
+                button = QPushButton(
+                    tr("Show the keys of {user}", user=name) if len(users) > 1
+                    else tr("Show the user's keys")
+                )
+                button.clicked.connect(lambda _=False, u=user: self.open_user.emit(u))
+                row.addWidget(button)
+            self._rows.addWidget(line)
+        self.setVisible(bool(rows))

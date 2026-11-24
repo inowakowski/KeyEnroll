@@ -62,6 +62,8 @@ FR = {
         "Affichage des {count} premiers utilisateurs. Recherchez pour trouver les autres."
     ),
     "{count} user(s)": "Utilisateurs\u00a0: {count}",
+    "Show the user's keys": "Afficher les clés de l’utilisateur",
+    "Show the keys of {user}": "Afficher les clés de {user}",
     "This key is registered to: {users}": "Cette clé est enregistrée pour\u00a0: {users}",
     "Connected key S/N {serial}: looking for its owner…": (
         "Clé connectée S/N {serial}\u00a0: recherche de son propriétaire…"

@@ -62,6 +62,8 @@ DE = {
         "Die ersten {count} Benutzer werden angezeigt. Suchen Sie nach den übrigen."
     ),
     "{count} user(s)": "{count} Benutzer",
+    "Show the user's keys": "Schlüssel des Benutzers anzeigen",
+    "Show the keys of {user}": "Schlüssel anzeigen: {user}",
     "This key is registered to: {users}": "Dieser Schlüssel ist registriert für: {users}",
     "Connected key S/N {serial}: looking for its owner…": (
         "Angeschlossener Schlüssel S/N {serial}: Besitzer wird gesucht…"

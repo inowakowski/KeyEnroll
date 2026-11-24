@@ -62,6 +62,8 @@ IT = {
         "Sono mostrati i primi {count} utenti. Cercare per trovare gli altri."
     ),
     "{count} user(s)": "Utenti: {count}",
+    "Show the user's keys": "Mostra le chiavi dell’utente",
+    "Show the keys of {user}": "Mostra le chiavi di {user}",
     "This key is registered to: {users}": "Questa chiave è registrata per: {users}",
     "Connected key S/N {serial}: looking for its owner…": (
         "Chiave collegata S/N {serial}: ricerca del proprietario…"

@@ -30,7 +30,7 @@ from ..i18n import tr
 from ..providers import AuthRequired
 from .common import AppContext, UserPicker, error_text, run_task
 from .dialogs import ResultDialog, check_key_apps
-from .key_owners import KeyOwners, owner_names
+from .key_owners import KeyOwners, OwnerBanner, owner_names
 from .profile_form import ProfileForm
 from .theme import Card
 from .workers import EnrollWorker, PinPrompt, answer_prompt
@@ -114,6 +114,10 @@ class EnrollPage(QWidget):
         key_card.body.addLayout(key_row)
         key_card.body.addLayout(self.key_details)
         key_card.body.addWidget(self.key_info)
+        # Who the key is still registered to: before a reset hands it to someone else.
+        self.owner_banner = OwnerBanner()
+        self.owner_banner.open_user.connect(ctx.open_user_credentials)
+        key_card.body.addWidget(self.owner_banner)
 
         # 3. options
         self.profile_combo = QComboBox()
@@ -365,6 +369,12 @@ class EnrollPage(QWidget):
 
     def _show_key_info(self) -> None:
         info = self._selected_key()
+        owners = self._owners.owners(info.serial) if info else None
+        self.owner_banner.set_rows(
+            [(tr("This key is registered to: {users}", users=owner_names(owners)), owners)]
+            if owners
+            else []
+        )
         self.key_serial.setText(str(info.serial) if info and info.serial else "—")
         self.key_firmware.setText(info.firmware if info and info.firmware else "—")
         self._update_name_preview()
@@ -390,9 +400,6 @@ class EnrollPage(QWidget):
         issue = model_issue(self.form.profile(), info)
         if issue is not None:
             text += "\n⚠ " + tr(issue.template, **issue.params)
-        owners = self._owners.owners(info.serial)
-        if owners:
-            text += "\n" + tr("This key is registered to: {users}", users=owner_names(owners))
         self.key_info.setText(text)
 
     # -- key name ----------------------------------------------------------

@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from html import escape
-
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -26,7 +23,7 @@ from .common import (
     selected_data,
     show_error,
 )
-from .key_owners import KeyOwners, KeyWatcher
+from .key_owners import KeyOwners, KeyWatcher, OwnerBanner, owner_names
 from .theme import Card
 
 
@@ -39,18 +36,13 @@ class CredentialsPage(QWidget):
         self.picker = UserPicker(ctx, browse=True)
         self.picker.selection_changed.connect(self._load)
         # Who the plugged-in keys belong to, where the provider keeps serial numbers.
-        self.key_note = QLabel()
-        self.key_note.setObjectName("hint")
-        self.key_note.setWordWrap(True)
-        self.key_note.setTextFormat(Qt.TextFormat.RichText)
-        self.key_note.linkActivated.connect(self._show_owner)
-        self.key_note.setVisible(False)
+        self.owner_banner = OwnerBanner()
+        self.owner_banner.open_user.connect(self.show_user)
         user_card = Card(tr("User"))
-        user_card.body.addWidget(self.key_note)
         user_card.body.addWidget(self.picker, 1)
         self._keys: list = []  # connected keys with a serial number
         self._owners = KeyOwners(ctx, self)
-        self._owners.changed.connect(self._update_key_note)
+        self._owners.changed.connect(self._update_owner_banner)
         self._watcher = KeyWatcher(ctx, self)
         self._watcher.keys_changed.connect(self._on_keys)
 
@@ -79,6 +71,7 @@ class CredentialsPage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(14)
+        layout.addWidget(self.owner_banner)
         layout.addWidget(user_card, 1)
         layout.addWidget(creds_card, 1)
 
@@ -100,45 +93,38 @@ class CredentialsPage(QWidget):
     def _on_keys(self, infos) -> None:
         self._keys = [info for info in infos if info.serial]
         self._owners.lookup(info.serial for info in self._keys)
-        self._update_key_note()
+        self._update_owner_banner()
         self._select_connected()
 
-    def _update_key_note(self) -> None:
-        if not (self._keys and self._owners.available):
-            self.key_note.setVisible(False)
-            return
-        lines = []
-        for info in self._keys:
-            owners = self._owners.owners(info.serial)
-            if owners is None and not self._owners.pending(info.serial):
-                continue  # the lookup failed; nothing to say
-            if owners is None:
-                text = tr(
-                    "Connected key S/N {serial}: looking for its owner…", serial=info.serial
-                )
-                lines.append(escape(text))
-            elif not owners:
-                text = tr(
-                    "Connected key S/N {serial} is not assigned to any user.",
-                    serial=info.serial,
-                )
-                lines.append(escape(text))
-            else:
-                users = ", ".join(
-                    f"<b>{escape(u.display_name or u.username)}</b> "
-                    f'(<a href="{escape(u.id)}">{escape(tr("Show"))}</a>)'
-                    for u in owners
-                )
-                # The template is escaped before the links are put in.
-                template = escape(tr("Connected key S/N {serial} belongs to: {users}"))
-                lines.append(template.format(serial=info.serial, users=users))
-        self.key_note.setText("<br>".join(lines))
-        self.key_note.setVisible(bool(lines))
+    def _update_owner_banner(self) -> None:
+        rows = []
+        if self._owners.available:
+            for info in self._keys:
+                owners = self._owners.owners(info.serial)
+                if owners:
+                    text = tr(
+                        "Connected key S/N {serial} belongs to: {users}",
+                        serial=info.serial,
+                        users=owner_names(owners),
+                    )
+                    rows.append((text, owners))
+                elif owners is not None:
+                    text = tr(
+                        "Connected key S/N {serial} is not assigned to any user.",
+                        serial=info.serial,
+                    )
+                    rows.append((text, []))
+                elif self._owners.pending(info.serial):
+                    text = tr(
+                        "Connected key S/N {serial}: looking for its owner…", serial=info.serial
+                    )
+                    rows.append((text, []))
+        self.owner_banner.set_rows(rows)
 
-    def _show_owner(self, user_id: str) -> None:
-        user = self._owners.find(user_id)
-        if user is not None:
-            self.picker.show_user(user)
+    def show_user(self, user) -> None:
+        """Selects the user; their credentials load, the one on a plugged-in
+        key selected."""
+        self.picker.show_user(user)
 
     def _select_connected(self) -> None:
         """Selects the credential on a plugged-in key, ready to be deleted."""
