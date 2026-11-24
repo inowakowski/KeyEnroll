@@ -107,6 +107,12 @@ ES = {
     "Require always UV": "Exigir siempre la verificación del usuario (UV)",
     "The key asks for the PIN on every use.": "La llave pide el PIN en cada uso.",
     "Require Enterprise Attestation": "Exigir atestación Enterprise",
+    "Store the credential on the key (passkey)": "Guardar la credencial en la llave (passkey)",
+    "The account is saved on the key and can be used without typing the user name. Takes one of "
+    "the key's credential slots.": (
+        "La cuenta se guarda en la llave y puede usarse sin escribir el nombre de usuario. Ocupa "
+        "una de las posiciones de credenciales de la llave."
+    ),
     # -- profiles page
     "New profile": "Nuevo perfil",
     "Profile name": "Nombre del perfil",
@@ -286,6 +292,16 @@ ES = {
     "This security key does not support Enterprise Attestation.": (
         "Esta llave de seguridad no admite la atestación Enterprise."
     ),
+    "This security key cannot store the credential on the key. Turn off 'Store the credential on "
+    "the key' in the profile.": (
+        "Esta llave de seguridad no puede guardar la credencial. Desactive «Guardar la "
+        "credencial en la llave» en el perfil."
+    ),
+    "The connection to the security key was interrupted. Close other programs that use the key, "
+    "such as Yubico Authenticator, and try again.": (
+        "Se interrumpió la conexión con la llave de seguridad. Cierre otros programas que usen "
+        "la llave, como Yubico Authenticator, e inténtelo de nuevo."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Esta llave de seguridad no puede imponer una longitud mínima del PIN ni un "
@@ -420,6 +436,7 @@ ES = {
     "forced PIN change": "cambio de PIN obligatorio",
     "always UV": "exigir siempre verificación (UV)",
     "Enterprise Attestation": "atestación Enterprise",
+    "credential not stored on the key": "credencial no guardada en la llave",
     # -- appearance
     "Appearance": "Apariencia",
     "Light": "Claro",

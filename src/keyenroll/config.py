@@ -121,6 +121,10 @@ class Profile:
     reset: bool = True
     random_pin: bool = True
     random_pin_length: int = 6
+    # Stores the credential on the key (a discoverable credential, a passkey)
+    # even when the identity provider does not ask for one. Okta, for one,
+    # asks for a credential that lives only at the provider.
+    discoverable: bool = True
     # Key models the profile accepts, as {"aaguid": ..., "name": ...};
     # empty accepts every model.
     allowed_models: list[dict[str, str]] = field(default_factory=list)

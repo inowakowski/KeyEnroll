@@ -104,6 +104,12 @@ PL = {
     "Require always UV": "Zawsze wymagaj weryfikacji użytkownika (UV)",
     "The key asks for the PIN on every use.": "Klucz wymaga PIN-u przy każdym użyciu.",
     "Require Enterprise Attestation": "Wymagaj atestacji Enterprise",
+    "Store the credential on the key (passkey)": "Zapisz poświadczenie na kluczu (passkey)",
+    "The account is saved on the key and can be used without typing the user name. Takes one of "
+    "the key's credential slots.": (
+        "Konto zostaje zapisane na kluczu i można się nim logować bez wpisywania nazwy "
+        "użytkownika. Zajmuje jedno miejsce na poświadczenia w kluczu."
+    ),
     # -- profiles page
     "New profile": "Nowy profil",
     "Profile name": "Nazwa profilu",
@@ -268,6 +274,16 @@ PL = {
     "This security key does not support Enterprise Attestation.": (
         "Ten klucz nie obsługuje atestacji Enterprise."
     ),
+    "This security key cannot store the credential on the key. Turn off 'Store the credential on "
+    "the key' in the profile.": (
+        "Ten klucz nie potrafi zapisać poświadczenia na kluczu. Wyłącz w profilu opcję „Zapisz "
+        "poświadczenie na kluczu”."
+    ),
+    "The connection to the security key was interrupted. Close other programs that use the key, "
+    "such as Yubico Authenticator, and try again.": (
+        "Połączenie z kluczem zostało przerwane. Zamknij inne programy, które korzystają z "
+        "klucza, np. Yubico Authenticator, i spróbuj ponownie."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Ten klucz nie potrafi wymusić minimalnej długości PIN-u ani zmiany PIN-u "
@@ -395,6 +411,7 @@ PL = {
     "forced PIN change": "wymuszona zmiana PIN-u",
     "always UV": "zawsze wymagaj UV",
     "Enterprise Attestation": "atestacja Enterprise",
+    "credential not stored on the key": "poświadczenie niezapisane na kluczu",
     # -- appearance
     "Appearance": "Wygląd",
     "Light": "Jasny",

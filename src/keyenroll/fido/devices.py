@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from fido2.ctap import CtapDevice
 from fido2.ctap2 import Ctap2
-from fido2.hid import CtapHidDevice
+from fido2.hid import CTAPHID, TYPE_INIT, CtapHidDevice, list_descriptors, open_connection
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,78 @@ logger = logging.getLogger(__name__)
 _CTAP_READ_CONFIG = 0x42
 _TAG_SERIAL = 0x02
 _TAG_VERSION = 0x05
+
+_BROADCAST = 0xFFFFFFFF
+_INIT = TYPE_INIT | CTAPHID.INIT
+
+
+class _OwnChannelConnection:
+    """HID connection that hands the device only the frames of its own channel.
+
+    Windows delivers every input report of a HID device to every open handle,
+    so while another program (Yubico Authenticator, a browser) talks to the
+    key, its responses arrive here too. fido2 aborts on such a frame with
+    "Wrong channel"; CTAPHID clients are expected to ignore it instead.
+    """
+
+    def __init__(self, inner, device: SharedHidDevice):
+        self._inner = inner
+        self._device = device
+        self._nonce: bytes | None = None
+
+    def write_packet(self, data: bytes) -> None:
+        if int.from_bytes(data[:4], "big") == _BROADCAST and data[4] == _INIT:
+            self._nonce = bytes(data[7:15])
+        self._inner.write_packet(data)
+
+    def read_packet(self) -> bytes:
+        while True:
+            packet = self._inner.read_packet()
+            channel = int.from_bytes(packet[:4], "big")
+            own = getattr(self._device, "_channel_id", _BROADCAST)
+            if channel != own:
+                logger.debug("Skipped a HID frame for channel %08x", channel)
+                continue
+            if (
+                channel == _BROADCAST
+                and packet[4] == _INIT
+                and self._nonce is not None
+                and bytes(packet[7:15]) != self._nonce
+            ):
+                logger.debug("Skipped another program's INIT response")
+                continue
+            return packet
+
+    def close(self) -> None:
+        self._inner.close()
+
+
+class SharedHidDevice(CtapHidDevice):
+    """CtapHidDevice that tolerates other programs using the key at the same time."""
+
+    def __init__(self, descriptor, connection):
+        super().__init__(descriptor, _OwnChannelConnection(connection, self))
+
+
+def _list_hid() -> list[CtapDevice]:
+    devices: list[CtapDevice] = []
+    try:
+        descriptors = list(list_descriptors())
+    except Exception:
+        logger.debug("HID listing failed", exc_info=True)
+        return devices
+    for descriptor in descriptors:
+        # One key failing to open must not hide the others.
+        try:
+            connection = open_connection(descriptor)
+            try:
+                devices.append(SharedHidDevice(descriptor, connection))
+            except BaseException:
+                connection.close()
+                raise
+        except Exception:
+            logger.debug("Opening %s failed", descriptor.path, exc_info=True)
+    return devices
 
 
 @dataclass
@@ -86,11 +158,7 @@ class DeviceSource:
     """Enumerates connected security keys. Returned devices are open."""
 
     def list(self) -> list[CtapDevice]:
-        devices: list[CtapDevice] = []
-        try:
-            devices.extend(CtapHidDevice.list_devices())
-        except Exception:
-            logger.debug("HID listing failed", exc_info=True)
+        devices = _list_hid()
         devices.extend(_list_pcsc())
         return devices
 

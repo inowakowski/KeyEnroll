@@ -56,6 +56,7 @@ does not have the required role. See [Identity providers](providers.md).
 |---|---|
 | *The reset was not accepted. It must be confirmed within a few seconds of inserting the key.* | A security key only allows a reset shortly after it is plugged in. Remove it, insert it, and touch it as soon as it blinks. The application retries a few times. |
 | *The key was not touched in time.* | Touch the gold contact or the button of the key while it blinks. |
+| *The connection to the security key was interrupted …* | Another program talked to the key at the same time and the connection broke off. Close Yubico Authenticator, browser tabs with a security key prompt and similar programs, then try again. During a factory reset the application asks you to re-insert the key once more. |
 | *Timed out waiting for the security key.* | The key was not removed or re-inserted within two minutes. Start again. |
 | *A different security key was inserted …* | For the factory reset, a key with another serial number was inserted than the one taken out. It was left untouched. Start again with the right key. |
 | *The selected security key is no longer connected.* | The key was unplugged. Insert it and press **Refresh**. |

@@ -1034,6 +1034,27 @@ def test_profile_limits_key_models_and_the_enroll_page_enforces_it(gui, monkeypa
     assert not enroll_page.is_running() and "reset" not in key.log
 
 
+def test_an_aaguid_can_be_typed_in_by_hand(gui, monkeypatch):
+    from keyenroll.ui import profile_form
+
+    window, ctx, key, source, shown = gui
+
+    def fill_in(dialog):
+        assert dialog.aaguid.text() == "" and not dialog.aaguid.isReadOnly()
+        dialog.aaguid.setText("CB69481E8FF7403993EC0A2729A154A8")
+        dialog.name.setText("YubiKey 5 NFC")
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(profile_form.ModelDialog, "exec", fill_in)
+    window.nav.setCurrentRow(3)
+    page = window.pages.currentWidget()
+    page.new.click()
+    page.models.add_manual.click()
+    assert page.models.list.count() == 1
+    model = page.models.list.item(0).data(Qt.ItemDataRole.UserRole)
+    assert model == {"aaguid": "cb69481e-8ff7-4039-93ec-0a2729a154a8", "name": "YubiKey 5 NFC"}
+
+
 def test_enrollments_are_written_to_the_deployment_log(gui):
     import csv
 

@@ -109,6 +109,14 @@ DE = {
         "Der Schlüssel verlangt bei jeder Verwendung die PIN."
     ),
     "Require Enterprise Attestation": "Enterprise Attestation verlangen",
+    "Store the credential on the key (passkey)": (
+        "Anmeldeinformationen auf dem Schlüssel speichern (Passkey)"
+    ),
+    "The account is saved on the key and can be used without typing the user name. Takes one of "
+    "the key's credential slots.": (
+        "Das Konto wird auf dem Schlüssel gespeichert und kann ohne Eingabe des Benutzernamens "
+        "verwendet werden. Belegt einen der Speicherplätze des Schlüssels."
+    ),
     # -- profiles page
     "New profile": "Neues Profil",
     "Profile name": "Profilname",
@@ -302,6 +310,17 @@ DE = {
     "This security key does not support Enterprise Attestation.": (
         "Dieser Sicherheitsschlüssel unterstützt Enterprise Attestation nicht."
     ),
+    "This security key cannot store the credential on the key. Turn off 'Store the credential on "
+    "the key' in the profile.": (
+        "Dieser Sicherheitsschlüssel kann die Anmeldeinformationen nicht speichern. Deaktivieren "
+        "Sie im Profil „Anmeldeinformationen auf dem Schlüssel speichern“."
+    ),
+    "The connection to the security key was interrupted. Close other programs that use the key, "
+    "such as Yubico Authenticator, and try again.": (
+        "Die Verbindung zum Sicherheitsschlüssel wurde unterbrochen. Schließen Sie andere "
+        "Programme, die den Schlüssel verwenden, etwa Yubico Authenticator, und versuchen Sie es "
+        "erneut."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Dieser Sicherheitsschlüssel kann weder eine PIN-Mindestlänge noch eine "
@@ -439,6 +458,7 @@ DE = {
     "forced PIN change": "erzwungene PIN-Änderung",
     "always UV": "UV immer verlangen",
     "Enterprise Attestation": "Enterprise Attestation",
+    "credential not stored on the key": "Anmeldeinformationen nicht auf dem Schlüssel gespeichert",
     # -- appearance
     "Appearance": "Darstellung",
     "Light": "Hell",

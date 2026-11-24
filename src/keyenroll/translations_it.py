@@ -105,6 +105,12 @@ IT = {
     "Require always UV": "Richiedi sempre la verifica dell’utente (UV)",
     "The key asks for the PIN on every use.": "La chiave chiede il PIN a ogni utilizzo.",
     "Require Enterprise Attestation": "Richiedi l’attestazione Enterprise",
+    "Store the credential on the key (passkey)": "Salva la credenziale sulla chiave (passkey)",
+    "The account is saved on the key and can be used without typing the user name. Takes one of "
+    "the key's credential slots.": (
+        "L’account viene salvato sulla chiave e può essere usato senza digitare il nome utente. "
+        "Occupa uno degli spazi per credenziali della chiave."
+    ),
     # -- profiles page
     "New profile": "Nuovo profilo",
     "Profile name": "Nome del profilo",
@@ -289,6 +295,16 @@ IT = {
     "This security key does not support Enterprise Attestation.": (
         "Questa chiave di sicurezza non supporta l’attestazione Enterprise."
     ),
+    "This security key cannot store the credential on the key. Turn off 'Store the credential on "
+    "the key' in the profile.": (
+        "Questa chiave di sicurezza non può salvare la credenziale. Disattivare «Salva la "
+        "credenziale sulla chiave» nel profilo."
+    ),
+    "The connection to the security key was interrupted. Close other programs that use the key, "
+    "such as Yubico Authenticator, and try again.": (
+        "La connessione con la chiave di sicurezza si è interrotta. Chiudere gli altri programmi "
+        "che usano la chiave, come Yubico Authenticator, e riprovare."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Questa chiave di sicurezza non può imporre una lunghezza minima del PIN né la "
@@ -422,6 +438,7 @@ IT = {
     "forced PIN change": "modifica del PIN obbligatoria",
     "always UV": "richiedi sempre la verifica (UV)",
     "Enterprise Attestation": "attestazione Enterprise",
+    "credential not stored on the key": "credenziale non salvata sulla chiave",
     # -- appearance
     "Appearance": "Aspetto",
     "Light": "Chiaro",

@@ -43,6 +43,13 @@ class ProfileForm(QWidget):
         self.always_uv = QCheckBox(tr("Require always UV"))
         self.always_uv.setToolTip(tr("The key asks for the PIN on every use."))
         self.ea = QCheckBox(tr("Require Enterprise Attestation"))
+        self.discoverable = QCheckBox(tr("Store the credential on the key (passkey)"))
+        self.discoverable.setToolTip(
+            tr(
+                "The account is saved on the key and can be used without typing the "
+                "user name. Takes one of the key's credential slots."
+            )
+        )
 
         form = QFormLayout(self)
         form.setContentsMargins(0, 0, 0, 0)
@@ -53,6 +60,7 @@ class ProfileForm(QWidget):
         form.addRow(self.force_change)
         form.addRow(self.always_uv)
         form.addRow(self.ea)
+        form.addRow(self.discoverable)
 
         # Allowed key models are edited on the Profiles page only; they are
         # carried along so that a one-off change of options keeps them.
@@ -61,7 +69,8 @@ class ProfileForm(QWidget):
         self._unknown_firmware = "refuse"
 
         self.random_pin.toggled.connect(self.random_len.setEnabled)
-        for box in (self.reset, self.random_pin, self.force_change, self.always_uv, self.ea):
+        for box in (self.reset, self.random_pin, self.force_change, self.always_uv, self.ea,
+                    self.discoverable):
             box.toggled.connect(self.changed)
         for spin in (self.min_pin, self.random_len):
             spin.valueChanged.connect(self.changed)
@@ -77,6 +86,7 @@ class ProfileForm(QWidget):
         self.force_change.setChecked(p.force_pin_change)
         self.always_uv.setChecked(p.require_always_uv)
         self.ea.setChecked(p.require_ea)
+        self.discoverable.setChecked(p.discoverable)
         self._models = [dict(m) for m in p.allowed_models]
         self._min_firmware = p.min_firmware
         self._unknown_firmware = p.unknown_firmware
@@ -92,6 +102,7 @@ class ProfileForm(QWidget):
             reset=self.reset.isChecked(),
             random_pin=self.random_pin.isChecked(),
             random_pin_length=self.random_len.value(),
+            discoverable=self.discoverable.isChecked(),
             allowed_models=[dict(m) for m in self._models],
             min_firmware=self._min_firmware,
             unknown_firmware=self._unknown_firmware,
@@ -113,6 +124,8 @@ def profile_summary(p: Profile) -> str:
         parts.append(tr("always UV"))
     if p.require_ea:
         parts.append(tr("Enterprise Attestation"))
+    if not p.discoverable:
+        parts.append(tr("credential not stored on the key"))
     if p.allowed_models:
         parts.append(tr("only {count} allowed key model(s)", count=len(p.allowed_models)))
     if p.min_firmware:
@@ -182,7 +195,8 @@ class KeyModelsEditor(QWidget):
         self.add_connected.setToolTip(tr("Reads the model of the security key that is plugged in."))
         self.add_connected.clicked.connect(self._add_connected)
         self.add_manual = QPushButton(tr("Add AAGUID…"))
-        self.add_manual.clicked.connect(self._add)
+        # clicked() passes "checked" (a bool), which must not become the AAGUID.
+        self.add_manual.clicked.connect(lambda: self._add())
         self.remove = QPushButton(tr("Remove from the list"))
         self.remove.clicked.connect(self._remove)
         buttons = QHBoxLayout()

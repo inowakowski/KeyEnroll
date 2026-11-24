@@ -313,3 +313,8 @@ def test_import_can_turn_down_instances(tmp_path):
     )
     assert [i.name for i in imported.instances] == ["Fine"]
     assert imported.skipped == ["Plain"]
+
+
+def test_profiles_saved_before_the_discoverable_option_store_credentials_on_the_key():
+    assert Profile.from_dict({"name": "old"}).discoverable is True
+    assert Profile.from_dict({"name": "x", "discoverable": False}).discoverable is False
