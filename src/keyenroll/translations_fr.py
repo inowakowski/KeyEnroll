@@ -53,6 +53,27 @@ FR = {
     "E-mail": "E-mail",
     "Name, username or e-mail": "Nom, nom d’utilisateur ou e-mail",
     "{count} user(s) found": "Utilisateurs trouvés\u00a0: {count}",
+    "Refresh list": "Actualiser la liste",
+    "Clears the search and lists all users again.": (
+        "Efface la recherche et affiche de nouveau tous les utilisateurs."
+    ),
+    "Loading users…": "Chargement des utilisateurs…",
+    "Showing the first {count} users. Search to find the others.": (
+        "Affichage des {count} premiers utilisateurs. Recherchez pour trouver les autres."
+    ),
+    "{count} user(s)": "Utilisateurs\u00a0: {count}",
+    "Show the user's keys": "Afficher les clés de l’utilisateur",
+    "Show the keys of {user}": "Afficher les clés de {user}",
+    "This key is registered to: {users}": "Cette clé est enregistrée pour\u00a0: {users}",
+    "Connected key S/N {serial}: looking for its owner…": (
+        "Clé connectée S/N {serial}\u00a0: recherche de son propriétaire…"
+    ),
+    "Connected key S/N {serial} is not assigned to any user.": (
+        "La clé connectée S/N {serial} n’est attribuée à aucun utilisateur."
+    ),
+    "Connected key S/N {serial} belongs to: {users}": (
+        "La clé connectée S/N {serial} appartient à\u00a0: {users}"
+    ),
     "No instance": "Aucune instance",
     "Add an identity provider instance first.": (
         "Ajoutez d’abord une instance de fournisseur d’identité."
@@ -314,6 +335,35 @@ FR = {
     "such as Yubico Authenticator, and try again.": (
         "La connexion à la clé de sécurité a été interrompue. Fermez les autres programmes qui "
         "utilisent la clé, comme Yubico Authenticator, puis réessayez."
+    ),
+    "The credential was registered, but Okta does not know the profile attribute '{attribute}' "
+    "for this user, so the serial number was not saved. Add the attribute in Profile Editor, to "
+    "the profile of the user's type, with exactly this variable name (it is case-sensitive).": (
+        "L’identifiant a été enregistré, mais Okta ne connaît pas l’attribut de profil « "
+        "{attribute} » pour cet utilisateur : le numéro de série n’a pas été inscrit. Ajoutez "
+        "l’attribut dans Profile Editor, au profil du type de l’utilisateur, avec exactement ce "
+        "nom de variable (sensible à la casse)."
+    ),
+    "Profile attribute for key serial numbers": (
+        "Attribut du profil pour les numéros de série des clés"
+    ),
+    "Variable name of a string array attribute in the Okta user profile. KeyEnroll writes the "
+    "serial number of every key it enrolls into it, so that you can tell the keys of a user "
+    "apart and find who has a key. Empty: off.": (
+        "Nom de variable d’un attribut de type string array dans le profil utilisateur Okta. "
+        "KeyEnroll y inscrit le numéro de série de chaque clé enregistrée, pour distinguer les "
+        "clés d’un utilisateur et savoir qui possède une clé. Vide : désactivé."
+    ),
+    "Saving the serial number in the user profile…": (
+        "Enregistrement du numéro de série dans le profil de l’utilisateur…"
+    ),
+    "The credential was registered, but the serial number could not be saved in the user "
+    "profile: {detail}": (
+        "L’identifiant a été enregistré, mais le numéro de série n’a pas pu être inscrit dans le "
+        "profil de l’utilisateur : {detail}"
+    ),
+    "Name, username, e-mail or key serial number": (
+        "Nom, identifiant, e-mail ou numéro de série de la clé"
     ),
     "Other security key programs are running": (
         "D’autres programmes de clés de sécurité sont en cours d’exécution"

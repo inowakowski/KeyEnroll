@@ -8,14 +8,27 @@ pracownik go zwrócił.
 
 ## Strona
 
-**Użytkownik** (u góry). Wyszukaj użytkownika i zaznacz go — tak samo jak na
-[stronie Rejestracja](enroll.md#1-user).
+**Użytkownik** (u góry). Po otwarciu strony widać **wszystkich użytkowników**
+katalogu, posortowanych po nazwie, więc wyszukiwanie jest opcjonalne: zaznacz
+użytkownika na liście albo zawęź ją wyszukiwarką, tak jak na
+[stronie Rejestracja](enroll.md#1-user). **Odśwież listę** czyści wyszukiwanie
+i wczytuje użytkowników ponownie; zaznaczony użytkownik pozostaje zaznaczony. Puste
+wyszukiwanie też pokazuje wszystkich. Przy bardzo dużych katalogach widać pierwszych
+5000 użytkowników; pozostałych znajdziesz wyszukiwarką.
+
+Gdy Okta [przechowuje numery seryjne](providers.md#key-serial-numbers), po
+podłączeniu YubiKeya u góry strony pojawia się wyróżniony baner z informacją, do kogo
+klucz należy, np. *Podłączony klucz S/N 32445513 należy do: Alicja Przykład*.
+**Pokaż klucze użytkownika** zaznacza tego użytkownika, a poświadczenie
+z podłączonego klucza zostaje zaznaczone, gotowe do usunięcia. Ten sam baner na
+[stronie Rejestracja](enroll.md) przenosi tutaj.
 
 **Poświadczenia FIDO wybranego użytkownika** (na dole)
 
 | Kolumna | Znaczenie |
 |---|---|
 | **Nazwa** | Nazwa, pod którą klucz został zarejestrowany. |
+| **Numer seryjny** | W Okcie, gdy instancja [zapisuje numery seryjne](providers.md#key-serial-numbers). W pozostałych przypadkach puste. |
 | **Utworzono** | Kiedy został zarejestrowany. |
 | **Szczegóły** | Co dostawca wie o kluczu, zwykle jego model. |
 | **ID** | Identyfikator poświadczenia u dostawcy. |

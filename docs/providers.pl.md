@@ -132,6 +132,7 @@ W *Entra ID → Metody uwierzytelniania → Zasady → Passkey (FIDO2)*:
 | **Domena Okta** | Na przykład `example.okta.com` albo własna domena. |
 | **Client ID** | Aplikacji utworzonej na potrzeby rejestracji. |
 | **Redirect URI** | Domyślnie `http://localhost:8080/yubienroll-redirect`. |
+| **Atrybut profilu na numery seryjne kluczy** | Opcjonalne. Zobacz [numery seryjne kluczy](#key-serial-numbers). |
 
 ### Integracja aplikacji
 
@@ -182,9 +183,56 @@ Administrator*.
   i odwrotnie. Wpisz domenę, na której użytkownicy faktycznie się logują; jeśli
   korzystają z obu, rejestruj przez dwie instancje.
 - Okta sama nadaje kluczowi nazwę na podstawie modelu. Pole *Nazwa wyświetlana
-  klucza* jest ignorowane.
+  klucza* jest ignorowane. Żeby odróżnić kilka kluczy jednego użytkownika, użyj
+  [numerów seryjnych](#key-serial-numbers).
 - Podczas logowania port 8080 na Twoim komputerze musi być wolny.
 - Źródło: [Yubico: Okta](https://docs.yubico.com/software/yubikey/tools/yubienroll/yubienroll-okta.html).
+
+### Numery seryjne kluczy { #key-serial-numbers }
+
+Okta nie przechowuje numeru seryjnego klucza, a administrator nie może nadać nazwy
+kluczowi użytkownika przez API. Gdy użytkownik ma kilka kluczy, w konsoli nie widać,
+który unieważnić. KeyEnroll może zamiast tego trzymać numery seryjne w profilu
+użytkownika:
+
+1. W *Directory → Profile Editor → User (default)* kliknij **Add attribute**: typ
+   danych **string array**, nazwa wyświetlana np. *Security keys*, nazwa zmiennej
+   `securityKeys`. W *User permission* ustaw **Read only** albo **Hide**, żeby
+   użytkownicy nie mogli go zmieniać.
+2. Wpisz nazwę zmiennej w instancji, w polu **Atrybut profilu na numery seryjne
+   kluczy**.
+
+Od tej pory każda rejestracja dopisuje po jednym wpisie na klucz, np.:
+
+```
+32445513 · 2026-11-24 10:41 UTC · fwf1k3xwer1B09yTH358
+```
+
+Numer seryjny, czas rejestracji i identyfikator klucza w Okcie. Klucze, których numeru
+nie da się odczytać (czytniki NFC, klucze innych producentów), mają wpis `unknown`.
+
+- [Strona Poświadczenia](credentials.md) pokazuje numer seryjny przy każdym kluczu.
+  Usunięcie klucza na tej stronie usuwa też jego wpis.
+- **Liczba wpisana w wyszukiwarkę użytkowników** jest też szukana jako numer
+  seryjny: właściciel klucza pojawia się na górze listy. Przydaje się przy zgubionym
+  kluczu.
+- **Podłączony klucz** jest sprawdzany sam: [strona Poświadczenia](credentials.md)
+  mówi, do kogo należy, i zaznacza jego poświadczenie, a [strona
+  Rejestracja](enroll.md) pokazuje właściciela na banerze pod kluczem
+  i w potwierdzeniu, żeby przez pomyłkę nie zresetować klucza wciąż przypisanego
+  komuś innemu. Oba banery mają przycisk otwierający klucze właściciela. Wymaga YubiKeya podłączonego przez USB; klucze na czytniku NFC nie
+  podają numeru seryjnego.
+- Wpisy kluczy usuniętych w konsoli Okta są sprzątane przy najbliższej rejestracji
+  albo usunięciu klucza tego użytkownika w KeyEnroll. Tekstu, którego KeyEnroll nie
+  zapisał, aplikacja nie rusza.
+- Nie trzeba dodatkowych uprawnień: `okta.users.manage` obejmuje profil. Jeśli
+  atrybutu nie da się zapisać (nie istnieje albo użytkownicy pochodzą z Active
+  Directory i atrybut jest stamtąd), rejestracja i tak się udaje i kończy
+  ostrzeżeniem.
+- *Okta nie zna atrybutu profilu …*: porównaj **Variable name** w Profile Editor
+  z ustawieniem instancji (wielkość liter ma znaczenie). Przy kilku typach
+  użytkowników atrybut trzeba dodać do profilu typu, do którego należy użytkownik.
+  Właśnie zarejestrowany klucz dostanie wpis dopiero po ponownej rejestracji.
 
 ## PingOne PingID
 

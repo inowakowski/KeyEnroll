@@ -24,6 +24,8 @@ MAX_THROTTLE_WAIT = 30.0
 # Upper bound for following "next page" links: a provider that keeps sending
 # them must not keep the application busy forever.
 MAX_PAGES = 100
+# The most users a full directory listing shows; beyond that, search.
+MAX_LISTED_USERS = 5000
 
 
 def _retry_after(resp) -> float:
@@ -39,6 +41,15 @@ class ProviderError(Exception):
     def __init__(self, message: str, status: int | None = None):
         super().__init__(message)
         self.status = status
+
+
+class ProviderNotice(ProviderError):
+    """A provider error explained by a translatable message of its own."""
+
+    def __init__(self, template: str, status: int | None = None, **params):
+        super().__init__(template.format(**params) if params else template, status)
+        self.template = template
+        self.params = params
 
 
 class AuthRequired(ProviderError):
@@ -81,6 +92,7 @@ class Credential:
     name: str = ""
     created: str = ""
     detail: str = ""
+    serial: str = ""  # serial number of the key, where the provider keeps it
 
 
 @dataclass
@@ -345,8 +357,9 @@ class Provider:
             )
         return resp
 
-    def _collect(self, url: str, params: dict | None, page) -> list:
-        """Follows a provider's "next page" links and returns every item.
+    def _collect(self, url: str, params: dict | None, page, limit: int | None = None) -> list:
+        """Follows a provider's "next page" links and returns every item, or
+        the first ``limit`` items.
 
         ``page(response)`` returns ``(items, next_url, next_params)``; no
         next URL ends the list. A next link to another host or scheme is not
@@ -357,6 +370,8 @@ class Provider:
         for _ in range(MAX_PAGES):
             got, next_url, params = page(self._request("GET", url, params=params))
             items.extend(got)
+            if limit is not None and len(items) >= limit:
+                return items[:limit]
             if not next_url:
                 return items
             if urlsplit(next_url)[:2] != origin:
@@ -381,6 +396,10 @@ class Provider:
 
     def search_users(self, query: str) -> list[DirectoryUser]:
         raise NotImplementedError
+
+    def list_users(self, limit: int = MAX_LISTED_USERS) -> list[DirectoryUser]:
+        """Users of the directory, as many as ``limit``."""
+        return self.search_users("")[:limit]
 
     def find_user(self, identifier: str) -> DirectoryUser | None:
         """Exact lookup by username, e-mail or ID, for imported user lists."""
@@ -408,6 +427,21 @@ class Provider:
 
     def list_credentials(self, user: DirectoryUser) -> list[Credential]:
         raise NotImplementedError
+
+    @property
+    def records_keys(self) -> bool:
+        """Whether the provider keeps which security key (serial number) each
+        credential is on, as configured for this instance."""
+        return False
+
+    def record_key(
+        self, user: DirectoryUser, registration: Registration, serial: int | None
+    ) -> None:
+        """Records the key a just registered credential is on."""
+
+    def users_with_key(self, serial: str) -> list[DirectoryUser]:
+        """Users the provider lists as having the key with this serial number."""
+        return []
 
     def search_groups(self, query: str) -> list[DirectoryGroup]:
         raise NotImplementedError

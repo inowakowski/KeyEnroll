@@ -19,9 +19,11 @@ from .common import (
     fit_columns,
     make_table,
     run_task,
+    select_row_where,
     selected_data,
     show_error,
 )
+from .key_owners import KeyOwners, KeyWatcher, OwnerBanner, owner_names
 from .theme import Card
 
 
@@ -31,13 +33,21 @@ class CredentialsPage(QWidget):
         self.ctx = ctx
         self._load_id = 0
 
-        self.picker = UserPicker(ctx)
+        self.picker = UserPicker(ctx, browse=True)
         self.picker.selection_changed.connect(self._load)
+        # Who the plugged-in keys belong to, where the provider keeps serial numbers.
+        self.owner_banner = OwnerBanner()
+        self.owner_banner.open_user.connect(self.show_user)
         user_card = Card(tr("User"))
         user_card.body.addWidget(self.picker, 1)
+        self._keys: list = []  # connected keys with a serial number
+        self._owners = KeyOwners(ctx, self)
+        self._owners.changed.connect(self._update_owner_banner)
+        self._watcher = KeyWatcher(ctx, self)
+        self._watcher.keys_changed.connect(self._on_keys)
 
         self.table = make_table(
-            [tr("Name"), tr("Created"), tr("Details"), tr("ID")], scrollable=True
+            [tr("Name"), tr("Serial number"), tr("Created"), tr("Details"), tr("ID")], scrollable=True
         )
         self.table.itemSelectionChanged.connect(self._update_buttons)
         self.notice = QLabel()
@@ -61,11 +71,78 @@ class CredentialsPage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(14)
+        layout.addWidget(self.owner_banner)
         layout.addWidget(user_card, 1)
         layout.addWidget(creds_card, 1)
 
         ctx.active_changed.connect(self._on_instance)
+        ctx.session_changed.connect(self._load_users)
         self._on_instance()
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._load_users()
+        self._watcher.start()
+
+    def hideEvent(self, event) -> None:
+        super().hideEvent(event)
+        self._watcher.stop()
+
+    # -- connected keys and their owners -----------------------------------
+
+    def _on_keys(self, infos) -> None:
+        self._keys = [info for info in infos if info.serial]
+        self._owners.lookup(info.serial for info in self._keys)
+        self._update_owner_banner()
+        self._select_connected()
+
+    def _update_owner_banner(self) -> None:
+        rows = []
+        if self._owners.available:
+            for info in self._keys:
+                owners = self._owners.owners(info.serial)
+                if owners:
+                    text = tr(
+                        "Connected key S/N {serial} belongs to: {users}",
+                        serial=info.serial,
+                        users=owner_names(owners),
+                    )
+                    rows.append((text, owners))
+                elif owners is not None:
+                    text = tr(
+                        "Connected key S/N {serial} is not assigned to any user.",
+                        serial=info.serial,
+                    )
+                    rows.append((text, []))
+                elif self._owners.pending(info.serial):
+                    text = tr(
+                        "Connected key S/N {serial}: looking for its owner…", serial=info.serial
+                    )
+                    rows.append((text, []))
+        self.owner_banner.set_rows(rows)
+
+    def show_user(self, user) -> None:
+        """Selects the user; their credentials load, the one on a plugged-in
+        key selected."""
+        self.picker.show_user(user)
+
+    def _select_connected(self) -> None:
+        """Selects the credential on a plugged-in key, ready to be deleted."""
+        serials = {str(info.serial) for info in self._keys}
+        if serials and selected_data(self.table) is None:
+            select_row_where(self.table, lambda c: c.serial in serials)
+
+    def _load_users(self) -> None:
+        """Lists all users when the page is shown, so that searching is optional."""
+        provider = self.ctx.provider
+        if not (self.isVisible() and provider and provider.supports_credential_list):
+            return
+        if not provider.has_session():
+            # Signed out: the list of the previous session goes too.
+            self.picker.clear()
+            self.picker.hint.setText(tr("Sign in to the identity provider first."))
+        elif not self.picker.loaded:
+            self.picker.load_all(quiet=True)
 
     def _on_instance(self) -> None:
         self._load_id += 1
@@ -84,6 +161,7 @@ class CredentialsPage(QWidget):
         self.notice.setVisible(not supported)
         self.table.setEnabled(supported)
         self._update_buttons()
+        self._load_users()
 
     def _update_buttons(self) -> None:
         provider = self.ctx.provider
@@ -111,8 +189,9 @@ class CredentialsPage(QWidget):
             if load_id != self._load_id:
                 return
             for c in creds:
-                fill_row(self.table, [c.name, c.created, c.detail, c.id], c)
+                fill_row(self.table, [c.name, c.serial, c.created, c.detail, c.id], c)
             fit_columns(self.table)
+            self._select_connected()
             self._update_buttons()
 
         def failed(exc):
@@ -134,7 +213,11 @@ class CredentialsPage(QWidget):
             tr(
                 "Delete credential '{name}' of {user}? The user will no longer be "
                 "able to sign in with this key.",
-                name=cred.name or cred.id,
+                name=(
+                    f"{cred.name or cred.id} (S/N {cred.serial})"
+                    if cred.serial
+                    else cred.name or cred.id
+                ),
                 user=user.display_name or user.username,
             )
         )

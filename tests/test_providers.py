@@ -322,6 +322,168 @@ def test_okta_error_causes(okta, http):
         okta.begin_registration(USER)
 
 
+# -- Okta: serial numbers of the keys in the user profile -------------------
+
+F_NEW = "fwfNEW00000000000001"
+F_OLD = "fwfOLD00000000000002"
+F_GONE = "fwfGONE0000000000003"
+
+
+@pytest.fixture
+def okta_serials(http, store, signed_in):
+    return signed_in(
+        OktaProvider(
+            "i1",
+            {"domain": "acme.okta.com", "client_id": "CLIENT", "key_attribute": "securityKeys"},
+            store,
+            http,
+        )
+    )
+
+
+def webauthn(*ids):
+    return [{"id": i, "factorType": "webauthn", "status": "ACTIVE"} for i in ids] + [
+        {"id": "push1", "factorType": "push", "status": "ACTIVE"}
+    ]
+
+
+def test_okta_key_entries_round_trip():
+    from datetime import datetime, timezone
+
+    from keyenroll.providers.okta import key_entry, parse_entry
+
+    entry = key_entry(32445513, F_NEW, datetime(2026, 11, 24, 10, 41, tzinfo=timezone.utc))
+    assert entry == f"32445513 · 2026-11-24 10:41 UTC · {F_NEW}"
+    assert parse_entry(entry) == ("32445513", F_NEW)
+    assert parse_entry(key_entry(None, F_NEW, datetime.now(timezone.utc)))[0] == "unknown"
+    assert parse_entry("spare key in the safe") is None
+
+
+def test_okta_records_serials_only_when_an_attribute_is_set(okta, okta_serials):
+    assert not okta.records_keys and okta_serials.records_keys
+    # Choosing the attribute does not cost the operator the sign-in.
+    assert OktaProvider.keeps_sign_in(
+        {"domain": "acme.okta.com", "client_id": "C"},
+        {"domain": "acme.okta.com", "client_id": "C", "key_attribute": "securityKeys"},
+    )
+
+
+def test_okta_record_key_adds_an_entry_and_drops_stale_ones(okta_serials, http):
+    from keyenroll.providers.base import Registration
+
+    http.add({"profile": {"securityKeys": [
+        f"11111111 · 2026-01-01 08:00 UTC · {F_GONE}",
+        f"22222222 · 2026-02-01 08:00 UTC · {F_OLD}",
+        "spare key in the safe",
+    ]}})  # fmt: skip
+    http.add(webauthn(F_OLD, F_NEW))
+    http.add({})
+    registration = Registration(options={}, origin="", state={"user_id": "user-1", "factor_id": F_NEW})
+
+    okta_serials.record_key(USER, registration, 32445513)
+
+    assert http.calls[0].url == "https://acme.okta.com/api/v1/users/user-1"
+    post = http.calls[2]
+    assert (post.method, post.url) == ("POST", "https://acme.okta.com/api/v1/users/user-1")
+    entries = post.json["profile"]["securityKeys"]
+    assert entries[:2] == [f"22222222 · 2026-02-01 08:00 UTC · {F_OLD}", "spare key in the safe"]
+    assert entries[2].startswith("32445513 · ") and entries[2].endswith(F_NEW)
+    assert len(entries) == 3
+
+
+def test_okta_explains_a_profile_attribute_it_does_not_know(okta_serials, http):
+    from keyenroll.providers.base import ProviderNotice, Registration
+
+    http.add({"profile": {}})
+    http.add(webauthn(F_NEW))
+    http.add({
+        "errorCode": "E0000001",
+        "errorSummary": "Api validation failed: userProfile",
+        "errorCauses": [{"errorSummary": "Property name 'securityKeys' is not defined in profile"}],
+    }, status=400)  # fmt: skip
+    registration = Registration(options={}, origin="", state={"user_id": "user-1", "factor_id": F_NEW})
+
+    with pytest.raises(ProviderNotice) as info:
+        okta_serials.record_key(USER, registration, 32445513)
+
+    assert info.value.params == {"attribute": "securityKeys"}
+    assert "Profile Editor" in info.value.template
+
+
+def test_okta_credentials_show_the_recorded_serial_numbers(okta_serials, http):
+    http.add(webauthn(F_OLD, F_NEW))
+    http.add({"profile": {"securityKeys": [f"22222222 · 2026-02-01 08:00 UTC · {F_OLD}"]}})
+    creds = okta_serials.list_credentials(USER)
+    assert [(c.id, c.serial) for c in creds] == [(F_OLD, "22222222"), (F_NEW, "")]
+
+
+def test_okta_credentials_are_listed_even_if_the_profile_cannot_be_read(okta_serials, http):
+    http.add(webauthn(F_OLD))
+    http.add({"errorSummary": "Not found"}, status=404)
+    assert [c.serial for c in okta_serials.list_credentials(USER)] == [""]
+
+
+def test_okta_deleting_a_key_removes_its_entry(okta_serials, http):
+    http.add(status=204)
+    http.add({"profile": {"securityKeys": [
+        f"22222222 · 2026-02-01 08:00 UTC · {F_OLD}",
+        f"32445513 · 2026-11-24 10:41 UTC · {F_NEW}",
+    ]}})  # fmt: skip
+    http.add(webauthn(F_NEW))  # F_OLD is gone already
+    http.add({})
+
+    okta_serials.delete_credential(USER, F_OLD)
+
+    assert http.calls[0].method == "DELETE" and http.calls[0].url.endswith(f"/factors/{F_OLD}")
+    assert http.calls[3].json == {
+        "profile": {"securityKeys": [f"32445513 · 2026-11-24 10:41 UTC · {F_NEW}"]}
+    }
+
+
+def test_okta_says_when_a_deleted_key_stays_listed(okta_serials, http):
+    http.add(status=204)
+    http.add({"profile": {"securityKeys": [f"22222222 · 2026-02-01 08:00 UTC · {F_OLD}"]}})
+    http.add(webauthn())
+    http.add({"errorSummary": "Api validation failed: profile"}, status=400)
+    with pytest.raises(ProviderError, match="the key was removed"):
+        okta_serials.delete_credential(USER, F_OLD)
+
+
+def test_okta_finds_the_owner_of_a_key_by_its_serial_number(okta_serials, http):
+    alice = {"id": "00u1", "profile": {"login": "alice@x", "securityKeys": [
+        f"32445513 · 2026-11-24 10:41 UTC · {F_NEW}"
+    ]}}  # fmt: skip
+    bob = {"id": "00u2", "profile": {"login": "bob@x", "securityKeys": [
+        f"132445513 · 2026-11-24 10:41 UTC · {F_OLD}"
+    ]}}  # fmt: skip
+    http.add([bob])  # the ordinary search
+    http.add([bob, alice])  # everyone with the attribute
+
+    users = okta_serials.search_users("32445513")
+
+    assert [u.username for u in users] == ["alice@x", "bob@x"]
+    assert http.calls[1].params == {"search": "profile.securityKeys pr", "limit": "200"}
+
+
+def test_okta_search_by_name_does_not_read_the_serial_numbers(okta_serials, http):
+    http.add([])
+    assert okta_serials.search_users("Alice") == []
+    assert len(http.calls) == 1
+
+
+def test_okta_refuses_an_attribute_name_okta_cannot_have(store, http, signed_in):
+    provider = signed_in(
+        OktaProvider(
+            "i1",
+            {"domain": "acme.okta.com", "client_id": "C", "key_attribute": "security keys"},
+            store,
+            http,
+        )
+    )
+    with pytest.raises(ProviderError, match="not a valid profile attribute"):
+        provider.users_with_key("1")
+
+
 # -- PingOne ----------------------------------------------------------------
 
 
@@ -892,3 +1054,43 @@ def test_plain_http_token_endpoint_is_refused(http, store):
     with pytest.raises(AuthRequired):
         provider.access_token()
     assert http.calls == []
+
+
+# -- full user lists ---------------------------------------------------------
+
+
+def test_okta_lists_all_users_across_pages_up_to_a_limit(okta, http):
+    page1 = [{"id": f"00u{i}", "profile": {"login": f"u{i}@x"}} for i in range(3)]
+    http.add(page1, links={"next": {"url": "https://acme.okta.com/api/v1/users?after=00u2"}})
+    http.add([{"id": "00u9", "profile": {"login": "u9@x"}}])
+    assert [u.username for u in okta.list_users()] == ["u0@x", "u1@x", "u2@x", "u9@x"]
+    assert http.calls[0].params == {"limit": "200"}
+
+    http.add(page1, links={"next": {"url": "https://acme.okta.com/api/v1/users?after=00u2"}})
+    assert len(okta.list_users(limit=2)) == 2
+    assert len(http.calls) == 3  # the next page is not read once the limit is reached
+
+
+def test_entra_lists_all_users_following_next_links(entra, http):
+    user = {"id": "1", "displayName": "A", "userPrincipalName": "a@x"}
+    http.add({"value": [user], "@odata.nextLink": "https://graph.microsoft.com/v1.0/users?$skiptoken=x"})
+    http.add({"value": [{**user, "id": "2", "userPrincipalName": "b@x"}]})
+    assert [u.username for u in entra.list_users()] == ["a@x", "b@x"]
+    assert http.calls[0].params["$top"] == "999"
+
+
+def test_pingone_lists_all_users_following_next_links(pingone, http):
+    http.add({
+        "_embedded": {"users": [{"id": "u1", "username": "a"}]},
+        "_links": {"next": {"href": "https://api.pingone.eu/v1/environments/ENV/users?cursor=2"}},
+    })  # fmt: skip
+    http.add({"_embedded": {"users": [{"id": "u2", "username": "b"}]}, "_links": {}})
+    assert [u.username for u in pingone.list_users()] == ["a", "b"]
+
+
+def test_aic_lists_all_users_with_the_paged_results_cookie(aic, http):
+    http.add({"result": [{"_id": "1", "userName": "a"}], "pagedResultsCookie": "c1"})
+    http.add({"result": [{"_id": "2", "userName": "b"}]})
+    assert [u.username for u in aic.list_users()] == ["a", "b"]
+    assert http.calls[0].params["_queryFilter"] == "true"
+    assert http.calls[1].params["_pagedResultsCookie"] == "c1"

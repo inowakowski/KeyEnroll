@@ -53,6 +53,27 @@ ES = {
     "E-mail": "Correo electrónico",
     "Name, username or e-mail": "Nombre, nombre de usuario o correo electrónico",
     "{count} user(s) found": "Usuarios encontrados: {count}",
+    "Refresh list": "Actualizar lista",
+    "Clears the search and lists all users again.": (
+        "Borra la búsqueda y vuelve a mostrar todos los usuarios."
+    ),
+    "Loading users…": "Cargando usuarios…",
+    "Showing the first {count} users. Search to find the others.": (
+        "Se muestran los primeros {count} usuarios. Busque para encontrar los demás."
+    ),
+    "{count} user(s)": "Usuarios: {count}",
+    "Show the user's keys": "Mostrar las llaves del usuario",
+    "Show the keys of {user}": "Mostrar las llaves de {user}",
+    "This key is registered to: {users}": "Esta llave está registrada para: {users}",
+    "Connected key S/N {serial}: looking for its owner…": (
+        "Llave conectada S/N {serial}: buscando a su propietario…"
+    ),
+    "Connected key S/N {serial} is not assigned to any user.": (
+        "La llave conectada S/N {serial} no está asignada a ningún usuario."
+    ),
+    "Connected key S/N {serial} belongs to: {users}": (
+        "La llave conectada S/N {serial} pertenece a: {users}"
+    ),
     "No instance": "Sin instancia",
     "Add an identity provider instance first.": (
         "Agregue primero una instancia de un proveedor de identidad."
@@ -301,6 +322,35 @@ ES = {
     "such as Yubico Authenticator, and try again.": (
         "Se interrumpió la conexión con la llave de seguridad. Cierre otros programas que usen "
         "la llave, como Yubico Authenticator, e inténtelo de nuevo."
+    ),
+    "The credential was registered, but Okta does not know the profile attribute '{attribute}' "
+    "for this user, so the serial number was not saved. Add the attribute in Profile Editor, to "
+    "the profile of the user's type, with exactly this variable name (it is case-sensitive).": (
+        "La credencial se registró, pero Okta no conoce el atributo de perfil «{attribute}» para "
+        "este usuario, así que no se guardó el número de serie. Añada el atributo en Profile "
+        "Editor, al perfil del tipo de usuario, con exactamente este nombre de variable "
+        "(distingue mayúsculas y minúsculas)."
+    ),
+    "Profile attribute for key serial numbers": (
+        "Atributo del perfil para los números de serie de las llaves"
+    ),
+    "Variable name of a string array attribute in the Okta user profile. KeyEnroll writes the "
+    "serial number of every key it enrolls into it, so that you can tell the keys of a user "
+    "apart and find who has a key. Empty: off.": (
+        "Nombre de variable de un atributo de tipo string array en el perfil de usuario de Okta. "
+        "KeyEnroll escribe en él el número de serie de cada llave que registra, para distinguir "
+        "las llaves de un usuario y saber quién tiene una llave. Vacío: desactivado."
+    ),
+    "Saving the serial number in the user profile…": (
+        "Guardando el número de serie en el perfil del usuario…"
+    ),
+    "The credential was registered, but the serial number could not be saved in the user "
+    "profile: {detail}": (
+        "La credencial se registró, pero no se pudo guardar el número de serie en el perfil del "
+        "usuario: {detail}"
+    ),
+    "Name, username, e-mail or key serial number": (
+        "Nombre, usuario, correo o número de serie de la llave"
     ),
     "Other security key programs are running": (
         "Hay otros programas de llaves de seguridad en ejecución"

@@ -35,13 +35,14 @@ from ..i18n import tr
 from ..journal import Journal, JournalContext, journal_dir
 from ..oauth import OAuthError
 from ..providers import AuthRequired, DirectoryUser, Provider, ProviderError, create_provider
+from ..providers.base import MAX_LISTED_USERS, ProviderNotice
 from ..secrets_store import TokenStore
 
 logger = logging.getLogger(__name__)
 
 
 def error_text(exc: BaseException) -> str:
-    if isinstance(exc, EnrollError):
+    if isinstance(exc, (EnrollError, ProviderNotice)):
         return tr(exc.template, **exc.params)
     if isinstance(exc, (ProviderError, OAuthError)):
         return tr(str(exc))
@@ -56,6 +57,8 @@ class AppContext(QObject):
     active_changed = Signal()
     session_changed = Signal()
     busy_changed = Signal(bool)
+    # Asks the window to open the Credentials page for this DirectoryUser.
+    open_user_credentials = Signal(object)
     theme_changed = Signal()
 
     def __init__(
@@ -360,6 +363,16 @@ def fill_row(table: QTableWidget, values: list[str], data=None) -> None:
             table.setItem(row, col, item)
 
 
+def select_row_where(table: QTableWidget, predicate) -> bool:
+    """Selects the first row whose data (see ``fill_row``) matches."""
+    for row in range(table.rowCount()):
+        if predicate(table.item(row, 0).data(Qt.ItemDataRole.UserRole)):
+            table.selectRow(row)
+            table.scrollToItem(table.item(row, 0))
+            return True
+    return False
+
+
 def selected_data(table: QTableWidget):
     rows = table.selectionModel().selectedRows()
     if not rows:
@@ -368,17 +381,21 @@ def selected_data(table: QTableWidget):
 
 
 class UserPicker(QWidget):
-    """Directory search box with a result table."""
+    """Directory search box with a result table.
+
+    With ``browse`` the table can also list every user of the directory: an
+    empty search does that, and so does the refresh button."""
 
     selection_changed = Signal(object)
 
-    def __init__(self, ctx: AppContext, parent: QWidget | None = None):
+    def __init__(self, ctx: AppContext, parent: QWidget | None = None, browse: bool = False):
         super().__init__(parent)
         self.ctx = ctx
+        self.browse = browse
+        self.loaded = False  # the full list of the current instance is shown
         self._search_id = 0
 
         self.query = QLineEdit()
-        self.query.setPlaceholderText(tr("Name, username or e-mail"))
         self.query.setClearButtonEnabled(True)
         self.query.returnPressed.connect(self.search)
         self.button = QPushButton(tr("Search"))
@@ -387,6 +404,11 @@ class UserPicker(QWidget):
         top = QHBoxLayout()
         top.addWidget(self.query, 1)
         top.addWidget(self.button)
+        self.refresh = QPushButton(tr("Refresh list"))
+        self.refresh.setToolTip(tr("Clears the search and lists all users again."))
+        self.refresh.clicked.connect(self.refresh_list)
+        self.refresh.setVisible(browse)
+        top.addWidget(self.refresh)
 
         self.table = make_table(
             [tr("Display name"), tr("Username"), tr("E-mail")], scrollable=True
@@ -404,46 +426,123 @@ class UserPicker(QWidget):
         layout.addWidget(self.hint)
 
         ctx.active_changed.connect(self.clear)
+        ctx.instances_changed.connect(self._update_placeholder)
+        self._update_placeholder()
+
+    def _update_placeholder(self) -> None:
+        provider = self.ctx.provider
+        if provider is not None and getattr(provider, "records_keys", False):
+            text = tr("Name, username, e-mail or key serial number")
+        else:
+            text = tr("Name, username or e-mail")
+        self.query.setPlaceholderText(text)
 
     def selected(self) -> DirectoryUser | None:
         return selected_data(self.table)
 
     def clear(self) -> None:
         self._search_id += 1  # drop results of a search still in flight
+        self.loaded = False
         self.table.setRowCount(0)
         self.hint.setText("")
-        self.button.setEnabled(True)
+        self._set_busy(False)
+        self._update_placeholder()
 
-    def search(self) -> None:
-        provider = self.ctx.provider
-        if provider is None:
-            QMessageBox.information(
-                self, tr("No instance"), tr("Add an identity provider instance first.")
-            )
-            return
-        query = self.query.text()
+    def _set_busy(self, busy: bool) -> None:
+        self.button.setEnabled(not busy)
+        self.refresh.setEnabled(not busy)
+
+    def _show(self, users: list[DirectoryUser], keep: str | None = None) -> None:
+        self.table.setRowCount(0)
+        for u in users:
+            fill_row(self.table, [u.display_name, u.username, u.email], u)
+        fit_columns(self.table)
+        if keep is not None:
+            select_row_where(self.table, lambda u: u.id == keep)
+
+    def show_user(self, user: DirectoryUser) -> None:
+        """Selects the user, adding them to the table if they are not listed."""
+        if not select_row_where(self.table, lambda u: u.id == user.id):
+            fill_row(self.table, [user.display_name, user.username, user.email], user)
+            select_row_where(self.table, lambda u: u.id == user.id)
+
+    def _run(self, fn, done, quiet: bool = False) -> None:
         self._search_id += 1
         search_id = self._search_id
-        self.button.setEnabled(False)
-        self.hint.setText(tr("Searching…"))
+        self._set_busy(True)
 
-        def done(users):
-            if search_id != self._search_id:
-                return
-            self.button.setEnabled(True)
-            self.table.setRowCount(0)
-            for u in users:
-                fill_row(self.table, [u.display_name, u.username, u.email], u)
-            fit_columns(self.table)
-            self.hint.setText(tr("{count} user(s) found", count=len(users)))
-            if len(users) == 1:
-                self.table.selectRow(0)
+        def ok(result):
+            if search_id == self._search_id:
+                self._set_busy(False)
+                done(result)
 
         def failed(exc):
             if search_id != self._search_id:
                 return
-            self.button.setEnabled(True)
-            self.hint.setText("")
-            show_error(self, self.ctx, exc)
+            self._set_busy(False)
+            if quiet:
+                # Loading on its own, e.g. before signing in: no message box.
+                self.hint.setText(error_text(exc))
+            else:
+                self.hint.setText("")
+                show_error(self, self.ctx, exc)
 
-        run_task(self, lambda: provider.search_users(query), done, failed)
+        run_task(self, fn, ok, failed)
+
+    def _provider(self, quiet: bool = False):
+        provider = self.ctx.provider
+        if provider is None and not quiet:
+            QMessageBox.information(
+                self, tr("No instance"), tr("Add an identity provider instance first.")
+            )
+        return provider
+
+    def search(self) -> None:
+        if self.browse and not self.query.text().strip():
+            self.load_all()
+            return
+        provider = self._provider()
+        if provider is None:
+            return
+        query = self.query.text()
+        self.hint.setText(tr("Searching…"))
+
+        def done(users):
+            self.loaded = False
+            self._show(users)
+            self.hint.setText(tr("{count} user(s) found", count=len(users)))
+            if len(users) == 1:
+                self.table.selectRow(0)
+
+        self._run(lambda: provider.search_users(query), done)
+
+    def load_all(self, quiet: bool = False) -> None:
+        """Lists every user of the directory, up to MAX_LISTED_USERS; the
+        selected user stays selected."""
+        provider = self._provider(quiet)
+        if provider is None:
+            return
+        self.hint.setText(tr("Loading users…"))
+
+        def done(users):
+            # Whoever is selected now: show_user() may have run meanwhile.
+            current = self.selected()
+            keep = current.id if current else None
+            self.loaded = True
+            users = sorted(users, key=lambda u: (u.display_name or u.username).casefold())
+            self._show(users, keep)
+            if len(users) >= MAX_LISTED_USERS:
+                self.hint.setText(
+                    tr(
+                        "Showing the first {count} users. Search to find the others.",
+                        count=len(users),
+                    )
+                )
+            else:
+                self.hint.setText(tr("{count} user(s)", count=len(users)))
+
+        self._run(lambda: provider.list_users(), done, quiet)
+
+    def refresh_list(self) -> None:
+        self.query.clear()
+        self.load_all()

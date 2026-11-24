@@ -69,6 +69,8 @@ class MainWindow(QMainWindow):
 
         self.enroll_page = EnrollPage(ctx)
         self.bulk_page = BulkPage(ctx)
+        self.credentials_page = CredentialsPage(ctx)
+        ctx.open_user_credentials.connect(self._open_user_credentials)
         self.pages = QStackedWidget()
         self.nav = QListWidget()
         self.nav.setObjectName("nav")
@@ -79,7 +81,7 @@ class MainWindow(QMainWindow):
         for title, icon, page in (
             (tr("Enroll"), "key", self.enroll_page),
             (tr("Bulk enrollment"), "users", self.bulk_page),
-            (tr("Credentials"), "shield", CredentialsPage(ctx)),
+            (tr("Credentials"), "shield", self.credentials_page),
             (tr("Profiles"), "sliders", ProfilesPage(ctx)),
             (tr("Instances"), "layers", InstancesPage(ctx)),
             (tr("Settings"), "gear", SettingsPage(ctx)),
@@ -160,6 +162,10 @@ class MainWindow(QMainWindow):
     def _retint_icons(self) -> None:
         for row, name in enumerate(self._icons):
             self.nav.item(row).setIcon(nav_icon(name))
+
+    def _open_user_credentials(self, user) -> None:
+        self.nav.setCurrentRow(PAGE_CREDENTIALS)
+        self.credentials_page.show_user(user)
 
     def _show_page(self, index: int) -> None:
         self.pages.setCurrentIndex(index)

@@ -29,7 +29,7 @@ from keyenroll.providers.base import AuthRequired, Credential, DirectoryGroup, D
 from keyenroll.secrets_store import TokenStore
 from keyenroll.ui import common, dialogs
 from keyenroll.ui.bulk_page import COL_MESSAGE, COL_PIN, COL_SERIAL, COL_STATUS
-from keyenroll.ui.common import AppContext
+from keyenroll.ui.common import AppContext, selected_data
 from keyenroll.ui.main_window import PAGE_BULK, PAGE_INSTANCES, PAGE_SETTINGS, MainWindow
 from test_enroll import FakeProvider, FakeSource
 
@@ -51,7 +51,7 @@ class GuiProvider(FakeProvider):
         self.label = instance.kind
         self.instance = instance
         self.session = True
-        self.credentials = [Credential("c1", "Old key", "2026-01-01", "YubiKey 5")]
+        self.credentials = [Credential("c1", "Old key", "2026-01-01", "YubiKey 5", serial="32445513")]
 
     def has_session(self):
         return self.session
@@ -63,6 +63,18 @@ class GuiProvider(FakeProvider):
 
     def find_user(self, identifier):
         return next((u for u in USERS if u.username == identifier), None)
+
+    records_keys = False
+    key_owners: dict = {}
+
+    def users_with_key(self, serial):
+        return [u for u in USERS if u.id in self.key_owners.get(serial, ())]
+
+    def list_users(self, limit=5000):
+        if not self.session:
+            raise AuthRequired("Not signed in. Sign in to the identity provider first.")
+        self.listed = getattr(self, "listed", 0) + 1
+        return list(reversed(USERS))[:limit]  # the page sorts them
 
     def list_credentials(self, user):
         return list(self.credentials)
@@ -310,6 +322,7 @@ def test_credentials_page_lists_and_deletes(gui):
     page = window.pages.currentWidget()
     pick_user(page, "Alice")
     wait_until(lambda: page.table.rowCount() == 1)
+    assert page.table.item(0, 1).text() == "32445513"
     assert not page.delete.isEnabled()
     page.table.selectRow(0)
     assert page.delete.isEnabled()
@@ -318,7 +331,131 @@ def test_credentials_page_lists_and_deletes(gui):
     wait_until(lambda: page.table.rowCount() == 0)
 
     assert ctx.provider.credentials == []
-    assert "Old key" in shown["boxes"][-1]
+    assert "Old key (S/N 32445513)" in shown["boxes"][-1]
+
+
+def test_credentials_page_lists_all_users_when_opened(gui):
+    window, ctx, key, source, shown = gui
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    picker = page.picker
+    wait_until(lambda: picker.table.rowCount() == 2)
+    assert column(picker.table, 0) == ["Alice Example", "Bob Example"]  # sorted
+    assert picker.loaded and ctx.provider.listed == 1
+
+    # Coming back does not read the directory again.
+    window.nav.setCurrentRow(0)
+    window.nav.setCurrentRow(2)
+    assert ctx.provider.listed == 1
+
+    # A search narrows the list; refreshing clears it and keeps the selection.
+    pick_user(page, "Bob")
+    picker.refresh.click()
+    wait_until(lambda: picker.table.rowCount() == 2)
+    assert picker.query.text() == "" and ctx.provider.listed == 2
+    assert picker.selected().display_name == "Bob Example"
+
+    # An empty search lists everyone as well.
+    picker.search()
+    wait_until(lambda: ctx.provider.listed == 3)
+    assert picker.table.rowCount() == 2
+
+
+def test_credentials_page_asks_to_sign_in_instead_of_listing(gui):
+    window, ctx, key, source, shown = gui
+    ctx.provider.session = False
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    assert page.picker.table.rowCount() == 0
+    assert "Sign in" in page.picker.hint.text()
+    assert shown["boxes"] == []  # no message box just for opening the page
+
+    ctx.provider.session = True
+    ctx.session_changed.emit()
+    wait_until(lambda: page.picker.table.rowCount() == 2)
+
+
+def banner_text(banner):
+    return " ".join(banner.texts()) if banner.isVisible() else ""
+
+
+def test_enroll_page_says_who_a_connected_key_is_registered_to(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    ctx.provider.records_keys = True
+    ctx.provider.key_owners = {"32445513": ["u2"]}
+    ctx.provider.credentials = [
+        Credential("c1", "YubiKey 5", "2026-01-01", "", serial="11111111"),
+        Credential("c2", "YubiKey 5", "2026-11-24", "", serial="32445513"),
+    ]
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    rescan(page)
+    wait_until(lambda: "registered to" in banner_text(page.owner_banner))
+    assert "This key is registered to: Bob Example" in banner_text(page.owner_banner)
+
+    pick_user(page, "Alice")
+    page.start.click()  # the confirmation names the current owner
+    assert "This key is registered to: Bob Example" in shown["boxes"][0]
+    wait_until(lambda: not page.is_running())
+
+    # The banner's button opens the owner's credentials.
+    ctx.provider.key_owners = {"32445513": ["u2"]}
+    rescan(page)
+    wait_until(lambda: page.owner_banner.buttons())
+    page.owner_banner.buttons()[0].click()
+    credentials = window.credentials_page
+    assert window.pages.currentWidget() is credentials
+    assert credentials.picker.selected().id == "u2"
+    wait_until(lambda: credentials.table.rowCount() == 2)
+    wait_until(lambda: selected_data(credentials.table) is not None)
+    assert selected_data(credentials.table).id == "c2"  # the key that is plugged in
+    # The full user list arriving later keeps Bob selected.
+    wait_until(lambda: credentials.picker.loaded)
+    assert credentials.picker.selected().id == "u2"
+
+
+def test_credentials_page_shows_the_owner_of_a_connected_key(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    ctx.provider.records_keys = True
+    ctx.provider.key_owners = {"32445513": ["u1"]}
+    ctx.provider.credentials = [
+        Credential("c1", "YubiKey 5", "2026-01-01", "", serial="11111111"),
+        Credential("c2", "YubiKey 5", "2026-11-24", "", serial="32445513"),
+    ]
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    wait_until(lambda: "belongs to" in banner_text(page.owner_banner))
+    assert "Connected key S/N 32445513 belongs to: Alice Example" in banner_text(page.owner_banner)
+
+    [button] = page.owner_banner.buttons()
+    assert button.text() == "Show the user's keys"
+    button.click()
+    assert page.picker.selected().id == "u1"
+    wait_until(lambda: page.table.rowCount() == 2)
+    # The credential on the plugged-in key is selected, ready to be deleted.
+    wait_until(lambda: selected_data(page.table) is not None)
+    assert selected_data(page.table).id == "c2"
+
+
+def test_credentials_page_says_when_a_connected_key_has_no_owner(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    ctx.provider.records_keys = True
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    wait_until(lambda: "not assigned" in banner_text(page.owner_banner))
+    assert page.owner_banner.buttons() == []
+
+
+def test_no_owner_hint_without_serial_numbers_at_the_provider(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    wait_until(lambda: page.picker.loaded)
+    assert not page.owner_banner.isVisible()
 
 
 def test_profiles_page_saves_and_enroll_page_follows(gui):
@@ -873,8 +1010,8 @@ def test_credentials_list_is_sortable(gui):
     assert column(page.table, 0) == ["Spare key", "main key", "Backup"]
     page.table.sortItems(0, Qt.SortOrder.AscendingOrder)
     assert column(page.table, 0) == ["Backup", "main key", "Spare key"]
-    page.table.sortItems(1, Qt.SortOrder.DescendingOrder)  # newest first
-    assert column(page.table, 1) == ["2026-03-01", "2026-02-10", "2026-01-15"]
+    page.table.sortItems(2, Qt.SortOrder.DescendingOrder)  # newest first
+    assert column(page.table, 2) == ["2026-03-01", "2026-02-10", "2026-01-15"]
 
     page.table.selectRow(2)  # the oldest one, "main key"
     page.delete.click()
