@@ -361,6 +361,16 @@ def fill_row(table: QTableWidget, values: list[str], data=None) -> None:
             table.setItem(row, col, item)
 
 
+def select_row_where(table: QTableWidget, predicate) -> bool:
+    """Selects the first row whose data (see ``fill_row``) matches."""
+    for row in range(table.rowCount()):
+        if predicate(table.item(row, 0).data(Qt.ItemDataRole.UserRole)):
+            table.selectRow(row)
+            table.scrollToItem(table.item(row, 0))
+            return True
+    return False
+
+
 def selected_data(table: QTableWidget):
     rows = table.selectionModel().selectedRows()
     if not rows:
@@ -445,12 +455,14 @@ class UserPicker(QWidget):
         for u in users:
             fill_row(self.table, [u.display_name, u.username, u.email], u)
         fit_columns(self.table)
-        if keep is None:
-            return
-        for row in range(self.table.rowCount()):
-            if self.table.item(row, 0).data(Qt.ItemDataRole.UserRole).id == keep:
-                self.table.selectRow(row)
-                break
+        if keep is not None:
+            select_row_where(self.table, lambda u: u.id == keep)
+
+    def show_user(self, user: DirectoryUser) -> None:
+        """Selects the user, adding them to the table if they are not listed."""
+        if not select_row_where(self.table, lambda u: u.id == user.id):
+            fill_row(self.table, [user.display_name, user.username, user.email], user)
+            select_row_where(self.table, lambda u: u.id == user.id)
 
     def _run(self, fn, done, quiet: bool = False) -> None:
         self._search_id += 1

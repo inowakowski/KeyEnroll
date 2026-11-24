@@ -62,6 +62,16 @@ DE = {
         "Die ersten {count} Benutzer werden angezeigt. Suchen Sie nach den übrigen."
     ),
     "{count} user(s)": "{count} Benutzer",
+    "This key is registered to: {users}": "Dieser Schlüssel ist registriert für: {users}",
+    "Connected key S/N {serial}: looking for its owner…": (
+        "Angeschlossener Schlüssel S/N {serial}: Besitzer wird gesucht…"
+    ),
+    "Connected key S/N {serial} is not assigned to any user.": (
+        "Angeschlossener Schlüssel S/N {serial} ist keinem Benutzer zugeordnet."
+    ),
+    "Connected key S/N {serial} belongs to: {users}": (
+        "Angeschlossener Schlüssel S/N {serial} gehört: {users}"
+    ),
     "No instance": "Keine Instanz",
     "Add an identity provider instance first.": (
         "Fügen Sie zuerst eine Instanz eines Identitätsanbieters hinzu."

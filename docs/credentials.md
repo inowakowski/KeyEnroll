@@ -15,6 +15,11 @@ the search and reads the users again; the selected user stays selected. An empty
 search lists everyone too. Very large directories show the first 5000 users; search
 for the others.
 
+With Okta [keeping serial numbers](providers.md#key-serial-numbers), plugging in a
+YubiKey shows above the list who it belongs to, for example *Connected key S/N
+32445513 belongs to: Alice Example (Show)*. **Show** selects that user, and the
+credential on the plugged-in key is selected, ready to be deleted.
+
 **FIDO credentials of the selected user** (bottom)
 
 | Column | Meaning |

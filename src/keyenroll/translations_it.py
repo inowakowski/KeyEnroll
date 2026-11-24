@@ -62,6 +62,16 @@ IT = {
         "Sono mostrati i primi {count} utenti. Cercare per trovare gli altri."
     ),
     "{count} user(s)": "Utenti: {count}",
+    "This key is registered to: {users}": "Questa chiave è registrata per: {users}",
+    "Connected key S/N {serial}: looking for its owner…": (
+        "Chiave collegata S/N {serial}: ricerca del proprietario…"
+    ),
+    "Connected key S/N {serial} is not assigned to any user.": (
+        "La chiave collegata S/N {serial} non è assegnata a nessun utente."
+    ),
+    "Connected key S/N {serial} belongs to: {users}": (
+        "La chiave collegata S/N {serial} appartiene a: {users}"
+    ),
     "No instance": "Nessuna istanza",
     "Add an identity provider instance first.": (
         "Aggiungere prima un’istanza di un provider di identità."

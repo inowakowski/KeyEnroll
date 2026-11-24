@@ -29,7 +29,7 @@ from keyenroll.providers.base import AuthRequired, Credential, DirectoryGroup, D
 from keyenroll.secrets_store import TokenStore
 from keyenroll.ui import common, dialogs
 from keyenroll.ui.bulk_page import COL_MESSAGE, COL_PIN, COL_SERIAL, COL_STATUS
-from keyenroll.ui.common import AppContext
+from keyenroll.ui.common import AppContext, selected_data
 from keyenroll.ui.main_window import PAGE_BULK, PAGE_INSTANCES, PAGE_SETTINGS, MainWindow
 from test_enroll import FakeProvider, FakeSource
 
@@ -63,6 +63,12 @@ class GuiProvider(FakeProvider):
 
     def find_user(self, identifier):
         return next((u for u in USERS if u.username == identifier), None)
+
+    records_keys = False
+    key_owners: dict = {}
+
+    def users_with_key(self, serial):
+        return [u for u in USERS if u.id in self.key_owners.get(serial, ())]
 
     def list_users(self, limit=5000):
         if not self.session:
@@ -367,6 +373,63 @@ def test_credentials_page_asks_to_sign_in_instead_of_listing(gui):
     ctx.provider.session = True
     ctx.session_changed.emit()
     wait_until(lambda: page.picker.table.rowCount() == 2)
+
+
+def test_enroll_page_says_who_a_connected_key_is_registered_to(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    ctx.provider.records_keys = True
+    ctx.provider.key_owners = {"32445513": ["u2"]}
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    rescan(page)
+    wait_until(lambda: "registered to" in page.key_info.text())
+    assert "This key is registered to: Bob Example" in page.key_info.text()
+
+    pick_user(page, "Alice")
+    page.start.click()  # the confirmation names the current owner
+    assert "This key is registered to: Bob Example" in shown["boxes"][0]
+    wait_until(lambda: not page.is_running())
+
+
+def test_credentials_page_shows_the_owner_of_a_connected_key(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    ctx.provider.records_keys = True
+    ctx.provider.key_owners = {"32445513": ["u1"]}
+    ctx.provider.credentials = [
+        Credential("c1", "YubiKey 5", "2026-01-01", "", serial="11111111"),
+        Credential("c2", "YubiKey 5", "2026-11-24", "", serial="32445513"),
+    ]
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    wait_until(lambda: "belongs to" in page.key_note.text())
+    note = page.key_note.text()
+    assert "S/N 32445513" in note and "<b>Alice Example</b>" in note
+
+    page._show_owner("u1")  # what the "Show" link does
+    assert page.picker.selected().id == "u1"
+    wait_until(lambda: page.table.rowCount() == 2)
+    # The credential on the plugged-in key is selected, ready to be deleted.
+    assert selected_data(page.table).id == "c2"
+
+
+def test_credentials_page_says_when_a_connected_key_has_no_owner(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    ctx.provider.records_keys = True
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    wait_until(lambda: "not assigned" in page.key_note.text())
+
+
+def test_no_owner_hint_without_serial_numbers_at_the_provider(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    wait_until(lambda: page.picker.loaded)
+    assert not page.key_note.isVisible()
 
 
 def test_profiles_page_saves_and_enroll_page_follows(gui):

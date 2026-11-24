@@ -439,6 +439,10 @@ class Provider:
     ) -> None:
         """Records the key a just registered credential is on."""
 
+    def users_with_key(self, serial: str) -> list[DirectoryUser]:
+        """Users the provider lists as having the key with this serial number."""
+        return []
+
     def search_groups(self, query: str) -> list[DirectoryGroup]:
         raise NotImplementedError
 

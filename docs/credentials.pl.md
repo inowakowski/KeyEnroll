@@ -16,6 +16,11 @@ i wczytuje użytkowników ponownie; zaznaczony użytkownik pozostaje zaznaczony.
 wyszukiwanie też pokazuje wszystkich. Przy bardzo dużych katalogach widać pierwszych
 5000 użytkowników; pozostałych znajdziesz wyszukiwarką.
 
+Gdy Okta [przechowuje numery seryjne](providers.md#key-serial-numbers), po
+podłączeniu YubiKeya nad listą widać, do kogo należy, np. *Podłączony klucz S/N
+32445513 należy do: Alicja Przykład (Pokaż)*. **Pokaż** zaznacza tego użytkownika,
+a poświadczenie z podłączonego klucza zostaje zaznaczone, gotowe do usunięcia.
+
 **Poświadczenia FIDO wybranego użytkownika** (na dole)
 
 | Kolumna | Znaczenie |

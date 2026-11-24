@@ -62,6 +62,16 @@ FR = {
         "Affichage des {count} premiers utilisateurs. Recherchez pour trouver les autres."
     ),
     "{count} user(s)": "Utilisateurs\u00a0: {count}",
+    "This key is registered to: {users}": "Cette clé est enregistrée pour\u00a0: {users}",
+    "Connected key S/N {serial}: looking for its owner…": (
+        "Clé connectée S/N {serial}\u00a0: recherche de son propriétaire…"
+    ),
+    "Connected key S/N {serial} is not assigned to any user.": (
+        "La clé connectée S/N {serial} n’est attribuée à aucun utilisateur."
+    ),
+    "Connected key S/N {serial} belongs to: {users}": (
+        "La clé connectée S/N {serial} appartient à\u00a0: {users}"
+    ),
     "No instance": "Aucune instance",
     "Add an identity provider instance first.": (
         "Ajoutez d’abord une instance de fournisseur d’identité."

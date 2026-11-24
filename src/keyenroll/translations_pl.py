@@ -61,6 +61,16 @@ PL = {
         "Wyświetlono pierwszych {count} użytkowników. Pozostałych znajdziesz wyszukiwarką."
     ),
     "{count} user(s)": "Użytkownicy: {count}",
+    "This key is registered to: {users}": "Ten klucz jest przypisany do: {users}",
+    "Connected key S/N {serial}: looking for its owner…": (
+        "Podłączony klucz S/N {serial}: szukanie właściciela…"
+    ),
+    "Connected key S/N {serial} is not assigned to any user.": (
+        "Podłączony klucz S/N {serial} nie jest przypisany do żadnego użytkownika."
+    ),
+    "Connected key S/N {serial} belongs to: {users}": (
+        "Podłączony klucz S/N {serial} należy do: {users}"
+    ),
     "No instance": "Brak instancji",
     "Add an identity provider instance first.": (
         "Najpierw dodaj instancję dostawcy tożsamości."

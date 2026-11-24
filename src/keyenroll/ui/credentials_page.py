@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from html import escape
+
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -19,9 +22,11 @@ from .common import (
     fit_columns,
     make_table,
     run_task,
+    select_row_where,
     selected_data,
     show_error,
 )
+from .key_owners import KeyOwners, KeyWatcher
 from .theme import Card
 
 
@@ -33,8 +38,21 @@ class CredentialsPage(QWidget):
 
         self.picker = UserPicker(ctx, browse=True)
         self.picker.selection_changed.connect(self._load)
+        # Who the plugged-in keys belong to, where the provider keeps serial numbers.
+        self.key_note = QLabel()
+        self.key_note.setObjectName("hint")
+        self.key_note.setWordWrap(True)
+        self.key_note.setTextFormat(Qt.TextFormat.RichText)
+        self.key_note.linkActivated.connect(self._show_owner)
+        self.key_note.setVisible(False)
         user_card = Card(tr("User"))
+        user_card.body.addWidget(self.key_note)
         user_card.body.addWidget(self.picker, 1)
+        self._keys: list = []  # connected keys with a serial number
+        self._owners = KeyOwners(ctx, self)
+        self._owners.changed.connect(self._update_key_note)
+        self._watcher = KeyWatcher(ctx, self)
+        self._watcher.keys_changed.connect(self._on_keys)
 
         self.table = make_table(
             [tr("Name"), tr("Serial number"), tr("Created"), tr("Details"), tr("ID")], scrollable=True
@@ -71,6 +89,62 @@ class CredentialsPage(QWidget):
     def showEvent(self, event) -> None:
         super().showEvent(event)
         self._load_users()
+        self._watcher.start()
+
+    def hideEvent(self, event) -> None:
+        super().hideEvent(event)
+        self._watcher.stop()
+
+    # -- connected keys and their owners -----------------------------------
+
+    def _on_keys(self, infos) -> None:
+        self._keys = [info for info in infos if info.serial]
+        self._owners.lookup(info.serial for info in self._keys)
+        self._update_key_note()
+        self._select_connected()
+
+    def _update_key_note(self) -> None:
+        if not (self._keys and self._owners.available):
+            self.key_note.setVisible(False)
+            return
+        lines = []
+        for info in self._keys:
+            owners = self._owners.owners(info.serial)
+            if owners is None and not self._owners.pending(info.serial):
+                continue  # the lookup failed; nothing to say
+            if owners is None:
+                text = tr(
+                    "Connected key S/N {serial}: looking for its owner…", serial=info.serial
+                )
+                lines.append(escape(text))
+            elif not owners:
+                text = tr(
+                    "Connected key S/N {serial} is not assigned to any user.",
+                    serial=info.serial,
+                )
+                lines.append(escape(text))
+            else:
+                users = ", ".join(
+                    f"<b>{escape(u.display_name or u.username)}</b> "
+                    f'(<a href="{escape(u.id)}">{escape(tr("Show"))}</a>)'
+                    for u in owners
+                )
+                # The template is escaped before the links are put in.
+                template = escape(tr("Connected key S/N {serial} belongs to: {users}"))
+                lines.append(template.format(serial=info.serial, users=users))
+        self.key_note.setText("<br>".join(lines))
+        self.key_note.setVisible(bool(lines))
+
+    def _show_owner(self, user_id: str) -> None:
+        user = self._owners.find(user_id)
+        if user is not None:
+            self.picker.show_user(user)
+
+    def _select_connected(self) -> None:
+        """Selects the credential on a plugged-in key, ready to be deleted."""
+        serials = {str(info.serial) for info in self._keys}
+        if serials and selected_data(self.table) is None:
+            select_row_where(self.table, lambda c: c.serial in serials)
 
     def _load_users(self) -> None:
         """Lists all users when the page is shown, so that searching is optional."""
@@ -131,6 +205,7 @@ class CredentialsPage(QWidget):
             for c in creds:
                 fill_row(self.table, [c.name, c.serial, c.created, c.detail, c.id], c)
             fit_columns(self.table)
+            self._select_connected()
             self._update_buttons()
 
         def failed(exc):

@@ -30,6 +30,7 @@ from ..i18n import tr
 from ..providers import AuthRequired
 from .common import AppContext, UserPicker, error_text, run_task
 from .dialogs import ResultDialog, check_key_apps
+from .key_owners import KeyOwners, owner_names
 from .profile_form import ProfileForm
 from .theme import Card
 from .workers import EnrollWorker, PinPrompt, answer_prompt
@@ -59,6 +60,8 @@ class EnrollPage(QWidget):
         self._keys: list[KeyInfo] = []
         self._refreshing = False
         self._last_paths: set | None = None
+        # Who the connected keys are registered to, where the provider knows.
+        self._owners = KeyOwners(ctx, self)
         self._provider_label = ""
         self._journal = None
         self._user = None
@@ -212,6 +215,7 @@ class EnrollPage(QWidget):
         ctx.busy_changed.connect(self._on_busy)
         self._reload_profiles()
         self._show_key_info()
+        self._owners.changed.connect(self._show_key_info)
 
         self._timer = QTimer(self)
         self._timer.setInterval(KEY_POLL_MS)
@@ -344,7 +348,9 @@ class EnrollPage(QWidget):
             index = self.key_combo.findData(selected)
             self.key_combo.setCurrentIndex(max(0, index))
             self.key_combo.blockSignals(False)
-            self._show_key_info()
+            # The keys may have changed hands (an enrollment just now): ask again.
+            self._owners.reset()
+            self._owners.lookup(info.serial for info in infos)
 
         def failed(exc) -> None:
             self._refreshing = False
@@ -384,6 +390,9 @@ class EnrollPage(QWidget):
         issue = model_issue(self.form.profile(), info)
         if issue is not None:
             text += "\n⚠ " + tr(issue.template, **issue.params)
+        owners = self._owners.owners(info.serial)
+        if owners:
+            text += "\n" + tr("This key is registered to: {users}", users=owner_names(owners))
         self.key_info.setText(text)
 
     # -- key name ----------------------------------------------------------
@@ -455,6 +464,9 @@ class EnrollPage(QWidget):
         ]
         if issue is not None:
             lines.append(tr(issue.template, **issue.params))
+        owners = self._owners.owners(key.serial)
+        if owners:
+            lines.append(tr("This key is registered to: {users}", users=owner_names(owners)))
         name = self._key_name(key)
         if name:
             lines.append(tr("Key name: {name}", name=name))
