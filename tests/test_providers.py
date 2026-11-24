@@ -1054,3 +1054,43 @@ def test_plain_http_token_endpoint_is_refused(http, store):
     with pytest.raises(AuthRequired):
         provider.access_token()
     assert http.calls == []
+
+
+# -- full user lists ---------------------------------------------------------
+
+
+def test_okta_lists_all_users_across_pages_up_to_a_limit(okta, http):
+    page1 = [{"id": f"00u{i}", "profile": {"login": f"u{i}@x"}} for i in range(3)]
+    http.add(page1, links={"next": {"url": "https://acme.okta.com/api/v1/users?after=00u2"}})
+    http.add([{"id": "00u9", "profile": {"login": "u9@x"}}])
+    assert [u.username for u in okta.list_users()] == ["u0@x", "u1@x", "u2@x", "u9@x"]
+    assert http.calls[0].params == {"limit": "200"}
+
+    http.add(page1, links={"next": {"url": "https://acme.okta.com/api/v1/users?after=00u2"}})
+    assert len(okta.list_users(limit=2)) == 2
+    assert len(http.calls) == 3  # the next page is not read once the limit is reached
+
+
+def test_entra_lists_all_users_following_next_links(entra, http):
+    user = {"id": "1", "displayName": "A", "userPrincipalName": "a@x"}
+    http.add({"value": [user], "@odata.nextLink": "https://graph.microsoft.com/v1.0/users?$skiptoken=x"})
+    http.add({"value": [{**user, "id": "2", "userPrincipalName": "b@x"}]})
+    assert [u.username for u in entra.list_users()] == ["a@x", "b@x"]
+    assert http.calls[0].params["$top"] == "999"
+
+
+def test_pingone_lists_all_users_following_next_links(pingone, http):
+    http.add({
+        "_embedded": {"users": [{"id": "u1", "username": "a"}]},
+        "_links": {"next": {"href": "https://api.pingone.eu/v1/environments/ENV/users?cursor=2"}},
+    })  # fmt: skip
+    http.add({"_embedded": {"users": [{"id": "u2", "username": "b"}]}, "_links": {}})
+    assert [u.username for u in pingone.list_users()] == ["a", "b"]
+
+
+def test_aic_lists_all_users_with_the_paged_results_cookie(aic, http):
+    http.add({"result": [{"_id": "1", "userName": "a"}], "pagedResultsCookie": "c1"})
+    http.add({"result": [{"_id": "2", "userName": "b"}]})
+    assert [u.username for u in aic.list_users()] == ["a", "b"]
+    assert http.calls[0].params["_queryFilter"] == "true"
+    assert http.calls[1].params["_pagedResultsCookie"] == "c1"

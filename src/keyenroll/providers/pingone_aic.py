@@ -17,6 +17,7 @@ from .. import oauth
 from ..i18n import N_
 from .base import (
     GROUPS_FIELD,
+    MAX_LISTED_USERS,
     DirectoryGroup,
     DirectoryUser,
     FieldSpec,
@@ -262,10 +263,16 @@ class PingOneAicProvider(Provider):
         ]
 
     def group_members(self, group: DirectoryGroup, nested: bool = False) -> list[DirectoryUser]:
+        # Users whose "groups" relationship points at the group.
+        return self._all_users(f"groups/_refResourceId eq {_query_quote(group.id)}")
+
+    def list_users(self, limit: int = MAX_LISTED_USERS) -> list[DirectoryUser]:
+        return self._all_users("true", limit)
+
+    def _all_users(self, query_filter: str, limit: int | None = None) -> list[DirectoryUser]:
         url = self._managed("user")
         params = {
-            # Users whose "groups" relationship points at the group.
-            "_queryFilter": f"groups/_refResourceId eq {_query_quote(group.id)}",
+            "_queryFilter": query_filter,
             "_pageSize": "200",
             "_fields": "userName,givenName,sn,mail",
         }
@@ -277,7 +284,7 @@ class PingOneAicProvider(Provider):
                 return data.get("result", []), None, None
             return data.get("result", []), url, {**params, "_pagedResultsCookie": cookie}
 
-        return [self._to_user(u) for u in self._collect(url, params, page)]
+        return [self._to_user(u) for u in self._collect(url, params, page, limit)]
 
     def _journey(self, payload: dict | None) -> dict:
         resp = self._request(

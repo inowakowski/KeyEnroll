@@ -11,6 +11,7 @@ from .. import oauth
 from ..i18n import N_
 from .base import (
     GROUPS_FIELD,
+    MAX_LISTED_USERS,
     Credential,
     DirectoryGroup,
     DirectoryUser,
@@ -144,6 +145,10 @@ class OktaProvider(Provider):
             known = {u.id for u in owners}
             users = owners + [u for u in users if u.id not in known]
         return users
+
+    def list_users(self, limit: int = MAX_LISTED_USERS) -> list[DirectoryUser]:
+        users = self._collect(f"{self._base}/api/v1/users", {"limit": "200"}, self._page, limit)
+        return [self._to_user(u) for u in users]
 
     # -- serial numbers of the keys in the user profile --------------------
 

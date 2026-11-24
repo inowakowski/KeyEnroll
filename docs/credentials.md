@@ -8,8 +8,12 @@ employee returns it.
 
 ## The page
 
-**User** (top). Search for the user and select them, exactly as on the
-[Enroll page](enroll.md#1-user).
+**User** (top). When you open the page, it lists **all users** of the directory,
+sorted by name, so searching is optional: select a user from the list, or search as
+on the [Enroll page](enroll.md#1-user) to narrow it down. **Refresh list** clears
+the search and reads the users again; the selected user stays selected. An empty
+search lists everyone too. Very large directories show the first 5000 users; search
+for the others.
 
 **FIDO credentials of the selected user** (bottom)
 

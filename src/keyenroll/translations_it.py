@@ -53,6 +53,15 @@ IT = {
     "E-mail": "E-mail",
     "Name, username or e-mail": "Nome, nome utente o e-mail",
     "{count} user(s) found": "Utenti trovati: {count}",
+    "Refresh list": "Aggiorna elenco",
+    "Clears the search and lists all users again.": (
+        "Cancella la ricerca e mostra di nuovo tutti gli utenti."
+    ),
+    "Loading users…": "Caricamento degli utenti…",
+    "Showing the first {count} users. Search to find the others.": (
+        "Sono mostrati i primi {count} utenti. Cercare per trovare gli altri."
+    ),
+    "{count} user(s)": "Utenti: {count}",
     "No instance": "Nessuna istanza",
     "Add an identity provider instance first.": (
         "Aggiungere prima un’istanza di un provider di identità."

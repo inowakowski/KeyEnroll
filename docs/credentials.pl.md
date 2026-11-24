@@ -8,8 +8,13 @@ pracownik go zwrócił.
 
 ## Strona
 
-**Użytkownik** (u góry). Wyszukaj użytkownika i zaznacz go — tak samo jak na
-[stronie Rejestracja](enroll.md#1-user).
+**Użytkownik** (u góry). Po otwarciu strony widać **wszystkich użytkowników**
+katalogu, posortowanych po nazwie, więc wyszukiwanie jest opcjonalne: zaznacz
+użytkownika na liście albo zawęź ją wyszukiwarką, tak jak na
+[stronie Rejestracja](enroll.md#1-user). **Odśwież listę** czyści wyszukiwanie
+i wczytuje użytkowników ponownie; zaznaczony użytkownik pozostaje zaznaczony. Puste
+wyszukiwanie też pokazuje wszystkich. Przy bardzo dużych katalogach widać pierwszych
+5000 użytkowników; pozostałych znajdziesz wyszukiwarką.
 
 **Poświadczenia FIDO wybranego użytkownika** (na dole)
 

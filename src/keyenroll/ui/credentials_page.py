@@ -31,7 +31,7 @@ class CredentialsPage(QWidget):
         self.ctx = ctx
         self._load_id = 0
 
-        self.picker = UserPicker(ctx)
+        self.picker = UserPicker(ctx, browse=True)
         self.picker.selection_changed.connect(self._load)
         user_card = Card(tr("User"))
         user_card.body.addWidget(self.picker, 1)
@@ -65,7 +65,24 @@ class CredentialsPage(QWidget):
         layout.addWidget(creds_card, 1)
 
         ctx.active_changed.connect(self._on_instance)
+        ctx.session_changed.connect(self._load_users)
         self._on_instance()
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._load_users()
+
+    def _load_users(self) -> None:
+        """Lists all users when the page is shown, so that searching is optional."""
+        provider = self.ctx.provider
+        if not (self.isVisible() and provider and provider.supports_credential_list):
+            return
+        if not provider.has_session():
+            # Signed out: the list of the previous session goes too.
+            self.picker.clear()
+            self.picker.hint.setText(tr("Sign in to the identity provider first."))
+        elif not self.picker.loaded:
+            self.picker.load_all(quiet=True)
 
     def _on_instance(self) -> None:
         self._load_id += 1
@@ -84,6 +101,7 @@ class CredentialsPage(QWidget):
         self.notice.setVisible(not supported)
         self.table.setEnabled(supported)
         self._update_buttons()
+        self._load_users()
 
     def _update_buttons(self) -> None:
         provider = self.ctx.provider

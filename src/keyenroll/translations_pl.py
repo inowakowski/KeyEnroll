@@ -52,6 +52,15 @@ PL = {
     "E-mail": "E-mail",
     "Name, username or e-mail": "Imię i nazwisko, nazwa użytkownika lub e-mail",
     "{count} user(s) found": "Znaleziono użytkowników: {count}",
+    "Refresh list": "Odśwież listę",
+    "Clears the search and lists all users again.": (
+        "Czyści wyszukiwanie i ponownie wyświetla wszystkich użytkowników."
+    ),
+    "Loading users…": "Wczytywanie użytkowników…",
+    "Showing the first {count} users. Search to find the others.": (
+        "Wyświetlono pierwszych {count} użytkowników. Pozostałych znajdziesz wyszukiwarką."
+    ),
+    "{count} user(s)": "Użytkownicy: {count}",
     "No instance": "Brak instancji",
     "Add an identity provider instance first.": (
         "Najpierw dodaj instancję dostawcy tożsamości."

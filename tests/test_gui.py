@@ -64,6 +64,12 @@ class GuiProvider(FakeProvider):
     def find_user(self, identifier):
         return next((u for u in USERS if u.username == identifier), None)
 
+    def list_users(self, limit=5000):
+        if not self.session:
+            raise AuthRequired("Not signed in. Sign in to the identity provider first.")
+        self.listed = getattr(self, "listed", 0) + 1
+        return list(reversed(USERS))[:limit]  # the page sorts them
+
     def list_credentials(self, user):
         return list(self.credentials)
 
@@ -320,6 +326,47 @@ def test_credentials_page_lists_and_deletes(gui):
 
     assert ctx.provider.credentials == []
     assert "Old key (S/N 32445513)" in shown["boxes"][-1]
+
+
+def test_credentials_page_lists_all_users_when_opened(gui):
+    window, ctx, key, source, shown = gui
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    picker = page.picker
+    wait_until(lambda: picker.table.rowCount() == 2)
+    assert column(picker.table, 0) == ["Alice Example", "Bob Example"]  # sorted
+    assert picker.loaded and ctx.provider.listed == 1
+
+    # Coming back does not read the directory again.
+    window.nav.setCurrentRow(0)
+    window.nav.setCurrentRow(2)
+    assert ctx.provider.listed == 1
+
+    # A search narrows the list; refreshing clears it and keeps the selection.
+    pick_user(page, "Bob")
+    picker.refresh.click()
+    wait_until(lambda: picker.table.rowCount() == 2)
+    assert picker.query.text() == "" and ctx.provider.listed == 2
+    assert picker.selected().display_name == "Bob Example"
+
+    # An empty search lists everyone as well.
+    picker.search()
+    wait_until(lambda: ctx.provider.listed == 3)
+    assert picker.table.rowCount() == 2
+
+
+def test_credentials_page_asks_to_sign_in_instead_of_listing(gui):
+    window, ctx, key, source, shown = gui
+    ctx.provider.session = False
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    assert page.picker.table.rowCount() == 0
+    assert "Sign in" in page.picker.hint.text()
+    assert shown["boxes"] == []  # no message box just for opening the page
+
+    ctx.provider.session = True
+    ctx.session_changed.emit()
+    wait_until(lambda: page.picker.table.rowCount() == 2)
 
 
 def test_profiles_page_saves_and_enroll_page_follows(gui):

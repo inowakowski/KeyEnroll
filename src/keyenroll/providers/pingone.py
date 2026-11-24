@@ -9,6 +9,7 @@ from .. import oauth
 from ..i18n import N_
 from .base import (
     GROUPS_FIELD,
+    MAX_LISTED_USERS,
     Credential,
     DirectoryGroup,
     DirectoryUser,
@@ -115,6 +116,12 @@ class PingOneProvider(Provider):
                 for attr in ("username", "email", "name.given", "name.family")
             )
         return self._users(params)
+
+    def list_users(self, limit: int = MAX_LISTED_USERS) -> list[DirectoryUser]:
+        users = self._collect(
+            f"{self._api}/users", {"limit": "200"}, self._pages("users"), limit
+        )
+        return [self._to_user(u) for u in users]
 
     def find_user(self, identifier: str) -> DirectoryUser | None:
         q = _scim_quote(identifier.strip())

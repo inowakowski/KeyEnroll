@@ -9,6 +9,7 @@ from .. import oauth
 from ..i18n import N_
 from .base import (
     GROUPS_FIELD,
+    MAX_LISTED_USERS,
     Credential,
     DirectoryGroup,
     DirectoryUser,
@@ -114,6 +115,15 @@ class EntraProvider(Provider):
             )
         data = self._request("GET", f"{self._api}/users", params=params).json()
         return [self._to_user(u) for u in data.get("value", [])]
+
+    def list_users(self, limit: int = MAX_LISTED_USERS) -> list[DirectoryUser]:
+        users = self._collect(
+            f"{self._api}/users",
+            {"$select": "id,displayName,userPrincipalName,mail", "$top": "999"},
+            self._page,
+            limit,
+        )
+        return [self._to_user(u) for u in users]
 
     @staticmethod
     def _to_user(u: dict) -> DirectoryUser:
