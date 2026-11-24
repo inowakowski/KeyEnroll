@@ -73,6 +73,17 @@ that requests *enterprise attestation*. This only works with keys that were orde
 with that feature and with a provider configured for it. Leave it off unless you
 know you need it.
 
+### Store the credential on the key (passkey)
+
+On by default. The credential is saved on the key as a *discoverable credential*
+(a passkey): the account then appears in tools such as Yubico Authenticator, and the
+user can sign in by choosing it on the key, without typing a user name first.
+
+Some identity providers, Okta among them, do not ask for this, so without the option
+the key only holds what the provider needs to verify it, and nothing shows on the key.
+Each stored credential takes one of the key's slots (100 on YubiKey firmware 5.7, 25
+on older ones). Turn it off only if the key must not keep any account on it.
+
 ## Allowed security keys
 
 !!! info "Since version 0.6.0"
@@ -109,6 +120,7 @@ selected key does not match the profile, and the enrollment does not start. In
 | Factory reset, PIN | Any FIDO2 key. |
 | Minimum PIN length, forced PIN change, always UV | A key whose firmware offers authenticator configuration (YubiKey firmware 5.5 or newer). |
 | Enterprise Attestation | A key manufactured with Enterprise Attestation. |
+| Store the credential on the key | Any FIDO2 key with room for discoverable credentials. |
 
 The application checks the key **before** it changes anything. If the key cannot do
 what the profile asks, the enrollment stops with a message and the key is left

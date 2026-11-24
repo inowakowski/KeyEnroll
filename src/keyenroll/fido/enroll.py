@@ -19,6 +19,7 @@ from fido2.ctap import CtapDevice, CtapError
 from fido2.ctap2 import Ctap2
 from fido2.ctap2.config import Config
 from fido2.ctap2.pin import ClientPin
+from fido2.hid import ConnectionFailure
 
 from ..config import Profile, version_tuple
 from ..i18n import N_
@@ -41,6 +42,12 @@ class EnrollError(Exception):
         super().__init__(template.format(**params) if params else template)
         self.template = template
         self.params = params
+
+
+CONNECTION_LOST = N_(
+    "The connection to the security key was interrupted. Close other programs "
+    "that use the key, such as Yubico Authenticator, and try again."
+)
 
 
 class EnrollCancelled(EnrollError):
@@ -222,6 +229,13 @@ class Enroller:
             raise EnrollError(
                 N_("This security key does not support 'Require always UV' (firmware 5.5+ needed).")
             )
+        if p.discoverable and not options.get("rk"):
+            raise EnrollError(
+                N_(
+                    "This security key cannot store the credential on the key. Turn off "
+                    "'Store the credential on the key' in the profile."
+                )
+            )
         if p.require_ea and not (can_configure and "ep" in options):
             raise EnrollError(
                 N_("This security key does not support Enterprise Attestation.")
@@ -258,6 +272,10 @@ class Enroller:
             raise EnrollError(
                 N_("The security key reported an error: {detail}"), detail=e.code.name
             ) from e
+        except ConnectionFailure:
+            close(dev)
+            self._check_cancel()
+            return EnrollError(CONNECTION_LOST)
         except BaseException:
             close(dev)
             raise
@@ -452,6 +470,11 @@ class Enroller:
         options.pop("timeout", None)
         if self.profile.require_ea:
             options["attestation"] = "enterprise"
+        if self.profile.discoverable:
+            selection = dict(options.get("authenticatorSelection") or {})
+            selection["residentKey"] = "required"
+            selection["requireResidentKey"] = True
+            options["authenticatorSelection"] = selection
         client = Fido2Client(
             dev,
             DefaultClientDataCollector(registration.origin),
@@ -483,6 +506,13 @@ class Enroller:
     # -- main --------------------------------------------------------------
 
     def run(self) -> EnrollResult:
+        try:
+            return self._run()
+        except ConnectionFailure as e:
+            self._check_cancel()
+            raise EnrollError(CONNECTION_LOST) from e
+
+    def _run(self) -> EnrollResult:
         p = self.profile
         self.ui.status(N_("Checking sign-in and permissions…"))
         self.provider.preflight(self.user)

@@ -38,7 +38,7 @@ from .common import (
     run_task,
     selected_data,
 )
-from .dialogs import ExportDialog, ResultDialog
+from .dialogs import ExportDialog, ResultDialog, check_key_apps
 from .profile_form import profile_summary
 from .theme import Card
 from .workers import BulkWorker, GroupWorker, PinPrompt, ResolveWorker, answer_prompt
@@ -627,7 +627,7 @@ class BulkPage(QWidget):
         proceed = box.addButton(tr("Start"), QMessageBox.ButtonRole.AcceptRole)
         box.addButton(tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
         box.exec()
-        if box.clickedButton() is not proceed:
+        if box.clickedButton() is not proceed or not check_key_apps(self):
             return
 
         worker = BulkWorker(

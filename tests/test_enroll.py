@@ -621,3 +621,63 @@ def test_unreadable_firmware_is_refused_or_only_warned_about_as_the_profile_says
 def test_profile_rejects_a_firmware_that_is_not_a_version():
     assert Profile(min_firmware="5.7").problems() == []
     assert Profile(min_firmware="latest").problems()
+
+
+class OktaLikeProvider(FakeProvider):
+    """Asks for a credential that lives only at the provider, as Okta does."""
+
+    def begin_registration(self, user):
+        registration = super().begin_registration(user)
+        registration.options["authenticatorSelection"] = {
+            "userVerification": "preferred",
+            "requireResidentKey": False,
+        }
+        return registration
+
+
+def test_credential_is_stored_on_the_key_even_if_the_provider_does_not_ask():
+    key = FakeAuthenticator()
+    enroller, ui, provider = make(Profile(), key, provider=OktaLikeProvider())
+    enroller.run()
+    assert provider.completed is not None
+    assert [c["rk"] for c in key.credentials] == [True]
+
+
+def test_profile_can_leave_the_credential_at_the_provider_only():
+    key = FakeAuthenticator()
+    profile = Profile(discoverable=False)
+    enroller, ui, provider = make(profile, key, provider=OktaLikeProvider())
+    enroller.run()
+    assert [c["rk"] for c in key.credentials] == [False]
+
+
+def test_key_that_cannot_store_credentials_is_refused_before_the_reset():
+    key = FakeAuthenticator()
+    key.rk_supported = False
+    key.pin = "135790"
+    enroller, ui, provider = make(Profile(), key)
+    with pytest.raises(EnrollError, match="cannot store the credential"):
+        enroller.run()
+    assert "reset" not in key.log and key.pin == "135790"
+
+
+def test_reset_disturbed_by_another_program_is_tried_again():
+    key = FakeAuthenticator()
+    key.connection_drops = ["reset"]
+    enroller, ui, provider = make(Profile(), key)
+
+    result = enroller.run()
+
+    assert key.log.count("reset") == 2
+    assert key.pin == result.pin
+    assert enroll.CONNECTION_LOST in ui.messages
+
+
+def test_lost_connection_is_reported_in_plain_words():
+    key = FakeAuthenticator()
+    key.connection_drops = ["make_credential"]
+    enroller, ui, provider = make(Profile(), key)
+    with pytest.raises(EnrollError) as info:
+        enroller.run()
+    assert info.value.template == enroll.CONNECTION_LOST
+    assert provider.events[-1] == "cancel"

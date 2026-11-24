@@ -58,6 +58,8 @@ konto nie ma wymaganej roli. Zobacz [Dostawcy tożsamości](providers.md).
 |---|---|
 | *Reset nie został przyjęty. Trzeba go potwierdzić w ciągu kilku sekund od włożenia klucza.* | Klucz pozwala na reset tylko chwilę po włożeniu. Wyjmij go, włóż i dotknij, gdy tylko zacznie migać. Aplikacja ponawia próbę kilka razy. |
 | *Klucz nie został dotknięty na czas.* | Dotknij złotego styku lub przycisku klucza, gdy miga. |
+| *Te programy korzystają z klucza w tym samym czasie …* | Działa Yubico Authenticator, YubiKey Manager albo YubiEnroll. Kliknij **Zamknij je i kontynuuj**. Jeśli nie da się ich zamknąć, zamknij je samodzielnie (także z zasobnika systemowego) i zacznij od nowa. |
+| *Połączenie z kluczem zostało przerwane …* | Inny program korzystał z klucza w tym samym czasie i połączenie się zerwało. Zamknij Yubico Authenticator, karty przeglądarki z monitem o klucz bezpieczeństwa i podobne programy, a potem spróbuj ponownie. Przy resecie fabrycznym aplikacja poprosi o jeszcze jedno ponowne włożenie klucza. |
 | *Upłynął czas oczekiwania na klucz.* | Klucza nie wyjęto lub nie włożono ponownie w ciągu dwóch minut. Zacznij od nowa. |
 | *Włożono inny klucz bezpieczeństwa …* | Do resetu fabrycznego włożono klucz o innym numerze seryjnym niż ten, który wyjęto. Nie został zmieniony. Zacznij od nowa z właściwym kluczem. |
 | *Wybrany klucz nie jest już podłączony.* | Klucz został wyjęty. Włóż go i kliknij **Odśwież**. |

@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from fido2 import cbor
 from fido2.ctap import STATUS, CtapDevice, CtapError
 from fido2.ctap2.pin import PinProtocolV1, PinProtocolV2
-from fido2.hid import CAPABILITY, CTAPHID
+from fido2.hid import CAPABILITY, CTAPHID, ConnectionFailure
 from fido2.utils import bytes2int, int2bytes, sha256
 
 ERR = CtapError.ERR
@@ -36,6 +36,10 @@ class FakeAuthenticator(CtapDevice):
         self.closed = 0
         self._wipe()
         self.fresh = False  # True right after "power-up": reset is allowed
+        self.rk_supported = True
+        # Commands whose next call fails as if another program disturbed the
+        # HID connection.
+        self.connection_drops: list[str] = []
 
     def _wipe(self):
         self.pin: str | None = None
@@ -79,6 +83,9 @@ class FakeAuthenticator(CtapDevice):
         if handler is None:
             return bytes([ERR.INVALID_COMMAND])
         self.log.append(handler.__name__.lstrip("_"))
+        if self.log[-1] in self.connection_drops:
+            self.connection_drops.remove(self.log[-1])
+            raise ConnectionFailure("Wrong channel")
         try:
             result = handler(params, event, on_keepalive)
         except _Fail as e:
@@ -89,7 +96,7 @@ class FakeAuthenticator(CtapDevice):
 
     def _get_info(self, params, event, on_keepalive):
         options = {
-            "rk": True,
+            "rk": self.rk_supported,
             "up": True,
             "clientPin": self.pin is not None,
             "pinUvAuthToken": True,
@@ -264,6 +271,7 @@ class FakeAuthenticator(CtapDevice):
                 "rp_id": rp["id"],
                 "user": user,
                 "enterprise": params.get(0x0A),
+                "rk": bool((params.get(7) or {}).get("rk")),
             }
         )
         self.token = None  # tokens are single-use for makeCredential

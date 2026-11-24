@@ -109,6 +109,12 @@ FR = {
         "La clé demande le code PIN à chaque utilisation."
     ),
     "Require Enterprise Attestation": "Exiger l’attestation Enterprise",
+    "Store the credential on the key (passkey)": "Enregistrer l’identifiant sur la clé (passkey)",
+    "The account is saved on the key and can be used without typing the user name. Takes one of "
+    "the key's credential slots.": (
+        "Le compte est enregistré sur la clé et peut être utilisé sans saisir le nom "
+        "d’utilisateur. Occupe l’un des emplacements d’identifiants de la clé."
+    ),
     # -- profiles page
     "New profile": "Nouveau profil",
     "Profile name": "Nom du profil",
@@ -299,6 +305,29 @@ FR = {
     "This security key does not support Enterprise Attestation.": (
         "Cette clé de sécurité ne prend pas en charge l’attestation Enterprise."
     ),
+    "This security key cannot store the credential on the key. Turn off 'Store the credential on "
+    "the key' in the profile.": (
+        "Cette clé de sécurité ne peut pas enregistrer l’identifiant. Désactivez « Enregistrer "
+        "l’identifiant sur la clé » dans le profil."
+    ),
+    "The connection to the security key was interrupted. Close other programs that use the key, "
+    "such as Yubico Authenticator, and try again.": (
+        "La connexion à la clé de sécurité a été interrompue. Fermez les autres programmes qui "
+        "utilisent la clé, comme Yubico Authenticator, puis réessayez."
+    ),
+    "Other security key programs are running": (
+        "D’autres programmes de clés de sécurité sont en cours d’exécution"
+    ),
+    "These programs use the security key at the same time and can make the enrollment fail: "
+    "{programs}. Close them before you continue.": (
+        "Ces programmes utilisent la clé de sécurité en même temps et peuvent faire échouer "
+        "l’enregistrement : {programs}. Fermez-les avant de continuer."
+    ),
+    "Close them and continue": "Les fermer et continuer",
+    "Continue anyway": "Continuer quand même",
+    "Could not close: {programs}. Close them yourself and try again.": (
+        "Impossible de fermer : {programs}. Fermez-les vous-même, puis réessayez."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Cette clé de sécurité ne peut imposer ni une longueur minimale du code PIN ni "
@@ -431,6 +460,7 @@ FR = {
     "forced PIN change": "changement de code PIN imposé",
     "always UV": "toujours exiger la vérification (UV)",
     "Enterprise Attestation": "attestation Enterprise",
+    "credential not stored on the key": "identifiant non enregistré sur la clé",
     # -- appearance
     "Appearance": "Apparence",
     "Light": "Clair",

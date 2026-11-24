@@ -73,6 +73,19 @@ który żąda *atestacji Enterprise*. Działa tylko z kluczami zamówionymi z t�
 i z dostawcą odpowiednio skonfigurowanym. Zostaw wyłączone, jeśli nie masz pewności,
 że tego potrzebujesz.
 
+### Zapisz poświadczenie na kluczu (passkey)
+
+Domyślnie włączone. Poświadczenie zostaje zapisane na kluczu jako *poświadczenie
+wykrywalne* (passkey): konto widać wtedy w programach takich jak Yubico Authenticator,
+a użytkownik może się zalogować, wybierając je na kluczu, bez wpisywania nazwy
+użytkownika.
+
+Niektórzy dostawcy tożsamości, w tym Okta, o to nie proszą, więc bez tej opcji klucz
+przechowuje tylko to, czego dostawca potrzebuje do weryfikacji, i na kluczu nic nie
+widać. Każde zapisane poświadczenie zajmuje jedno miejsce w kluczu (100 w YubiKey
+z firmware 5.7, 25 w starszych). Wyłącz opcję tylko wtedy, gdy na kluczu nie może
+zostać żadne konto.
+
 ## Dozwolone klucze bezpieczeństwa { #allowed-security-keys }
 
 !!! info "Od wersji 0.6.0"
@@ -109,6 +122,7 @@ pojawia się w kolumnie *Komunikat*.
 | Reset fabryczny, PIN | Dowolny klucz FIDO2. |
 | Minimalna długość PIN-u, wymuszona zmiana PIN-u, zawsze wymagaj UV | Klucz, którego firmware pozwala na konfigurację (YubiKey z firmware 5.5 lub nowszym). |
 | Atestacja Enterprise | Klucz wyprodukowany z atestacją Enterprise. |
+| Zapisz poświadczenie na kluczu | Dowolny klucz FIDO2 z miejscem na poświadczenia wykrywalne. |
 
 Aplikacja sprawdza klucz, **zanim** cokolwiek na nim zmieni. Jeśli klucz nie potrafi
 tego, czego wymaga profil, rejestracja kończy się komunikatem, a klucz pozostaje
