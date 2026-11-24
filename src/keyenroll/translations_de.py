@@ -321,6 +321,18 @@ DE = {
         "Programme, die den Schlüssel verwenden, etwa Yubico Authenticator, und versuchen Sie es "
         "erneut."
     ),
+    "Other security key programs are running": "Andere Sicherheitsschlüssel-Programme laufen",
+    "These programs use the security key at the same time and can make the enrollment fail: "
+    "{programs}. Close them before you continue.": (
+        "Diese Programme greifen gleichzeitig auf den Sicherheitsschlüssel zu und können die "
+        "Registrierung scheitern lassen: {programs}. Schließen Sie sie, bevor Sie fortfahren."
+    ),
+    "Close them and continue": "Schließen und fortfahren",
+    "Continue anyway": "Trotzdem fortfahren",
+    "Could not close: {programs}. Close them yourself and try again.": (
+        "Konnte nicht geschlossen werden: {programs}. Schließen Sie die Programme selbst und "
+        "versuchen Sie es erneut."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Dieser Sicherheitsschlüssel kann weder eine PIN-Mindestlänge noch eine "

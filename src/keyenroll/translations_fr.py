@@ -315,6 +315,19 @@ FR = {
         "La connexion à la clé de sécurité a été interrompue. Fermez les autres programmes qui "
         "utilisent la clé, comme Yubico Authenticator, puis réessayez."
     ),
+    "Other security key programs are running": (
+        "D’autres programmes de clés de sécurité sont en cours d’exécution"
+    ),
+    "These programs use the security key at the same time and can make the enrollment fail: "
+    "{programs}. Close them before you continue.": (
+        "Ces programmes utilisent la clé de sécurité en même temps et peuvent faire échouer "
+        "l’enregistrement : {programs}. Fermez-les avant de continuer."
+    ),
+    "Close them and continue": "Les fermer et continuer",
+    "Continue anyway": "Continuer quand même",
+    "Could not close: {programs}. Close them yourself and try again.": (
+        "Impossible de fermer : {programs}. Fermez-les vous-même, puis réessayez."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Cette clé de sécurité ne peut imposer ni une longueur minimale du code PIN ni "

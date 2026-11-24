@@ -284,6 +284,17 @@ PL = {
         "Połączenie z kluczem zostało przerwane. Zamknij inne programy, które korzystają z "
         "klucza, np. Yubico Authenticator, i spróbuj ponownie."
     ),
+    "Other security key programs are running": "Działają inne programy do kluczy bezpieczeństwa",
+    "These programs use the security key at the same time and can make the enrollment fail: "
+    "{programs}. Close them before you continue.": (
+        "Te programy korzystają z klucza w tym samym czasie i mogą przerwać rejestrację: "
+        "{programs}. Zamknij je, zanim przejdziesz dalej."
+    ),
+    "Close them and continue": "Zamknij je i kontynuuj",
+    "Continue anyway": "Kontynuuj mimo to",
+    "Could not close: {programs}. Close them yourself and try again.": (
+        "Nie udało się zamknąć: {programs}. Zamknij je samodzielnie i spróbuj ponownie."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Ten klucz nie potrafi wymusić minimalnej długości PIN-u ani zmiany PIN-u "

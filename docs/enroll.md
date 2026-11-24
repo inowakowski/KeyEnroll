@@ -48,6 +48,11 @@ Press **Enroll security key**. A confirmation shows the user, the key and what w
 be done. If the profile includes a factory reset, it warns that all FIDO credentials
 on the key will be erased.
 
+If Yubico Authenticator, YubiKey Manager or YubiEnroll is running, KeyEnroll warns
+you first: these programs talk to the key at the same time and can make the
+enrollment fail. **Close them and continue** ends them for you; **Continue anyway**
+leaves them running. The same check runs before a [bulk enrollment](bulk.md).
+
 ![An enrollment in progress](assets/screenshots/en/enroll-progress.png){ .shot }
 
 The panel at the bottom tells you what to do with the key and keeps a short log of

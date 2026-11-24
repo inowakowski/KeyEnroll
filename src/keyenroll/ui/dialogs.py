@@ -5,7 +5,7 @@ from __future__ import annotations
 from urllib.parse import urlsplit
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QDesktopServices, QFont, QFontDatabase
+from PySide6.QtGui import QDesktopServices, QFont, QFontDatabase, QGuiApplication
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -25,10 +25,57 @@ from PySide6.QtWidgets import (
 
 from .. import handover as handover_text
 from ..config import ConfigImport, ConfigStore, Instance
+from ..fido import key_apps
 from ..handover import Handover
 from ..i18n import current_language, tr
 from ..providers import PROVIDERS
 from .common import copy_sensitive
+
+
+def check_key_apps(parent: QWidget) -> bool:
+    """Warns about other programs that use security keys, such as Yubico
+    Authenticator, and offers to close them. Returns False to stop."""
+    apps = key_apps.find()
+    if not apps:
+        return True
+    programs = ", ".join(app.name for app in apps)
+    title = tr("Other security key programs are running")
+    box = QMessageBox(parent)
+    box.setIcon(QMessageBox.Icon.Warning)
+    box.setWindowTitle(title)
+    box.setText(
+        tr(
+            "These programs use the security key at the same time and can make the "
+            "enrollment fail: {programs}. Close them before you continue.",
+            programs=programs,
+        )
+    )
+    close = box.addButton(tr("Close them and continue"), QMessageBox.ButtonRole.AcceptRole)
+    anyway = box.addButton(tr("Continue anyway"), QMessageBox.ButtonRole.ActionRole)
+    box.addButton(tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
+    box.setDefaultButton(close)
+    box.exec()
+    clicked = box.clickedButton()
+    if clicked is anyway:
+        return True
+    if clicked is not close:
+        return False
+    QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+    try:
+        left = key_apps.close(apps)
+    finally:
+        QGuiApplication.restoreOverrideCursor()
+    if left:
+        QMessageBox.warning(
+            parent,
+            title,
+            tr(
+                "Could not close: {programs}. Close them yourself and try again.",
+                programs=", ".join(app.name for app in left),
+            ),
+        )
+        return False
+    return True
 
 
 def local_redirect(uri: str) -> bool:

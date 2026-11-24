@@ -48,6 +48,12 @@ Kliknij **Zarejestruj klucz**. Okno potwierdzenia pokazuje użytkownika, klucz i
 co zostanie zrobione. Jeśli profil obejmuje reset fabryczny, ostrzega, że wszystkie
 poświadczenia FIDO na kluczu zostaną usunięte.
 
+Jeśli działa Yubico Authenticator, YubiKey Manager albo YubiEnroll, KeyEnroll najpierw
+ostrzega: te programy korzystają z klucza w tym samym czasie i mogą przerwać
+rejestrację. **Zamknij je i kontynuuj** kończy je za Ciebie; **Kontynuuj mimo to**
+zostawia je uruchomione. To samo sprawdzenie odbywa się przed
+[wdrożeniem masowym](bulk.md).
+
 ![Rejestracja w toku](assets/screenshots/pl/enroll-progress.png){ .shot }
 
 Panel na dole okna mówi, co zrobić z kluczem, i prowadzi krótki dziennik kroków.

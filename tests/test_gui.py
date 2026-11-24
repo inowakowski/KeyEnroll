@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 from fake_authenticator import FakeAuthenticator
 from keyenroll import DOCS_URL, PROJECT_URL, bulk, i18n
 from keyenroll.config import ConfigStore, Instance
-from keyenroll.fido import enroll
+from keyenroll.fido import enroll, key_apps
 from keyenroll.handover import Handover
 from keyenroll.providers.base import AuthRequired, Credential, DirectoryGroup, DirectoryUser
 from keyenroll.secrets_store import TokenStore
@@ -99,6 +99,8 @@ def wait_until(condition, timeout=10.0):
 @pytest.fixture
 def gui(app, tmp_path, monkeypatch):
     monkeypatch.setattr(enroll, "POLL_INTERVAL", 0.01)
+    # Whatever runs on the test machine, no Yubico Authenticator by default.
+    monkeypatch.setattr(key_apps, "find", lambda: [])
     config = ConfigStore(tmp_path / "config.json")
     config.upsert_instance(Instance(name="Prod", kind="entra", default_profile="default"))
     config.upsert_instance(Instance(name="Lab", kind="okta"))
@@ -1032,6 +1034,73 @@ def test_profile_limits_key_models_and_the_enroll_page_enforces_it(gui, monkeypa
     enroll_page.start.click()
     assert "cannot be read" in shown["boxes"][-1]
     assert not enroll_page.is_running() and "reset" not in key.log
+
+
+def _with_authenticator(monkeypatch, closes: bool):
+    app = key_apps.KeyApp(key_apps.AUTHENTICATOR, [4242])
+    state = {"running": [app], "closed": []}
+    monkeypatch.setattr(key_apps, "find", lambda: list(state["running"]))
+
+    def close(apps):
+        state["closed"].extend(apps)
+        if closes:
+            state["running"] = []
+        return list(state["running"])
+
+    monkeypatch.setattr(key_apps, "close", close)
+    return state
+
+
+def test_running_authenticator_is_closed_before_the_enrollment(gui, monkeypatch):
+    window, ctx, key, source, shown = gui
+    state = _with_authenticator(monkeypatch, closes=True)
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    wait_until(lambda: page.key_combo.currentData() is not None)
+    pick_user(page, "Alice")
+    page.start.click()  # the fixture picks "Close them and continue"
+    assert "Yubico Authenticator" in shown["boxes"][-1]
+    assert [a.pids for a in state["closed"]] == [[4242]]
+    wait_until(lambda: not page.is_running())
+    assert shown["results"]  # enrolled
+
+
+def test_enrollment_does_not_start_when_the_program_cannot_be_closed(gui, monkeypatch):
+    window, ctx, key, source, shown = gui
+    _with_authenticator(monkeypatch, closes=False)
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    wait_until(lambda: page.key_combo.currentData() is not None)
+    pick_user(page, "Alice")
+    page.start.click()
+    assert "Could not close: Yubico Authenticator" in shown["boxes"][-1]
+    assert not page.is_running() and "reset" not in key.log
+
+
+def test_operator_may_continue_with_the_program_running(gui, monkeypatch):
+    window, ctx, key, source, shown = gui
+    state = _with_authenticator(monkeypatch, closes=True)
+
+    def continue_anyway(box):
+        shown["boxes"].append(box.text())
+        wanted = "Continue anyway" if "Yubico Authenticator" in box.text() else None
+        for button in box.buttons():
+            role = box.buttonRole(button)
+            if (wanted and button.text() == wanted) or (
+                not wanted and role == QMessageBox.ButtonRole.AcceptRole
+            ):
+                button.click()
+                break
+        return 0
+
+    monkeypatch.setattr(QMessageBox, "exec", continue_anyway)
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    wait_until(lambda: page.key_combo.currentData() is not None)
+    pick_user(page, "Alice")
+    page.start.click()
+    wait_until(lambda: not page.is_running())
+    assert state["closed"] == [] and shown["results"]
 
 
 def test_an_aaguid_can_be_typed_in_by_hand(gui, monkeypatch):

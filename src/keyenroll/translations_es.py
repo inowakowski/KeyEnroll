@@ -302,6 +302,19 @@ ES = {
         "Se interrumpió la conexión con la llave de seguridad. Cierre otros programas que usen "
         "la llave, como Yubico Authenticator, e inténtelo de nuevo."
     ),
+    "Other security key programs are running": (
+        "Hay otros programas de llaves de seguridad en ejecución"
+    ),
+    "These programs use the security key at the same time and can make the enrollment fail: "
+    "{programs}. Close them before you continue.": (
+        "Estos programas usan la llave de seguridad al mismo tiempo y pueden hacer fallar el "
+        "registro: {programs}. Ciérrelos antes de continuar."
+    ),
+    "Close them and continue": "Cerrarlos y continuar",
+    "Continue anyway": "Continuar de todos modos",
+    "Could not close: {programs}. Close them yourself and try again.": (
+        "No se pudo cerrar: {programs}. Ciérrelos usted mismo e inténtelo de nuevo."
+    ),
     "This security key cannot enforce a minimum PIN length or a forced PIN change "
     "(firmware 5.5+ needed).": (
         "Esta llave de seguridad no puede imponer una longitud mínima del PIN ni un "

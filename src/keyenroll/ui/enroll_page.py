@@ -29,7 +29,7 @@ from ..handover import Handover
 from ..i18n import tr
 from ..providers import AuthRequired
 from .common import AppContext, UserPicker, error_text, run_task
-from .dialogs import ResultDialog
+from .dialogs import ResultDialog, check_key_apps
 from .profile_form import ProfileForm
 from .theme import Card
 from .workers import EnrollWorker, PinPrompt, answer_prompt
@@ -470,7 +470,7 @@ class EnrollPage(QWidget):
         proceed = box.addButton(tr("Enroll"), QMessageBox.ButtonRole.AcceptRole)
         box.addButton(tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
         box.exec()
-        if box.clickedButton() is not proceed:
+        if box.clickedButton() is not proceed or not check_key_apps(self):
             return
 
         self.log.clear()
