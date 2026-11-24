@@ -61,6 +61,120 @@ DE = {
         "Die ersten {count} Benutzer werden angezeigt. Suchen Sie nach den übrigen."
     ),
     "{count} user(s)": "{count} Benutzer",
+    "A lock code is 32 hexadecimal characters (0-9, a-f).": (
+        "Ein Sperrcode besteht aus 32 Hexadezimalzeichen (0-9, a-f)."
+    ),
+    "A lock code is stored on this computer.": (
+        "Auf diesem Computer ist ein Sperrcode gespeichert."
+    ),
+    "Always on: KeyEnroll enrolls keys with it.": (
+        "Immer aktiv: KeyEnroll registriert Schlüssel damit."
+    ),
+    "Application": "Anwendung",
+    "Apply": "Anwenden",
+    "Applying removes the lock.": "Beim Anwenden wird die Sperre entfernt.",
+    "Changing a locked key needs its lock code.": (
+        "Für einen gesperrten Schlüssel ist sein Sperrcode nötig."
+    ),
+    "Configuration lock code": "Sperrcode der Konfiguration",
+    "Copy": "Kopieren",
+    "Enabled applications": "Aktivierte Anwendungen",
+    "Enter…": "Eingeben…",
+    "FIDO U2F (older two-step sign-in)": "FIDO U2F (ältere Zwei-Faktor-Anmeldung)",
+    "FIDO2 (passkeys, sign-in with the identity provider)": (
+        "FIDO2 (Passkeys, Anmeldung beim Identitätsanbieter)"
+    ),
+    "Generate": "Erzeugen",
+    "Its lock code is removed from this computer too. Keys locked with it can then only be "
+    "changed if you kept a copy.": (
+        "Sein Sperrcode wird auch von diesem Computer entfernt. Damit gesperrte Schlüssel lassen "
+        "sich dann nur mit einer aufbewahrten Kopie ändern."
+    ),
+    "Keep a copy of the lock code in your password manager. Without it, keys locked with it can "
+    "no longer be changed.\n\n{code}": (
+        "Bewahren Sie eine Kopie des Sperrcodes im Passwort-Manager auf. Ohne ihn lassen sich "
+        "damit gesperrte Schlüssel nicht mehr ändern.\n\n{code}"
+    ),
+    "Keys locked with the current code can then only be changed with that code. Replace it anyway?": (
+        "Mit dem aktuellen Code gesperrte Schlüssel lassen sich dann nur mit diesem Code ändern. "
+        "Trotzdem ersetzen?"
+    ),
+    "Lock code": "Sperrcode",
+    "Lock code (32 hexadecimal characters):": "Sperrcode (32 Hexadezimalzeichen):",
+    "Lock the configuration with this code": "Konfiguration mit diesem Code sperren",
+    "Manage key": "Schlüssel verwalten",
+    "Manage key…": "Schlüssel verwalten…",
+    "Managing applications needs a YubiKey with firmware 5.0 or newer.": (
+        "Zum Verwalten der Anwendungen ist ein YubiKey mit Firmware 5.0 oder neuer nötig."
+    ),
+    "No lock code": "Kein Sperrcode",
+    "No lock code. Keys are configured without a lock.": (
+        "Kein Sperrcode. Schlüssel werden ohne Sperre konfiguriert."
+    ),
+    "OATH (one-time codes in Yubico Authenticator)": "OATH (Einmalcodes in Yubico Authenticator)",
+    "OTP (Yubico OTP, challenge-response, static password)": (
+        "OTP (Yubico OTP, Challenge-Response, statisches Passwort)"
+    ),
+    "OpenPGP": "OpenPGP",
+    "Optional. In Manage key, it locks which applications are enabled on a key, so that its user "
+    "cannot change them. Keep a copy in a password manager: without the code, locked keys can no "
+    "longer be changed.": (
+        "Optional. Unter Schlüssel verwalten sperrt er, welche Anwendungen auf einem Schlüssel "
+        "aktiv sind, damit der Benutzer das nicht ändern kann. Bewahren Sie eine Kopie im "
+        "Passwort-Manager auf: Ohne den Code lassen sich gesperrte Schlüssel nicht mehr ändern."
+    ),
+    "Optional: choose which applications the key offers, such as PIV or OTP.": (
+        "Optional: Wählen Sie, welche Anwendungen der Schlüssel anbietet, etwa PIV oder OTP."
+    ),
+    "PIV (smart card, certificates)": "PIV (Smartcard, Zertifikate)",
+    "Profile: {name}": "Profil: {name}",
+    "Reading the security key…": "Sicherheitsschlüssel wird gelesen…",
+    "Remove": "Entfernen",
+    "Remove the lock code": "Sperrcode entfernen",
+    "Remove the lock code from this profile and this computer? Keys locked with it can then only "
+    "be changed if you kept a copy.": (
+        "Sperrcode aus diesem Profil und von diesem Computer entfernen? Damit gesperrte "
+        "Schlüssel lassen sich dann nur mit einer aufbewahrten Kopie ändern."
+    ),
+    "Remove the lock? The user will be able to change the applications again.": (
+        "Sperre entfernen? Der Benutzer kann die Anwendungen dann wieder ändern."
+    ),
+    "Replace the lock code": "Sperrcode ersetzen",
+    "Save the profile first.": "Speichern Sie zuerst das Profil.",
+    "Saved. Remove the security key and insert it again for the changes to take effect.": (
+        "Gespeichert. Ziehen Sie den Sicherheitsschlüssel ab und stecken Sie ihn wieder ein, "
+        "damit die Änderungen wirksam werden."
+    ),
+    "The configuration is locked. Choose the profile whose lock code it was locked with.": (
+        "Die Konfiguration ist gesperrt. Wählen Sie das Profil, mit dessen Sperrcode sie "
+        "gesperrt wurde."
+    ),
+    "The configuration is not locked.": "Die Konfiguration ist nicht gesperrt.",
+    "The configuration of this key is locked. Choose the lock code it was locked with.": (
+        "Die Konfiguration dieses Schlüssels ist gesperrt. Wählen Sie den Sperrcode, mit dem sie "
+        "gesperrt wurde."
+    ),
+    "The security key refused the change. The lock code does not match.": (
+        "Der Sicherheitsschlüssel hat die Änderung abgelehnt. Der Sperrcode stimmt nicht."
+    ),
+    "The security key sent an invalid configuration.": (
+        "Der Sicherheitsschlüssel hat eine ungültige Konfiguration gesendet."
+    ),
+    "The user cannot enable the applications again, for example in Yubico Authenticator.": (
+        "Der Benutzer kann die Anwendungen nicht wieder aktivieren, etwa in Yubico Authenticator."
+    ),
+    "This profile has a lock code, but it is not stored on this computer. Enter it to use it here.": (
+        "Dieses Profil hat einen Sperrcode, der aber nicht auf diesem Computer gespeichert ist. "
+        "Geben Sie ihn ein, um ihn hier zu verwenden."
+    ),
+    "This security key does not support managing its applications.": (
+        "Dieser Sicherheitsschlüssel unterstützt das Verwalten seiner Anwendungen nicht."
+    ),
+    "To lock keys, create a lock code on the Profiles page.": (
+        "Um Schlüssel zu sperren, erstellen Sie auf der Seite Profile einen Sperrcode."
+    ),
+    "Writing the configuration…": "Konfiguration wird geschrieben…",
+    "YubiHSM Auth": "YubiHSM Auth",
     "Connected key S/N {serial} was not found at the identity provider "
     "or in the deployment log of this computer.": (
         "Der angeschlossene Schlüssel S/N {serial} wurde weder beim Identitätsanbieter noch im Bereitstellungsprotokoll dieses Computers gefunden."

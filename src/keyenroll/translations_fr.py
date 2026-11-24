@@ -61,6 +61,127 @@ FR = {
         "Affichage des {count} premiers utilisateurs. Recherchez pour trouver les autres."
     ),
     "{count} user(s)": "Utilisateurs\u00a0: {count}",
+    "A lock code is 32 hexadecimal characters (0-9, a-f).": (
+        "Un code de verrouillage comporte 32 caractères hexadécimaux (0-9, a-f)."
+    ),
+    "A lock code is stored on this computer.": (
+        "Un code de verrouillage est enregistré sur cet ordinateur."
+    ),
+    "Always on: KeyEnroll enrolls keys with it.": (
+        "Toujours activé\u00a0: KeyEnroll enregistre les clés avec."
+    ),
+    "Application": "Application",
+    "Apply": "Appliquer",
+    "Applying removes the lock.": "L’application supprime le verrouillage.",
+    "Changing a locked key needs its lock code.": (
+        "Modifier une clé verrouillée nécessite son code de verrouillage."
+    ),
+    "Configuration lock code": "Code de verrouillage de la configuration",
+    "Copy": "Copier",
+    "Enabled applications": "Applications activées",
+    "Enter…": "Saisir…",
+    "FIDO U2F (older two-step sign-in)": "FIDO U2F (ancienne connexion en deux étapes)",
+    "FIDO2 (passkeys, sign-in with the identity provider)": (
+        "FIDO2 (passkeys, connexion au fournisseur d’identité)"
+    ),
+    "Generate": "Générer",
+    "Its lock code is removed from this computer too. Keys locked with it can then only be "
+    "changed if you kept a copy.": (
+        "Son code de verrouillage est aussi supprimé de cet ordinateur. Les clés verrouillées "
+        "avec ne pourront être modifiées que si vous en avez gardé une copie."
+    ),
+    "Keep a copy of the lock code in your password manager. Without it, keys locked with it can "
+    "no longer be changed.\n\n{code}": (
+        "Conservez une copie du code de verrouillage dans votre gestionnaire de mots de passe. "
+        "Sans lui, les clés verrouillées avec ne pourront plus être modifiées.\n\n{code}"
+    ),
+    "Keys locked with the current code can then only be changed with that code. Replace it anyway?": (
+        "Les clés verrouillées avec le code actuel ne pourront être modifiées qu’avec ce code. "
+        "Le remplacer quand même\u00a0?"
+    ),
+    "Lock code": "Code de verrouillage",
+    "Lock code (32 hexadecimal characters):": (
+        "Code de verrouillage (32 caractères hexadécimaux)\u00a0:"
+    ),
+    "Lock the configuration with this code": "Verrouiller la configuration avec ce code",
+    "Manage key": "Gérer la clé",
+    "Manage key…": "Gérer la clé…",
+    "Managing applications needs a YubiKey with firmware 5.0 or newer.": (
+        "La gestion des applications nécessite une YubiKey avec un firmware 5.0 ou plus récent."
+    ),
+    "No lock code": "Aucun code de verrouillage",
+    "No lock code. Keys are configured without a lock.": (
+        "Aucun code de verrouillage. Les clés sont configurées sans verrouillage."
+    ),
+    "OATH (one-time codes in Yubico Authenticator)": (
+        "OATH (codes à usage unique dans Yubico Authenticator)"
+    ),
+    "OTP (Yubico OTP, challenge-response, static password)": (
+        "OTP (Yubico OTP, défi-réponse, mot de passe statique)"
+    ),
+    "OpenPGP": "OpenPGP",
+    "Optional. In Manage key, it locks which applications are enabled on a key, so that its user "
+    "cannot change them. Keep a copy in a password manager: without the code, locked keys can no "
+    "longer be changed.": (
+        "Facultatif. Dans Gérer la clé, il verrouille les applications activées sur une clé, "
+        "afin que son utilisateur ne puisse pas les modifier. Conservez-en une copie dans un "
+        "gestionnaire de mots de passe\u00a0: sans le code, les clés verrouillées ne peuvent "
+        "plus être modifiées."
+    ),
+    "Optional: choose which applications the key offers, such as PIV or OTP.": (
+        "Facultatif\u00a0: choisissez les applications proposées par la clé, comme PIV ou OTP."
+    ),
+    "PIV (smart card, certificates)": "PIV (carte à puce, certificats)",
+    "Profile: {name}": "Profil\u00a0: {name}",
+    "Reading the security key…": "Lecture de la clé de sécurité…",
+    "Remove": "Supprimer",
+    "Remove the lock code": "Supprimer le code de verrouillage",
+    "Remove the lock code from this profile and this computer? Keys locked with it can then only "
+    "be changed if you kept a copy.": (
+        "Supprimer le code de verrouillage de ce profil et de cet ordinateur\u00a0? Les clés "
+        "verrouillées avec ne pourront être modifiées que si vous en avez gardé une copie."
+    ),
+    "Remove the lock? The user will be able to change the applications again.": (
+        "Supprimer le verrouillage\u00a0? L’utilisateur pourra de nouveau modifier les "
+        "applications."
+    ),
+    "Replace the lock code": "Remplacer le code de verrouillage",
+    "Save the profile first.": "Enregistrez d’abord le profil.",
+    "Saved. Remove the security key and insert it again for the changes to take effect.": (
+        "Enregistré. Retirez la clé de sécurité et réinsérez-la pour que les modifications "
+        "prennent effet."
+    ),
+    "The configuration is locked. Choose the profile whose lock code it was locked with.": (
+        "La configuration est verrouillée. Choisissez le profil dont le code a servi à la "
+        "verrouiller."
+    ),
+    "The configuration is not locked.": "La configuration n’est pas verrouillée.",
+    "The configuration of this key is locked. Choose the lock code it was locked with.": (
+        "La configuration de cette clé est verrouillée. Choisissez le code qui a servi à la "
+        "verrouiller."
+    ),
+    "The security key refused the change. The lock code does not match.": (
+        "La clé de sécurité a refusé la modification. Le code de verrouillage ne correspond pas."
+    ),
+    "The security key sent an invalid configuration.": (
+        "La clé de sécurité a envoyé une configuration non valide."
+    ),
+    "The user cannot enable the applications again, for example in Yubico Authenticator.": (
+        "L’utilisateur ne peut pas réactiver les applications, par exemple dans Yubico "
+        "Authenticator."
+    ),
+    "This profile has a lock code, but it is not stored on this computer. Enter it to use it here.": (
+        "Ce profil a un code de verrouillage, mais il n’est pas enregistré sur cet ordinateur. "
+        "Saisissez-le pour l’utiliser ici."
+    ),
+    "This security key does not support managing its applications.": (
+        "Cette clé de sécurité ne permet pas de gérer ses applications."
+    ),
+    "To lock keys, create a lock code on the Profiles page.": (
+        "Pour verrouiller des clés, créez un code de verrouillage sur la page Profils."
+    ),
+    "Writing the configuration…": "Écriture de la configuration…",
+    "YubiHSM Auth": "YubiHSM Auth",
     "Connected key S/N {serial} was not found at the identity provider "
     "or in the deployment log of this computer.": (
         "La clé connectée S/N {serial} est introuvable chez le fournisseur d’identité et dans le journal de déploiement de cet ordinateur."

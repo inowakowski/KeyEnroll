@@ -580,6 +580,100 @@ def test_profile_of_a_user_says_when_the_provider_cannot_list_keys(gui):
     dialog.deleteLater()
 
 
+def test_manage_key_switches_applications_off_and_locks_with_a_profile_code(gui, monkeypatch):
+    from keyenroll import lock_codes
+    from keyenroll.fido.management import Capability
+    from keyenroll.ui import manage_key
+
+    window, ctx, key, source, shown = gui
+    # A lock code for the "default" profile, made on the Profiles page.
+    window.nav.setCurrentRow(3)
+    profiles = window.pages.currentWidget()
+    profiles._select("default")
+    profiles.lock_code.generate.click()
+    assert "lock code" in shown["boxes"][-1].lower()
+    profile = ctx.config.profile("default")
+    code = lock_codes.get(ctx.tokens, profile)
+    assert code is not None and profile.lock_code_id
+    assert profiles.form.profile("default").lock_code_id == profile.lock_code_id
+
+    dialogs = []
+
+    def drive(dialog):
+        dialogs.append(dialog)
+        wait_until(lambda: dialog.apply.isEnabled())
+        assert dialog.usb_boxes[Capability.PIV].isChecked()
+        assert not dialog.usb_boxes[Capability.FIDO2].isEnabled()  # always on
+        dialog.usb_boxes[Capability.PIV].setChecked(False)
+        dialog.nfc_boxes[Capability.OTP].setChecked(False)
+        dialog.code_choice.setCurrentIndex(dialog.code_choice.findData("default"))
+        dialog.lock.setChecked(True)
+        dialog.apply.click()
+        wait_until(lambda: dialog.applied)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(manage_key.ManageKeyDialog, "exec", drive)
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    wait_until(lambda: page.key_combo.currentData() is not None)
+    page.key_manage.click()
+
+    assert dialogs and dialogs[0].applied
+    assert not key.usb_enabled & Capability.PIV and key.usb_enabled & Capability.FIDO2
+    assert not key.nfc_enabled & Capability.OTP and key.nfc_enabled & Capability.PIV
+    assert key.lock_code == code
+    assert "insert it again" in shown["boxes"][-1]
+
+    from keyenroll.journal import journal_dir
+
+    rows = "".join(p.read_text(encoding="utf-8-sig") for p in journal_dir(ctx.config.path).iterdir())
+    assert "configured" in rows and "configuration locked" in rows and "PIV" in rows
+
+
+def test_manage_key_needs_the_code_of_a_locked_key(gui, monkeypatch):
+    from keyenroll.ui import manage_key
+
+    window, ctx, key, source, shown = gui
+    key.lock_code = bytes(range(1, 17))  # locked elsewhere; no profile has the code
+    seen = []
+
+    def drive(dialog):
+        wait_until(lambda: dialog.apply.isEnabled())
+        seen.append((dialog.state.text(), dialog.lock_note.text(), dialog.lock.isEnabled()))
+        dialog.apply.click()
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(manage_key.ManageKeyDialog, "exec", drive)
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    wait_until(lambda: page.key_combo.currentData() is not None)
+    page.key_manage.click()
+    state, note, can_lock = seen[0]
+    assert "locked" in state and "needs its lock code" in note and not can_lock
+    assert "needs its lock code" in shown["boxes"][-1]
+    assert key.config_writes == []
+
+
+def test_manage_key_explains_a_key_that_cannot_be_managed(gui, monkeypatch):
+    from keyenroll.ui import manage_key
+
+    window, ctx, key, source, shown = gui
+    key.management = False
+    seen = []
+
+    def drive(dialog):
+        wait_until(lambda: "does not support" in dialog.state.text())
+        seen.append(dialog.apply.isEnabled())
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(manage_key.ManageKeyDialog, "exec", drive)
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    wait_until(lambda: page.key_combo.currentData() is not None)
+    page.key_manage.click()
+    assert seen == [False]
+
+
 def test_profiles_page_saves_and_enroll_page_follows(gui):
     window, ctx, key, source, shown = gui
     window.nav.setCurrentRow(3)

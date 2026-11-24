@@ -67,6 +67,7 @@ class ProfileForm(QWidget):
         self._models: list[dict[str, str]] = []
         self._min_firmware = ""
         self._unknown_firmware = "refuse"
+        self._lock_code_id = ""
 
         self.random_pin.toggled.connect(self.random_len.setEnabled)
         for box in (self.reset, self.random_pin, self.force_change, self.always_uv, self.ea,
@@ -90,7 +91,12 @@ class ProfileForm(QWidget):
         self._models = [dict(m) for m in p.allowed_models]
         self._min_firmware = p.min_firmware
         self._unknown_firmware = p.unknown_firmware
+        self._lock_code_id = p.lock_code_id
         self.blockSignals(False)
+
+    def set_lock_code_id(self, lock_code_id: str) -> None:
+        """The lock code is saved apart from the form; keep the form in step."""
+        self._lock_code_id = lock_code_id
 
     def profile(self, name: str = "") -> Profile:
         return Profile(
@@ -106,6 +112,7 @@ class ProfileForm(QWidget):
             allowed_models=[dict(m) for m in self._models],
             min_firmware=self._min_firmware,
             unknown_firmware=self._unknown_firmware,
+            lock_code_id=self._lock_code_id,
         )
 
 

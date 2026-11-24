@@ -136,6 +136,10 @@ class Journal:
     ) -> bool:
         return self.write(self._entry(user, key, result="failed", message=_message(exc)))
 
+    def configured(self, key: KeyInfo, message: str) -> bool:
+        """Applications of a key changed in Manage key."""
+        return self.write(self._entry(None, key, result="configured", message=message))
+
     def deleted(self, user: DirectoryUser, credential: Credential) -> bool:
         """A credential removed on the Credentials page: the key it was on no
         longer belongs to the user (see ``last_key_owner``)."""

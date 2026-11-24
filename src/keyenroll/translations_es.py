@@ -61,6 +61,119 @@ ES = {
         "Se muestran los primeros {count} usuarios. Busque para encontrar los demás."
     ),
     "{count} user(s)": "Usuarios: {count}",
+    "A lock code is 32 hexadecimal characters (0-9, a-f).": (
+        "Un código de bloqueo tiene 32 caracteres hexadecimales (0-9, a-f)."
+    ),
+    "A lock code is stored on this computer.": "Hay un código de bloqueo guardado en este equipo.",
+    "Always on: KeyEnroll enrolls keys with it.": (
+        "Siempre activado: KeyEnroll registra las llaves con él."
+    ),
+    "Application": "Aplicación",
+    "Apply": "Aplicar",
+    "Applying removes the lock.": "Al aplicar se quitará el bloqueo.",
+    "Changing a locked key needs its lock code.": (
+        "Para cambiar una llave bloqueada se necesita su código de bloqueo."
+    ),
+    "Configuration lock code": "Código de bloqueo de la configuración",
+    "Copy": "Copiar",
+    "Enabled applications": "Aplicaciones activadas",
+    "Enter…": "Introducir…",
+    "FIDO U2F (older two-step sign-in)": "FIDO U2F (inicio de sesión en dos pasos antiguo)",
+    "FIDO2 (passkeys, sign-in with the identity provider)": (
+        "FIDO2 (passkeys, inicio de sesión con el proveedor de identidad)"
+    ),
+    "Generate": "Generar",
+    "Its lock code is removed from this computer too. Keys locked with it can then only be "
+    "changed if you kept a copy.": (
+        "Su código de bloqueo también se elimina de este equipo. Las llaves bloqueadas con él "
+        "solo podrán cambiarse si guardó una copia."
+    ),
+    "Keep a copy of the lock code in your password manager. Without it, keys locked with it can "
+    "no longer be changed.\n\n{code}": (
+        "Guarde una copia del código de bloqueo en su gestor de contraseñas. Sin él, las llaves "
+        "bloqueadas con él ya no podrán cambiarse.\n\n{code}"
+    ),
+    "Keys locked with the current code can then only be changed with that code. Replace it anyway?": (
+        "Las llaves bloqueadas con el código actual solo podrán cambiarse con ese código. "
+        "¿Reemplazarlo igualmente?"
+    ),
+    "Lock code": "Código de bloqueo",
+    "Lock code (32 hexadecimal characters):": "Código de bloqueo (32 caracteres hexadecimales):",
+    "Lock the configuration with this code": "Bloquear la configuración con este código",
+    "Manage key": "Gestionar llave",
+    "Manage key…": "Gestionar llave…",
+    "Managing applications needs a YubiKey with firmware 5.0 or newer.": (
+        "Gestionar las aplicaciones requiere una YubiKey con firmware 5.0 o posterior."
+    ),
+    "No lock code": "Sin código de bloqueo",
+    "No lock code. Keys are configured without a lock.": (
+        "Sin código de bloqueo. Las llaves se configuran sin bloqueo."
+    ),
+    "OATH (one-time codes in Yubico Authenticator)": (
+        "OATH (códigos de un solo uso en Yubico Authenticator)"
+    ),
+    "OTP (Yubico OTP, challenge-response, static password)": (
+        "OTP (Yubico OTP, desafío-respuesta, contraseña estática)"
+    ),
+    "OpenPGP": "OpenPGP",
+    "Optional. In Manage key, it locks which applications are enabled on a key, so that its user "
+    "cannot change them. Keep a copy in a password manager: without the code, locked keys can no "
+    "longer be changed.": (
+        "Opcional. En Gestionar llave bloquea qué aplicaciones están activadas en una llave, "
+        "para que su usuario no pueda cambiarlas. Guarde una copia en un gestor de contraseñas: "
+        "sin el código, las llaves bloqueadas ya no podrán cambiarse."
+    ),
+    "Optional: choose which applications the key offers, such as PIV or OTP.": (
+        "Opcional: elija qué aplicaciones ofrece la llave, como PIV u OTP."
+    ),
+    "PIV (smart card, certificates)": "PIV (tarjeta inteligente, certificados)",
+    "Profile: {name}": "Perfil: {name}",
+    "Reading the security key…": "Leyendo la llave de seguridad…",
+    "Remove": "Quitar",
+    "Remove the lock code": "Quitar el código de bloqueo",
+    "Remove the lock code from this profile and this computer? Keys locked with it can then only "
+    "be changed if you kept a copy.": (
+        "¿Quitar el código de bloqueo de este perfil y de este equipo? Las llaves bloqueadas con "
+        "él solo podrán cambiarse si guardó una copia."
+    ),
+    "Remove the lock? The user will be able to change the applications again.": (
+        "¿Quitar el bloqueo? El usuario podrá volver a cambiar las aplicaciones."
+    ),
+    "Replace the lock code": "Reemplazar el código de bloqueo",
+    "Save the profile first.": "Guarde primero el perfil.",
+    "Saved. Remove the security key and insert it again for the changes to take effect.": (
+        "Guardado. Retire la llave de seguridad y vuelva a insertarla para que se apliquen los "
+        "cambios."
+    ),
+    "The configuration is locked. Choose the profile whose lock code it was locked with.": (
+        "La configuración está bloqueada. Elija el perfil con cuyo código se bloqueó."
+    ),
+    "The configuration is not locked.": "La configuración no está bloqueada.",
+    "The configuration of this key is locked. Choose the lock code it was locked with.": (
+        "La configuración de esta llave está bloqueada. Elija el código con el que se bloqueó."
+    ),
+    "The security key refused the change. The lock code does not match.": (
+        "La llave de seguridad rechazó el cambio. El código de bloqueo no coincide."
+    ),
+    "The security key sent an invalid configuration.": (
+        "La llave de seguridad envió una configuración no válida."
+    ),
+    "The user cannot enable the applications again, for example in Yubico Authenticator.": (
+        "El usuario no podrá volver a activar las aplicaciones, por ejemplo en Yubico "
+        "Authenticator."
+    ),
+    "This profile has a lock code, but it is not stored on this computer. Enter it to use it here.": (
+        "Este perfil tiene un código de bloqueo, pero no está guardado en este equipo. "
+        "Introdúzcalo para usarlo aquí."
+    ),
+    "This security key does not support managing its applications.": (
+        "Esta llave de seguridad no admite gestionar sus aplicaciones."
+    ),
+    "To lock keys, create a lock code on the Profiles page.": (
+        "Para bloquear llaves, cree un código de bloqueo en la página Perfiles."
+    ),
+    "Writing the configuration…": "Escribiendo la configuración…",
+    "YubiHSM Auth": "YubiHSM Auth",
     "Connected key S/N {serial} was not found at the identity provider "
     "or in the deployment log of this computer.": (
         "La llave conectada S/N {serial} no se encontró en el proveedor de identidad ni en el registro de despliegue de este equipo."

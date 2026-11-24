@@ -15,9 +15,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .. import lock_codes
 from ..config import Profile
 from ..i18n import N_, tr
 from .common import AppContext
+from .lock_code import LockCodeEditor
 from .profile_form import KeyModelsEditor, ProfileForm
 from .theme import Card
 
@@ -65,6 +67,18 @@ class ProfilesPage(QWidget):
         )
         models_box.body.addWidget(self.models)
 
+        self.lock_code = LockCodeEditor(ctx)
+        self.lock_code.changed.connect(self.form.set_lock_code_id)
+        lock_box = Card(
+            tr("Configuration lock code"),
+            tr(
+                "Optional. In Manage key, it locks which applications are enabled on "
+                "a key, so that its user cannot change them. Keep a copy in a password "
+                "manager: without the code, locked keys can no longer be changed."
+            ),
+        )
+        lock_box.body.addWidget(self.lock_code)
+
         # Both cards can be taller than a small window: let them scroll.
         right_host = QWidget()
         right = QVBoxLayout(right_host)
@@ -72,6 +86,7 @@ class ProfilesPage(QWidget):
         right.setSpacing(14)
         right.addWidget(box)
         right.addWidget(models_box)
+        right.addWidget(lock_box)
         right.addStretch(1)
         scroll = QScrollArea()
         scroll.setObjectName("plain")
@@ -111,6 +126,7 @@ class ProfilesPage(QWidget):
         self.name.setText(profile.name)
         self.form.set_profile(profile)
         self.models.set_profile(profile)
+        self.lock_code.set_profile(profile.name)
         self.delete.setEnabled(True)
 
     def _new(self) -> None:
@@ -121,6 +137,7 @@ class ProfilesPage(QWidget):
         self.name.setText("")
         self.form.set_profile(Profile())
         self.models.set_profile(Profile())
+        self.lock_code.set_profile(None)
         self.delete.setEnabled(False)
         self.name.setFocus()
 
@@ -140,11 +157,18 @@ class ProfilesPage(QWidget):
     def _delete(self) -> None:
         if self._editing is None:
             return
-        answer = QMessageBox.question(
-            self, tr("Delete profile"), tr("Delete profile '{name}'?", name=self._editing)
-        )
+        profile = self.ctx.config.profile(self._editing)
+        text = tr("Delete profile '{name}'?", name=self._editing)
+        if profile is not None and profile.lock_code_id:
+            text += "\n\n" + tr(
+                "Its lock code is removed from this computer too. Keys locked with it "
+                "can then only be changed if you kept a copy."
+            )
+        answer = QMessageBox.question(self, tr("Delete profile"), text)
         if answer != QMessageBox.StandardButton.Yes:
             return
+        if profile is not None:
+            lock_codes.forget(self.ctx.tokens, profile)
         self.ctx.config.delete_profile(self._editing)
         self._reload()
         self.ctx.profiles_changed.emit()
