@@ -125,3 +125,76 @@ def test_okta_answers_itself_and_falls_back_to_the_log(tmp_path):
 
     unknown = find_owners(okta, tmp_path, "Prod", 1234567)
     assert unknown.users == [] and unknown.provider_records
+
+
+# -- serial numbers in the key names (Entra ID, PingOne) -----------------------
+
+
+class Directory(Provider):
+    serials_in_key_names = True
+
+    def __init__(self, credentials, fail_for=()):
+        super().__init__(credentials)
+        self.fail_for = set(fail_for)
+        self.listed = 0
+        self.read = []
+
+    def list_users(self):
+        self.listed += 1
+        return [ALICE, BOB]
+
+    def list_credentials(self, user):
+        self.read.append(user.id)
+        if user.id in self.fail_for:
+            raise ProviderError("HTTP 403 – forbidden", 403)
+        return super().list_credentials(user)
+
+
+def test_the_index_finds_a_key_enrolled_anywhere(tmp_path):
+    from keyenroll.key_lookup import KeyIndex
+
+    provider = Directory({
+        "u1": [Credential("m1", "YubiKey 5 NFC")],
+        "u2": [Credential("m2", "Serial: 23851693", serial="23851693")],
+    })  # fmt: skip
+    index = KeyIndex(provider)
+    found = find_owners(provider, tmp_path, "Prod", 23851693, index)  # nothing in the log
+    assert found.users == [BOB] and found.confirmed
+
+    # Read once, then reused.
+    assert find_owners(provider, tmp_path, "Prod", 11111111, index).searched_provider
+    assert provider.listed == 1 and sorted(provider.read) == ["u1", "u2"]
+
+
+def test_the_index_is_read_again_when_old_and_follows_changes_made_here(tmp_path):
+    from keyenroll.key_lookup import KeyIndex
+
+    provider = Directory({"u2": [Credential("m2", "YubiKey 23851693", serial="23851693")]})
+    index = KeyIndex(provider, max_age=3600)
+    assert index.owners(23851693) == [BOB]
+    index.remove(23851693, BOB)  # deleted on the Credentials page
+    index.add(32445513, ALICE)  # enrolled on the Enroll page
+    assert index.owners(23851693) == [] and index.owners(32445513) == [ALICE]
+    assert provider.listed == 1
+
+    index.max_age = -1  # too old now
+    assert index.owners(23851693) == [BOB]
+    assert provider.listed == 2
+
+
+def test_a_user_whose_keys_cannot_be_read_does_not_stop_the_index(tmp_path):
+    from keyenroll.key_lookup import KeyIndex
+
+    provider = Directory(
+        {"u2": [Credential("m2", "YubiKey 23851693", serial="23851693")]}, fail_for={"u1"}
+    )
+    assert KeyIndex(provider).owners(23851693) == [BOB]
+
+
+def test_the_log_still_helps_when_the_name_has_no_serial(tmp_path):
+    from keyenroll.key_lookup import KeyIndex
+
+    provider = Directory({"u1": [Credential("m1", "Alice's key")]})
+    enrolled(tmp_path, ALICE, 32445513)
+    found = find_owners(provider, tmp_path, "Prod", 32445513, KeyIndex(provider))
+    assert found.users == [ALICE] and not found.confirmed

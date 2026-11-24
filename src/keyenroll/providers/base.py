@@ -109,14 +109,15 @@ class Registration:
     state: dict[str, Any] = field(default_factory=dict)
 
 
-_SERIAL_AT_END = re.compile(r"(?:^|\s)(\d{6,10})$")
+# A YubiKey serial number standing on its own in a key's name: "YubiKey
+# 32445513" (what KeyEnroll writes), "Serial: 23851693", "5C NFC (23851693)".
+_SERIAL = re.compile(r"(?<![\d.])(\d{6,10})(?![\d.])")
 
 
 def serial_in_name(name: str) -> str:
-    """The serial number KeyEnroll appends to a key's name ("YubiKey 32445513",
-    see compose_key_name), or an empty string."""
-    match = _SERIAL_AT_END.search(name.strip())
-    return match.group(1) if match else ""
+    """The last serial-number-like number in a key's name, or an empty string."""
+    found = _SERIAL.findall(name)
+    return found[-1] if found else ""
 
 
 def b64url_encode(data: bytes) -> str:
@@ -180,6 +181,9 @@ class Provider:
     supports_credential_delete: ClassVar[bool] = True
     max_display_name: ClassVar[int | None] = None  # limit for credential names
     supports_groups: ClassVar[bool] = False
+    # The names of the users' keys may carry their serial numbers, so the
+    # owner of a key can be found by reading every user's keys.
+    serials_in_key_names: ClassVar[bool] = False
     supports_nested_groups: ClassVar[bool] = False
     # Settings that can change without the saved sign-in going anywhere else.
     # A change to any other setting (a host, a tenant, a client ID) makes the

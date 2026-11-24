@@ -220,6 +220,9 @@ class CredentialsPage(QWidget):
         def deleted(_) -> None:
             # Recorded so that the key is no longer suggested as this user's.
             self.ctx.journal(provider, "").deleted(user, cred)
+            index = self.ctx.key_index()
+            if index is not None:
+                index.remove(cred.serial, user)
             self._owners.reset()
             self._watcher.rescan()
             self._load(user)

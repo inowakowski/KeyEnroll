@@ -33,7 +33,7 @@ from ..fido.devices import DeviceSource
 from ..fido.enroll import EnrollError
 from ..i18n import tr
 from ..journal import Journal, JournalContext, journal_dir
-from ..key_lookup import find_owners
+from ..key_lookup import KeyIndex, find_owners
 from ..oauth import OAuthError
 from ..providers import AuthRequired, DirectoryUser, Provider, ProviderError, create_provider
 from ..providers.base import MAX_LISTED_USERS, ProviderNotice
@@ -75,6 +75,7 @@ class AppContext(QObject):
         self.source = source or DeviceSource()
         self._factory = provider_factory
         self._providers: dict[str, Provider] = {}
+        self._key_indexes: dict[str, KeyIndex] = {}
         self._busy = False
         # Temporary PINs on the bulk list that were not exported yet.
         self.unexported_pins = False
@@ -106,6 +107,23 @@ class AppContext(QObject):
 
     def forget_provider(self, instance_id: str) -> None:
         self._providers.pop(instance_id, None)
+        self._key_indexes.pop(instance_id, None)
+
+    def key_index(self) -> KeyIndex | None:
+        """The serial numbers in the key names of the active instance's users,
+        where the provider keeps them there (Entra ID, PingOne)."""
+        instance = self.config.active_instance
+        provider = self.provider
+        if (
+            instance is None
+            or not getattr(provider, "serials_in_key_names", False)
+            or not getattr(provider, "supports_credential_list", False)
+        ):
+            return None
+        index = self._key_indexes.get(instance.id)
+        if index is None or index.provider is not provider:
+            index = self._key_indexes[instance.id] = KeyIndex(provider)
+        return index
 
     @property
     def busy(self) -> bool:
@@ -388,7 +406,8 @@ def owner_search(ctx: AppContext):
     instance = ctx.config.active_instance
     name = instance.name if instance else ""
     folder = journal_dir(ctx.config.path)
-    return lambda serial: find_owners(provider, folder, name, serial)
+    index = ctx.key_index()
+    return lambda serial: find_owners(provider, folder, name, serial, index)
 
 
 class UserPicker(QWidget):

@@ -61,6 +61,10 @@ FR = {
         "Affichage des {count} premiers utilisateurs. Recherchez pour trouver les autres."
     ),
     "{count} user(s)": "Utilisateurs\u00a0: {count}",
+    "Connected key S/N {serial} was not found at the identity provider "
+    "or in the deployment log of this computer.": (
+        "La clé connectée S/N {serial} est introuvable chez le fournisseur d’identité et dans le journal de déploiement de cet ordinateur."
+    ),
     "Double-click a user to see their security keys.": (
         "Double-cliquez sur un utilisateur pour voir ses clés de sécurité."
     ),

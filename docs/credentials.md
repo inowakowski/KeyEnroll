@@ -48,15 +48,22 @@ reader do not report it) and finds its owner, with every identity provider:
 
 1. **Okta** with a [profile attribute for serial numbers](providers.md#key-serial-numbers)
    answers itself.
-2. Otherwise the [deployment log](data.md) of this computer says whom the key was
-   last enrolled for. KeyEnroll then asks the provider whether that user still has
-   it: Entra ID and PingOne keep the serial number in the key's name when
-   *Add the serial number to the key name* was on during the enrollment.
+2. **Entra ID and PingOne** keep the serial number in the key's name, for example
+   *YubiKey 23851693* (KeyEnroll with *Add the serial number to the key name*) or
+   *Serial: 23851693* (other tools). Neither can search key names across the
+   directory, so the first lookup reads the keys of every user, up to 5000, and
+   KeyEnroll keeps that list for 15 minutes; enrollments and deletions made in
+   KeyEnroll update it at once. This finds keys enrolled from any computer or
+   tool. In a large directory the first lookup takes a while.
+3. Otherwise the [deployment log](data.md) of this computer says whom the key was
+   last enrolled for, and KeyEnroll asks the provider whether that user still has
+   it.
 
 | Banner | Meaning |
 |---|---|
 | *… belongs to: Alice Example* | Confirmed by the identity provider. |
 | *According to the deployment log, … belongs to: Alice Example* | Only the log says so: the provider cannot tell the user's keys apart (no serial number in their names), or does not list them (PingOne Advanced Identity Cloud). |
+| *… was not found at the identity provider or in the deployment log of this computer* | Entra ID or PingOne: no key name carries this serial number, and this computer did not enroll it. |
 | *… is not in the deployment log of this computer* | The key was never enrolled from this computer with this instance, or it was deleted on this page since. |
 | *… is not assigned to any user* | Okta with the attribute: nobody has the key. |
 

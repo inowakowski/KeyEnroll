@@ -41,6 +41,7 @@ class EntraProvider(Provider):
     label = "Microsoft Entra ID"
     max_display_name = MAX_DISPLAY_NAME
     supports_groups = True
+    serials_in_key_names = True
     supports_nested_groups = True
     fields = [
         FieldSpec("tenant_id", N_("Directory (tenant) ID")),

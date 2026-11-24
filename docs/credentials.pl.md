@@ -50,15 +50,23 @@ NFC go nie podają) i znajduje właściciela, u każdego dostawcy tożsamości:
 
 1. **Okta** z [atrybutem profilu na numery seryjne](providers.md#key-serial-numbers)
    odpowiada sama.
-2. W pozostałych przypadkach [dziennik wdrożeń](data.md) tego komputera mówi, dla
-   kogo klucz zarejestrowano ostatnio. KeyEnroll pyta potem dostawcę, czy ten
-   użytkownik nadal go ma: Entra ID i PingOne przechowują numer seryjny w nazwie
-   klucza, jeśli przy rejestracji było włączone *Dodaj numer seryjny do nazwy klucza*.
+2. **Entra ID i PingOne** przechowują numer seryjny w nazwie klucza, np. *YubiKey
+   23851693* (KeyEnroll z opcją *Dodaj numer seryjny do nazwy klucza*) albo *Serial:
+   23851693* (inne narzędzia). Żaden z nich nie wyszukuje nazw kluczy w całym
+   katalogu, więc pierwsze sprawdzenie odczytuje klucze wszystkich użytkowników (do
+   5000), a KeyEnroll trzyma tę listę przez 15 minut; rejestracje i usunięcia
+   zrobione w KeyEnroll aktualizują ją od razu. Tak znajdują się klucze
+   zarejestrowane z dowolnego komputera i dowolnym narzędziem. W dużym katalogu
+   pierwsze sprawdzenie trwa dłuższą chwilę.
+3. W pozostałych przypadkach [dziennik wdrożeń](data.md) tego komputera mówi, dla
+   kogo klucz zarejestrowano ostatnio, a KeyEnroll pyta dostawcę, czy ten
+   użytkownik nadal go ma.
 
 | Baner | Znaczenie |
 |---|---|
 | *… należy do: Alicja Przykład* | Potwierdzone przez dostawcę tożsamości. |
 | *Według dziennika wdrożeń … należy do: Alicja Przykład* | Mówi tak tylko dziennik: dostawca nie odróżnia kluczy użytkownika (brak numeru w nazwach) albo ich nie udostępnia (PingOne Advanced Identity Cloud). |
+| *… nie znaleziono u dostawcy tożsamości ani w dzienniku wdrożeń tego komputera* | Entra ID lub PingOne: żadna nazwa klucza nie zawiera tego numeru, a ten komputer go nie rejestrował. |
 | *… nie ma w dzienniku wdrożeń tego komputera* | Klucza nigdy nie rejestrowano z tego komputera w tej instancji albo usunięto go od tego czasu na tej stronie. |
 | *… nie jest przypisany do żadnego użytkownika* | Okta z atrybutem: nikt nie ma tego klucza. |
 

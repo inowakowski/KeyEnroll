@@ -28,6 +28,7 @@ from ..fido.enroll import EnrollCancelled, EnrollResult, compose_key_name, model
 from ..handover import Handover
 from ..i18n import tr
 from ..providers import AuthRequired
+from ..providers.base import serial_in_name
 from .common import AppContext, UserPicker, error_text, run_task
 from .dialogs import ResultDialog, check_key_apps
 from .key_owners import KeyOwners, OwnerBanner, owner_text
@@ -555,6 +556,10 @@ class EnrollPage(QWidget):
         self._finish()
         if self._journal is not None:
             self._journal.enrolled(result)
+        index = self.ctx.key_index()
+        serial = result.key.serial
+        if index is not None and serial and serial_in_name(result.display_name) == str(serial):
+            index.add(serial, result.user)
         self.step.setText(tr("The security key has been enrolled."))
         handover = handover_from_result(result, self._provider_label)
         ResultDialog(handover, self.ctx.config, self).exec()

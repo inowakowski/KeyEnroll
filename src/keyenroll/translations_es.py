@@ -61,6 +61,10 @@ ES = {
         "Se muestran los primeros {count} usuarios. Busque para encontrar los demás."
     ),
     "{count} user(s)": "Usuarios: {count}",
+    "Connected key S/N {serial} was not found at the identity provider "
+    "or in the deployment log of this computer.": (
+        "La llave conectada S/N {serial} no se encontró en el proveedor de identidad ni en el registro de despliegue de este equipo."
+    ),
     "Double-click a user to see their security keys.": (
         "Haga doble clic en un usuario para ver sus llaves de seguridad."
     ),

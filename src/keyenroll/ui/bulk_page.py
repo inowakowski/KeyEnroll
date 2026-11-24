@@ -660,6 +660,9 @@ class BulkPage(QWidget):
 
     def _finished(self, exc) -> None:
         self._end()
+        index = self.ctx.key_index()
+        if index is not None:
+            index.forget()  # many keys changed hands: read them again when needed
         if exc is not None:
             self._report(exc)
 
