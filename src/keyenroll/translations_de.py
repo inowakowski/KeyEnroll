@@ -51,7 +51,6 @@ DE = {
     "Username": "Benutzername",
     "Display name": "Anzeigename",
     "E-mail": "E-Mail",
-    "Name, username or e-mail": "Name, Benutzername oder E-Mail",
     "{count} user(s) found": "{count} Benutzer gefunden",
     "Refresh list": "Liste aktualisieren",
     "Clears the search and lists all users again.": (
@@ -62,6 +61,15 @@ DE = {
         "Die ersten {count} Benutzer werden angezeigt. Suchen Sie nach den übrigen."
     ),
     "{count} user(s)": "{count} Benutzer",
+    "According to the deployment log, this key is registered to: {users}": (
+        "Laut Bereitstellungsprotokoll ist dieser Schlüssel registriert für: {users}"
+    ),
+    "According to the deployment log, connected key S/N {serial} belongs to: {users}": (
+        "Laut Bereitstellungsprotokoll gehört der angeschlossene Schlüssel S/N {serial}: {users}"
+    ),
+    "Connected key S/N {serial} is not in the deployment log of this computer.": (
+        "Der angeschlossene Schlüssel S/N {serial} steht nicht im Bereitstellungsprotokoll dieses Computers."
+    ),
     "Show the user's keys": "Schlüssel des Benutzers anzeigen",
     "Show the keys of {user}": "Schlüssel anzeigen: {user}",
     "This key is registered to: {users}": "Dieser Schlüssel ist registriert für: {users}",

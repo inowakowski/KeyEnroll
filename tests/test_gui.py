@@ -449,13 +449,71 @@ def test_credentials_page_says_when_a_connected_key_has_no_owner(gui):
     assert page.owner_banner.buttons() == []
 
 
-def test_no_owner_hint_without_serial_numbers_at_the_provider(gui):
+def log_enrollment(ctx, user, serial):
+    from keyenroll.fido.devices import KeyInfo
+    from keyenroll.fido.enroll import EnrollResult
+    from keyenroll.journal import Journal, JournalContext, journal_dir
+
+    log = Journal(journal_dir(ctx.config.path), JournalContext(instance="Prod", provider="Entra"))
+    key = KeyInfo(key="usb:x", transport="usb", name="YubiKey", serial=serial)
+    log.enrolled(EnrollResult(user=user, key=key, display_name=f"YubiKey {serial}"))
+
+
+def test_owner_of_a_key_comes_from_the_deployment_log_with_any_provider(gui):
+    window, ctx, key, source, shown = gui
+    assert not ctx.provider.records_keys  # an Entra instance
+    key.serial = 32445513
+    log_enrollment(ctx, USERS[1], 32445513)
+    ctx.provider.credentials = [
+        Credential("c2", "YubiKey 32445513", "2026-11-24", "", serial="32445513")
+    ]
+    window.nav.setCurrentRow(2)
+    page = window.pages.currentWidget()
+    # Bob still has a key named with this serial number: confirmed.
+    wait_until(lambda: "belongs to" in banner_text(page.owner_banner))
+    assert "Connected key S/N 32445513 belongs to: Bob Example" in banner_text(page.owner_banner)
+
+    page.owner_banner.buttons()[0].click()
+    wait_until(lambda: selected_data(page.table) is not None)
+    page.delete.click()  # revoked here: the log now says the key is free
+    wait_until(lambda: "not in the deployment log" in banner_text(page.owner_banner))
+
+
+def test_unconfirmed_owner_is_marked_as_coming_from_the_log(gui):
+    window, ctx, key, source, shown = gui
+    key.serial = 32445513
+    log_enrollment(ctx, USERS[0], 32445513)
+    ctx.provider.credentials = [Credential("c1", "Alice's key", "2026-11-24", "")]
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    rescan(page)
+    wait_until(lambda: "deployment log" in banner_text(page.owner_banner))
+    assert (
+        "According to the deployment log, this key is registered to: Alice Example"
+        in banner_text(page.owner_banner)
+    )
+
+
+def test_a_key_missing_from_the_log_is_said_to_be(gui):
     window, ctx, key, source, shown = gui
     key.serial = 32445513
     window.nav.setCurrentRow(2)
     page = window.pages.currentWidget()
-    wait_until(lambda: page.picker.loaded)
-    assert not page.owner_banner.isVisible()
+    wait_until(lambda: "not in the deployment log" in banner_text(page.owner_banner))
+    assert page.owner_banner.buttons() == []
+
+
+def test_user_search_finds_the_owner_of_a_serial_number_with_any_provider(gui):
+    window, ctx, key, source, shown = gui
+    log_enrollment(ctx, USERS[1], 32445513)
+    ctx.provider.credentials = [Credential("c2", "YubiKey 32445513", "", "", serial="32445513")]
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    assert "key serial number" in page.picker.query.placeholderText()
+    page.picker.query.setText("32445513")
+    page.picker.search()
+    wait_until(lambda: page.picker.table.rowCount() == 1)
+    assert page.picker.selected().display_name == "Bob Example"
 
 
 def test_profiles_page_saves_and_enroll_page_follows(gui):

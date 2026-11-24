@@ -19,7 +19,7 @@ from pathlib import Path
 from .config import append_private, private_dir
 from .fido.devices import KeyInfo
 from .fido.enroll import EnrollError, EnrollResult
-from .providers import DirectoryUser, ProviderError
+from .providers import Credential, DirectoryUser, ProviderError
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +136,15 @@ class Journal:
     ) -> bool:
         return self.write(self._entry(user, key, result="failed", message=_message(exc)))
 
+    def deleted(self, user: DirectoryUser, credential: Credential) -> bool:
+        """A credential removed on the Credentials page: the key it was on no
+        longer belongs to the user (see ``last_key_owner``)."""
+        return self.write(
+            self._entry(
+                user, None, result="deleted", serial=credential.serial, key_name=credential.name
+            )
+        )
+
     def write(self, entry: dict) -> bool:
         """Appends one line. A full disk or a locked file is logged, never
         raised: the enrollment itself has already happened."""
@@ -158,6 +167,42 @@ class Journal:
         except OSError:
             logger.warning("Could not write to the deployment log", exc_info=True)
             return False
+
+
+def last_key_owner(folder: Path, instance: str, serial) -> DirectoryUser | None:
+    """The user the key was last enrolled for with this instance, from this
+    computer's log; None if it was never enrolled here or removed since."""
+    wanted = str(serial)
+    latest: dict | None = None
+    try:
+        paths = sorted(p for p in folder.iterdir() if _FILE.fullmatch(p.name))
+    except OSError:
+        return None
+    for path in paths:
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except OSError:
+            continue
+        for row in csv.DictReader(io.StringIO(text)):
+            if (
+                row.get("serial") == wanted
+                and row.get("instance") == instance
+                and row.get("result") in ("enrolled", "deleted")
+                and (latest is None or (row.get("time") or "") >= (latest.get("time") or ""))
+            ):
+                latest = row
+    if latest is None or latest["result"] != "enrolled" or not latest.get("user_id"):
+        return None
+    return DirectoryUser(
+        id=_plain(latest["user_id"]),
+        username=_plain(latest.get("username") or ""),
+        display_name=_plain(latest.get("display_name") or ""),
+    )
+
+
+def _plain(cell: str) -> str:
+    """Undoes ``safe_cell``."""
+    return cell[1:] if cell.startswith("'") and cell[1:].startswith(_FORMULA_PREFIXES) else cell
 
 
 def prune(folder: Path, months: int, today: datetime | None = None) -> list[Path]:

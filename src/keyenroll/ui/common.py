@@ -33,6 +33,7 @@ from ..fido.devices import DeviceSource
 from ..fido.enroll import EnrollError
 from ..i18n import tr
 from ..journal import Journal, JournalContext, journal_dir
+from ..key_lookup import find_owners
 from ..oauth import OAuthError
 from ..providers import AuthRequired, DirectoryUser, Provider, ProviderError, create_provider
 from ..providers.base import MAX_LISTED_USERS, ProviderNotice
@@ -380,6 +381,16 @@ def selected_data(table: QTableWidget):
     return table.item(rows[0].row(), 0).data(Qt.ItemDataRole.UserRole)
 
 
+def owner_search(ctx: AppContext):
+    """A function, safe to run off the UI thread, that finds who has the key
+    with a serial number with the active instance."""
+    provider = ctx.provider
+    instance = ctx.config.active_instance
+    name = instance.name if instance else ""
+    folder = journal_dir(ctx.config.path)
+    return lambda serial: find_owners(provider, folder, name, serial)
+
+
 class UserPicker(QWidget):
     """Directory search box with a result table.
 
@@ -430,12 +441,7 @@ class UserPicker(QWidget):
         self._update_placeholder()
 
     def _update_placeholder(self) -> None:
-        provider = self.ctx.provider
-        if provider is not None and getattr(provider, "records_keys", False):
-            text = tr("Name, username, e-mail or key serial number")
-        else:
-            text = tr("Name, username or e-mail")
-        self.query.setPlaceholderText(text)
+        self.query.setPlaceholderText(tr("Name, username, e-mail or key serial number"))
 
     def selected(self) -> DirectoryUser | None:
         return selected_data(self.table)
@@ -506,6 +512,20 @@ class UserPicker(QWidget):
             return
         query = self.query.text()
         self.hint.setText(tr("Searching…"))
+        owners = owner_search(self.ctx) if query.strip().isdigit() else None
+
+        def find():
+            users = provider.search_users(query)
+            if owners is None:
+                return users
+            # A number may be the serial number of a key: its owner comes first.
+            try:
+                found = owners(query.strip()).users
+            except Exception:
+                logger.info("Looking up a key owner failed", exc_info=True)
+                found = []
+            known = {u.id for u in found}
+            return found + [u for u in users if u.id not in known]
 
         def done(users):
             self.loaded = False
@@ -514,7 +534,7 @@ class UserPicker(QWidget):
             if len(users) == 1:
                 self.table.selectRow(0)
 
-        self._run(lambda: provider.search_users(query), done)
+        self._run(find, done)
 
     def load_all(self, quiet: bool = False) -> None:
         """Lists every user of the directory, up to MAX_LISTED_USERS; the

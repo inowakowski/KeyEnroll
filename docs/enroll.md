@@ -23,7 +23,7 @@ You have to be [signed in](instances.md#signing-in) to search.
 | Key selector | The connected security keys. A USB key that is plugged in or removed appears or disappears by itself within a couple of seconds. |
 | **Refresh** | Looks for keys again immediately. |
 | **Serial number**, **Firmware** | Read from the key, so that you can check you are holding the right one. Keys of the *Security Key* series do not reveal a serial number. |
-| Status line | The state of the key before enrollment: whether a PIN is set, its minimum PIN length, and whether "always UV", Enterprise Attestation or a forced PIN change are active. With Okta [keeping serial numbers](providers.md#key-serial-numbers), a highlighted banner says who the key is registered to, and **Show the user's keys** opens them on the [Credentials page](credentials.md). |
+| Status line | The state of the key before enrollment: whether a PIN is set, its minimum PIN length, and whether "always UV", Enterprise Attestation or a forced PIN change are active. A highlighted banner says [who the key is registered to](credentials.md#key-owner), and **Show the user's keys** opens them on the [Credentials page](credentials.md). |
 
 Keys on an NFC reader are listed with the mark **NFC**. They are not detected
 automatically: place the key on the reader, then press **Refresh**.

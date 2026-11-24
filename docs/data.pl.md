@@ -114,7 +114,7 @@ zarejestrował który klucz.
 | Kolumna | Zawartość |
 |---|---|
 | `time` | Data i godzina w UTC. |
-| `result`, `mode` | `enrolled` (zarejestrowano) lub `failed` (błąd); `single` (pojedyncza) lub `bulk` (masowa). |
+| `result`, `mode` | `enrolled` (zarejestrowano), `failed` (błąd) lub `deleted` (poświadczenie usunięte na [stronie Poświadczenia](credentials.md)); `single` (pojedyncza) lub `bulk` (masowa). |
 | `instance`, `provider`, `operator` | Gdzie zarejestrowano klucz i które konto administratora było zalogowane, tak jak nazywa je dostawca tożsamości. |
 | `username`, `user_id`, `display_name` | Użytkownik, który dostał klucz. |
 | `serial`, `firmware`, `aaguid`, `key_name` | Klucz: numer seryjny, wersja firmware, model i nazwa, pod którą go zarejestrowano. |

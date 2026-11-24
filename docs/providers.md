@@ -211,15 +211,9 @@ serial number cannot be read (NFC readers, keys of other vendors) are listed as
 
 - The [Credentials page](credentials.md) shows the serial number next to each key.
   Deleting a key there also removes its entry.
-- A **number typed in the user search** is also looked up as a serial number: the
-  user who has that key is listed first. Handy for a lost key.
-- A **plugged-in key** is looked up by itself: the [Credentials page](credentials.md)
-  says who it belongs to and selects its credential, and the
-  [Enroll page](enroll.md) shows the owner in a banner under the key and in the
-  confirmation, so that a key still assigned to someone is not reset by mistake.
-  Both banners have a button that opens the owner's keys.
-  This needs a YubiKey over USB; keys on an NFC reader do not report their serial
-  number.
+- Finding [who a key belongs to](credentials.md#key-owner) works with every
+  provider through the deployment log; with the attribute, Okta answers for keys
+  enrolled from any computer.
 - Entries of keys deleted in the admin console are cleaned up the next time
   KeyEnroll enrolls or deletes a key of that user. Text that KeyEnroll did not
   write is left alone.

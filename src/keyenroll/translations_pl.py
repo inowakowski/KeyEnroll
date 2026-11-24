@@ -50,7 +50,6 @@ PL = {
     "Username": "Nazwa użytkownika",
     "Display name": "Nazwa wyświetlana",
     "E-mail": "E-mail",
-    "Name, username or e-mail": "Imię i nazwisko, nazwa użytkownika lub e-mail",
     "{count} user(s) found": "Znaleziono użytkowników: {count}",
     "Refresh list": "Odśwież listę",
     "Clears the search and lists all users again.": (
@@ -61,6 +60,15 @@ PL = {
         "Wyświetlono pierwszych {count} użytkowników. Pozostałych znajdziesz wyszukiwarką."
     ),
     "{count} user(s)": "Użytkownicy: {count}",
+    "According to the deployment log, this key is registered to: {users}": (
+        "Według dziennika wdrożeń ten klucz jest przypisany do: {users}"
+    ),
+    "According to the deployment log, connected key S/N {serial} belongs to: {users}": (
+        "Według dziennika wdrożeń podłączony klucz S/N {serial} należy do: {users}"
+    ),
+    "Connected key S/N {serial} is not in the deployment log of this computer.": (
+        "Podłączonego klucza S/N {serial} nie ma w dzienniku wdrożeń tego komputera."
+    ),
     "Show the user's keys": "Pokaż klucze użytkownika",
     "Show the keys of {user}": "Pokaż klucze: {user}",
     "This key is registered to: {users}": "Ten klucz jest przypisany do: {users}",

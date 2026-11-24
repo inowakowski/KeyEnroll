@@ -16,12 +16,11 @@ i wczytuje użytkowników ponownie; zaznaczony użytkownik pozostaje zaznaczony.
 wyszukiwanie też pokazuje wszystkich. Przy bardzo dużych katalogach widać pierwszych
 5000 użytkowników; pozostałych znajdziesz wyszukiwarką.
 
-Gdy Okta [przechowuje numery seryjne](providers.md#key-serial-numbers), po
-podłączeniu YubiKeya u góry strony pojawia się wyróżniony baner z informacją, do kogo
-klucz należy, np. *Podłączony klucz S/N 32445513 należy do: Alicja Przykład*.
-**Pokaż klucze użytkownika** zaznacza tego użytkownika, a poświadczenie
-z podłączonego klucza zostaje zaznaczone, gotowe do usunięcia. Ten sam baner na
-[stronie Rejestracja](enroll.md) przenosi tutaj.
+Po podłączeniu YubiKeya u góry strony pojawia się wyróżniony baner z informacją,
+[do kogo klucz należy](#key-owner), np. *Podłączony klucz S/N 32445513 należy do:
+Alicja Przykład*. **Pokaż klucze użytkownika** zaznacza tego użytkownika,
+a poświadczenie z podłączonego klucza zostaje zaznaczone, gotowe do usunięcia. Ten
+sam baner na [stronie Rejestracja](enroll.md) przenosi tutaj.
 
 **Poświadczenia FIDO wybranego użytkownika** (na dole)
 
@@ -43,6 +42,30 @@ z podłączonego klucza zostaje zaznaczone, gotowe do usunięcia. Ten sam baner 
     kluczem. Żeby znów go używać, klucz trzeba zarejestrować od nowa. Usunięcie
     tutaj nie zmienia niczego na samym kluczu: jego PIN i pozostałe poświadczenia
     zostają.
+
+## Do kogo należy klucz { #key-owner }
+
+KeyEnroll odczytuje numer seryjny YubiKeya podłączonego przez USB (klucze na czytniku
+NFC go nie podają) i znajduje właściciela, u każdego dostawcy tożsamości:
+
+1. **Okta** z [atrybutem profilu na numery seryjne](providers.md#key-serial-numbers)
+   odpowiada sama.
+2. W pozostałych przypadkach [dziennik wdrożeń](data.md) tego komputera mówi, dla
+   kogo klucz zarejestrowano ostatnio. KeyEnroll pyta potem dostawcę, czy ten
+   użytkownik nadal go ma: Entra ID i PingOne przechowują numer seryjny w nazwie
+   klucza, jeśli przy rejestracji było włączone *Dodaj numer seryjny do nazwy klucza*.
+
+| Baner | Znaczenie |
+|---|---|
+| *… należy do: Alicja Przykład* | Potwierdzone przez dostawcę tożsamości. |
+| *Według dziennika wdrożeń … należy do: Alicja Przykład* | Mówi tak tylko dziennik: dostawca nie odróżnia kluczy użytkownika (brak numeru w nazwach) albo ich nie udostępnia (PingOne Advanced Identity Cloud). |
+| *… nie ma w dzienniku wdrożeń tego komputera* | Klucza nigdy nie rejestrowano z tego komputera w tej instancji albo usunięto go od tego czasu na tej stronie. |
+| *… nie jest przypisany do żadnego użytkownika* | Okta z atrybutem: nikt nie ma tego klucza. |
+
+Klucz, którego użytkownik już nie ma (usunięty w konsoli albo zresetowany
+i zarejestrowany gdzie indziej dla kogoś innego), nie jest podpowiadany, gdy dostawca
+pokazuje, że wszystkie klucze użytkownika są inne. Liczba wpisana w wyszukiwarkę
+użytkowników jest sprawdzana tak samo.
 
 ## Co obsługują dostawcy
 

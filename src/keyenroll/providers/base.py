@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import re
 import threading
 import time
 from dataclasses import dataclass, field
@@ -106,6 +107,16 @@ class Registration:
     options: dict[str, Any]
     origin: str
     state: dict[str, Any] = field(default_factory=dict)
+
+
+_SERIAL_AT_END = re.compile(r"(?:^|\s)(\d{6,10})$")
+
+
+def serial_in_name(name: str) -> str:
+    """The serial number KeyEnroll appends to a key's name ("YubiKey 32445513",
+    see compose_key_name), or an empty string."""
+    match = _SERIAL_AT_END.search(name.strip())
+    return match.group(1) if match else ""
 
 
 def b64url_encode(data: bytes) -> str:

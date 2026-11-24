@@ -138,13 +138,7 @@ class OktaProvider(Provider):
         if query.strip():
             params["q"] = query.strip()
         data = self._request("GET", f"{self._base}/api/v1/users", params=params).json()
-        users = [self._to_user(u) for u in data]
-        if self.records_keys and query.strip().isdigit():
-            # A number may be the serial number of a key: its owner comes first.
-            owners = self.users_with_key(query.strip())
-            known = {u.id for u in owners}
-            users = owners + [u for u in users if u.id not in known]
-        return users
+        return [self._to_user(u) for u in data]
 
     def list_users(self, limit: int = MAX_LISTED_USERS) -> list[DirectoryUser]:
         users = self._collect(f"{self._base}/api/v1/users", {"limit": "200"}, self._page, limit)
