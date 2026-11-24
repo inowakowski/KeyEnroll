@@ -61,6 +61,14 @@ FR = {
         "Affichage des {count} premiers utilisateurs. Recherchez pour trouver les autres."
     ),
     "{count} user(s)": "Utilisateurs\u00a0: {count}",
+    "Double-click a user to see their security keys.": (
+        "Double-cliquez sur un utilisateur pour voir ses clés de sécurité."
+    ),
+    "Loading…": "Chargement…",
+    "Open on the Credentials page": "Ouvrir sur la page Identifiants",
+    "Security keys": "Clés de sécurité",
+    "There you can delete a key of the user.": "Vous pouvez y supprimer une clé de l’utilisateur.",
+    "{count} FIDO method(s).": "Méthodes FIDO\u00a0: {count}.",
     "According to the deployment log, this key is registered to: {users}": (
         "D’après le journal de déploiement, cette clé est enregistrée pour\u00a0: {users}"
     ),

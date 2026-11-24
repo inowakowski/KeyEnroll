@@ -516,6 +516,50 @@ def test_user_search_finds_the_owner_of_a_serial_number_with_any_provider(gui):
     assert page.picker.selected().display_name == "Bob Example"
 
 
+def test_double_click_on_a_user_shows_their_profile_and_keys(gui, monkeypatch):
+    from keyenroll.ui import user_dialog
+
+    window, ctx, key, source, shown = gui
+    ctx.provider.credentials = [
+        Credential("c1", "YubiKey 32445513", "2026-11-24", "YubiKey 5 NFC", serial="32445513"),
+        Credential("c2", "Spare key", "2026-01-02", "YubiKey 5C"),
+    ]
+    opened = []
+
+    def capture(dialog):
+        opened.append(dialog)
+        wait_until(lambda: dialog.table.rowCount() == 2)
+        assert column(dialog.table, 1) == ["32445513", ""]
+        assert "2" in dialog.status.text()
+        texts = [w.text() for w in dialog.findChildren(QLabel)]
+        assert "Bob Example" in texts and "bob@example.com" in texts and "u2" in texts
+        dialog.open_credentials.click()
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(user_dialog.UserProfileDialog, "exec", capture)
+    page = window.enroll_page
+    window.nav.setCurrentRow(0)
+    pick_user(page, "Bob")
+    table = page.picker.table
+    table.activated.emit(table.model().index(0, 1))  # what a double click sends
+
+    assert len(opened) == 1
+    credentials = window.credentials_page
+    assert window.pages.currentWidget() is credentials
+    assert credentials.picker.selected().id == "u2"
+
+
+def test_profile_of_a_user_says_when_the_provider_cannot_list_keys(gui):
+    from keyenroll.ui.user_dialog import UserProfileDialog
+
+    window, ctx, key, source, shown = gui
+    ctx.provider.supports_credential_list = False
+    dialog = UserProfileDialog(ctx, USERS[0], window)
+    assert "does not offer an API" in dialog.status.text()
+    assert not dialog.open_credentials.isVisible()
+    dialog.deleteLater()
+
+
 def test_profiles_page_saves_and_enroll_page_follows(gui):
     window, ctx, key, source, shown = gui
     window.nav.setCurrentRow(3)

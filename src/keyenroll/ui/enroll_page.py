@@ -33,6 +33,7 @@ from .dialogs import ResultDialog, check_key_apps
 from .key_owners import KeyOwners, OwnerBanner, owner_text
 from .profile_form import ProfileForm
 from .theme import Card
+from .user_dialog import UserProfileDialog
 from .workers import EnrollWorker, PinPrompt, answer_prompt
 
 KEY_POLL_MS = 2000
@@ -69,6 +70,8 @@ class EnrollPage(QWidget):
         # 1. user
         self.picker = UserPicker(ctx)
         self.picker.selection_changed.connect(self._check_existing)
+        self.picker.activated.connect(self._show_profile)
+        self.picker.table.setToolTip(tr("Double-click a user to see their security keys."))
         self._existing_id = 0
         self.user_note = QLabel()
         self.user_note.setObjectName("hint")
@@ -277,6 +280,9 @@ class EnrollPage(QWidget):
         self._show_key_info()
 
     # -- existing keys of the user -----------------------------------------
+
+    def _show_profile(self, user) -> None:
+        UserProfileDialog(self.ctx, user, self).exec()
 
     def _check_existing(self, user) -> None:
         """Says how many FIDO methods the selected user has already, so that a

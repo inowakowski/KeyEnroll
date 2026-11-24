@@ -61,6 +61,14 @@ IT = {
         "Sono mostrati i primi {count} utenti. Cercare per trovare gli altri."
     ),
     "{count} user(s)": "Utenti: {count}",
+    "Double-click a user to see their security keys.": (
+        "Fare doppio clic su un utente per vedere le sue chiavi di sicurezza."
+    ),
+    "Loading…": "Caricamento…",
+    "Open on the Credentials page": "Apri nella pagina Credenziali",
+    "Security keys": "Chiavi di sicurezza",
+    "There you can delete a key of the user.": "Lì è possibile eliminare una chiave dell’utente.",
+    "{count} FIDO method(s).": "Metodi FIDO: {count}.",
     "According to the deployment log, this key is registered to: {users}": (
         "Secondo il registro delle distribuzioni, questa chiave è registrata per: {users}"
     ),

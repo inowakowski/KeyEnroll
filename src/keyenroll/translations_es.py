@@ -61,6 +61,14 @@ ES = {
         "Se muestran los primeros {count} usuarios. Busque para encontrar los demás."
     ),
     "{count} user(s)": "Usuarios: {count}",
+    "Double-click a user to see their security keys.": (
+        "Haga doble clic en un usuario para ver sus llaves de seguridad."
+    ),
+    "Loading…": "Cargando…",
+    "Open on the Credentials page": "Abrir en la página Credenciales",
+    "Security keys": "Llaves de seguridad",
+    "There you can delete a key of the user.": "Allí puede eliminar una llave del usuario.",
+    "{count} FIDO method(s).": "Métodos FIDO: {count}.",
     "According to the deployment log, this key is registered to: {users}": (
         "Según el registro de despliegue, esta llave está registrada para: {users}"
     ),

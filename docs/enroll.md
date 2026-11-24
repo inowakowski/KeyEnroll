@@ -9,8 +9,8 @@ laid out as three numbered steps and a large button.
 
 | Control | What it is for |
 |---|---|
-| Search field | Type the beginning of a name, user name or e-mail address and press ++enter++ or **Search**. An empty search lists the first users of the directory. |
-| User list | Select the user who will receive the key. Click a column header to sort. |
+| Search field | Type the beginning of a name, user name or e-mail address and press ++enter++ or **Search**. A number is also looked up as a [key serial number](credentials.md#key-owner). An empty search lists the first users of the directory. |
+| User list | Select the user who will receive the key. Click a column header to sort. **Double-click** a user to see their profile and the security keys registered to them (with serial numbers where known); **Open on the Credentials page** takes you there to delete one (since 0.8.1). |
 | Counter below the list | How many users matched. At most 25 are shown, so make the search more specific if the user is missing. |
 | Note under the list | How many FIDO methods the selected user already has, so that a second key is not handed out by mistake (since 0.7.0; not with PingOne AIC). |
 

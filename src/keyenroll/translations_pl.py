@@ -60,6 +60,14 @@ PL = {
         "Wyświetlono pierwszych {count} użytkowników. Pozostałych znajdziesz wyszukiwarką."
     ),
     "{count} user(s)": "Użytkownicy: {count}",
+    "Double-click a user to see their security keys.": (
+        "Kliknij dwukrotnie użytkownika, aby zobaczyć jego klucze bezpieczeństwa."
+    ),
+    "Loading…": "Wczytywanie…",
+    "Open on the Credentials page": "Otwórz na stronie Poświadczenia",
+    "Security keys": "Klucze bezpieczeństwa",
+    "There you can delete a key of the user.": "Tam możesz usunąć klucz użytkownika.",
+    "{count} FIDO method(s).": "Metody FIDO: {count}.",
     "According to the deployment log, this key is registered to: {users}": (
         "Według dziennika wdrożeń ten klucz jest przypisany do: {users}"
     ),

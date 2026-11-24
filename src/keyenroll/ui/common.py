@@ -398,6 +398,8 @@ class UserPicker(QWidget):
     empty search does that, and so does the refresh button."""
 
     selection_changed = Signal(object)
+    # A user was double-clicked (or Enter pressed on them).
+    activated = Signal(object)
 
     def __init__(self, ctx: AppContext, parent: QWidget | None = None, browse: bool = False):
         super().__init__(parent)
@@ -427,6 +429,7 @@ class UserPicker(QWidget):
         self.table.itemSelectionChanged.connect(
             lambda: self.selection_changed.emit(self.selected())
         )
+        self.table.activated.connect(self._activated)
         self.hint = QLabel()
         self.hint.setObjectName("hint")
 
@@ -445,6 +448,11 @@ class UserPicker(QWidget):
 
     def selected(self) -> DirectoryUser | None:
         return selected_data(self.table)
+
+    def _activated(self, index) -> None:
+        user = self.table.item(index.row(), 0).data(Qt.ItemDataRole.UserRole)
+        if user is not None:
+            self.activated.emit(user)
 
     def clear(self) -> None:
         self._search_id += 1  # drop results of a search still in flight

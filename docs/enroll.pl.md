@@ -9,8 +9,8 @@ jednego użytkownika. Składa się z trzech ponumerowanych kroków i dużego prz
 
 | Element | Do czego służy |
 |---|---|
-| Pole wyszukiwania | Wpisz początek imienia, nazwiska, nazwy użytkownika lub adresu e-mail i naciśnij ++enter++ albo **Szukaj**. Puste wyszukiwanie pokazuje pierwszych użytkowników katalogu. |
-| Lista użytkowników | Zaznacz użytkownika, który dostanie klucz. Kliknięcie nagłówka kolumny sortuje listę. |
+| Pole wyszukiwania | Wpisz początek imienia, nazwiska, nazwy użytkownika lub adresu e-mail i naciśnij ++enter++ albo **Szukaj**. Liczba jest też szukana jako [numer seryjny klucza](credentials.md#key-owner). Puste wyszukiwanie pokazuje pierwszych użytkowników katalogu. |
+| Lista użytkowników | Zaznacz użytkownika, który dostanie klucz. Kliknięcie nagłówka kolumny sortuje listę. **Dwuklik** na użytkowniku pokazuje jego profil i przypisane mu klucze bezpieczeństwa (z numerami seryjnymi, gdy są znane); **Otwórz na stronie Poświadczenia** przenosi tam, gdzie można klucz usunąć (od wersji 0.8.1). |
 | Licznik pod listą | Ilu użytkowników znaleziono. Lista pokazuje najwyżej 25 osób, więc jeśli brakuje szukanej, zawęź wyszukiwanie. |
 | Informacja pod listą | Ile metod FIDO ma już zaznaczony użytkownik, żeby nie wydać mu przez pomyłkę drugiego klucza (od wersji 0.7.0; nie dla PingOne AIC). |
 
