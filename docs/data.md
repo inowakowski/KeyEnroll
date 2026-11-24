@@ -110,7 +110,7 @@ whom, and when.
 | Column | Content |
 |---|---|
 | `time` | Date and time in UTC. |
-| `result`, `mode` | `enrolled`, `failed`, or `deleted` (a credential removed on the [Credentials page](credentials.md)); `single` or `bulk`. |
+| `result`, `mode` | `enrolled`, `failed`, `deleted` (a credential removed on the [Credentials page](credentials.md)) or `configured` (applications changed in [Manage key](enroll.md#manage-key)); `single` or `bulk`. |
 | `instance`, `provider`, `operator` | Where the key was registered, and the administrator account that was signed in, as the identity provider names it. |
 | `username`, `user_id`, `display_name` | The user who received the key. |
 | `serial`, `firmware`, `aaguid`, `key_name` | The key: serial number, firmware version, model and the name it was registered under. |

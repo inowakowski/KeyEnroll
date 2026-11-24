@@ -22,11 +22,39 @@ You have to be [signed in](instances.md#signing-in) to search.
 |---|---|
 | Key selector | The connected security keys. A USB key that is plugged in or removed appears or disappears by itself within a couple of seconds. |
 | **Refresh** | Looks for keys again immediately. |
+| **Manage key…** | Optional: [which applications the key offers](#manage-key), such as PIV or OTP. |
 | **Serial number**, **Firmware** | Read from the key, so that you can check you are holding the right one. Keys of the *Security Key* series do not reveal a serial number. |
 | Status line | The state of the key before enrollment: whether a PIN is set, its minimum PIN length, and whether "always UV", Enterprise Attestation or a forced PIN change are active. A highlighted banner says [who the key is registered to](credentials.md#key-owner), and **Show the user's keys** opens them on the [Credentials page](credentials.md). |
 
 Keys on an NFC reader are listed with the mark **NFC**. They are not detected
 automatically: place the key on the reader, then press **Refresh**.
+
+### Manage key { #manage-key }
+
+!!! info "Since version 0.9.0"
+
+Optional, and independent of the enrollment: **Manage key…** opens the applications
+of the selected YubiKey (firmware 5.0 or newer, connected over USB), so that you can
+switch off what its user should not have.
+
+| Application | What it is |
+|---|---|
+| FIDO2 | Passkeys and sign-in with the identity provider. Always on: KeyEnroll enrolls keys with it. |
+| FIDO U2F | Older two-step sign-in. |
+| OTP | Yubico OTP, **challenge-response** and static passwords (the key's two slots). |
+| OATH | One-time codes shown in Yubico Authenticator. |
+| PIV | Smart card: certificates for Windows sign-in, VPN, e-mail signing. |
+| OpenPGP, YubiHSM Auth | Signing and encryption keys, YubiHSM sessions. |
+
+Each application can be on or off separately for **USB** and **NFC**. **Apply** writes
+the change; it takes effect once the key is removed and inserted again. Every change
+is written to the [deployment log](data.md) with the result `configured`.
+
+**Locking.** Without a lock, the user can switch the applications on again, for
+example in Yubico Authenticator. To prevent that, choose a profile's
+[lock code](profiles.md#configuration-lock-code) and tick **Lock the configuration
+with this code**. A locked key can only be changed with the same code; unticking the
+box removes the lock. Locking is optional.
 
 ## 3. Enrollment options
 

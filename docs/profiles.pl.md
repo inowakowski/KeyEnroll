@@ -115,6 +115,29 @@ pojawia się w kolumnie *Komunikat*.
     można się logować, nadal decyduje dostawca tożsamości, np. w Entra ID ograniczenie
     AAGUID w polityce Passkey.
 
+## Kod blokady konfiguracji { #configuration-lock-code }
+
+!!! info "Od wersji 0.9.0"
+
+Opcjonalny. Profil może mieć kod blokady, używany w oknie
+[Zarządzaj kluczem](enroll.md#manage-key) do zablokowania, które aplikacje są
+włączone na kluczu, żeby użytkownik nie mógł tego zmienić.
+
+| Przycisk | Co robi |
+|---|---|
+| **Wygeneruj** | Tworzy losowy kod i pokazuje go jeszcze raz, do skopiowania do menedżera haseł. |
+| **Wpisz…** | Używa kodu, który już masz (32 znaki szesnastkowe), np. na drugim komputerze. |
+| **Kopiuj** | Kopiuje zapisany kod. |
+| **Usuń** | Usuwa kod z tego komputera. |
+
+Kod jest przechowywany w magazynie poświadczeń systemu, nigdy w pliku konfiguracji,
+i nie trafia do [eksportu konfiguracji](instances.md#moving-the-configuration): na
+innym komputerze wpisz go przyciskiem **Wpisz…**.
+
+!!! warning "Zachowaj kopię"
+    Klucz zablokowany kodem da się zmienić tylko tym kodem. Jeśli go zgubisz,
+    aplikacji tych kluczy nie da się już zmienić.
+
 ## Co musi obsługiwać klucz { #what-the-key-has-to-support }
 
 | Opcja | Wymaganie |

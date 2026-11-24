@@ -125,6 +125,9 @@ class Profile:
     # even when the identity provider does not ask for one. Okta, for one,
     # asks for a credential that lives only at the provider.
     discoverable: bool = True
+    # Names the configuration lock code of the profile in the OS credential
+    # store (lock_codes.py); empty: the profile has none.
+    lock_code_id: str = ""
     # Key models the profile accepts, as {"aaguid": ..., "name": ...};
     # empty accepts every model.
     allowed_models: list[dict[str, str]] = field(default_factory=list)

@@ -22,11 +22,39 @@ Wyszukiwanie wymaga [zalogowania](instances.md#signing-in).
 |---|---|
 | Lista kluczy | Podłączone klucze bezpieczeństwa. Włożony lub wyjęty klucz USB sam pojawia się lub znika w ciągu paru sekund. |
 | **Odśwież** | Od razu szuka kluczy ponownie. |
+| **Zarządzaj kluczem…** | Opcjonalnie: [które aplikacje udostępnia klucz](#manage-key), np. PIV czy OTP. |
 | **Numer seryjny**, **Firmware** | Odczytane z klucza, żeby można było sprawdzić, czy to właściwy egzemplarz. Klucze z serii *Security Key* nie udostępniają numeru seryjnego. |
 | Wiersz stanu | Stan klucza przed rejestracją: czy ma ustawiony PIN, jaka jest minimalna długość PIN-u oraz czy włączone są „zawsze wymagaj UV”, atestacja Enterprise lub wymuszona zmiana PIN-u. Wyróżniony baner mówi, [do kogo klucz jest przypisany](credentials.md#key-owner), a **Pokaż klucze użytkownika** otwiera je na [stronie Poświadczenia](credentials.md). |
 
 Klucze na czytniku NFC są oznaczone dopiskiem **NFC**. Nie są wykrywane
 automatycznie: połóż klucz na czytniku i kliknij **Odśwież**.
+
+### Zarządzaj kluczem { #manage-key }
+
+!!! info "Od wersji 0.9.0"
+
+Opcjonalne i niezależne od rejestracji: **Zarządzaj kluczem…** otwiera aplikacje
+wybranego YubiKeya (firmware 5.0 lub nowszy, podłączony przez USB), żeby wyłączyć to,
+czego jego użytkownik nie powinien mieć.
+
+| Aplikacja | Co to jest |
+|---|---|
+| FIDO2 | Passkeye i logowanie u dostawcy tożsamości. Zawsze włączone: KeyEnroll rejestruje nim klucze. |
+| FIDO U2F | Starsze logowanie dwuetapowe. |
+| OTP | Yubico OTP, **challenge-response** i hasła statyczne (dwa sloty klucza). |
+| OATH | Kody jednorazowe wyświetlane w Yubico Authenticator. |
+| PIV | Karta inteligentna: certyfikaty do logowania w Windows, VPN, podpisywania poczty. |
+| OpenPGP, YubiHSM Auth | Klucze do podpisu i szyfrowania, sesje YubiHSM. |
+
+Każdą aplikację można włączyć lub wyłączyć osobno dla **USB** i **NFC**. **Zastosuj**
+zapisuje zmianę; zaczyna ona działać po wyjęciu i ponownym włożeniu klucza. Każda
+zmiana trafia do [dziennika wdrożeń](data.md) z wynikiem `configured`.
+
+**Blokada.** Bez blokady użytkownik może sam włączyć aplikacje z powrotem, np.
+w Yubico Authenticator. Żeby temu zapobiec, wybierz [kod blokady](profiles.md#configuration-lock-code)
+profilu i zaznacz **Zablokuj konfigurację tym kodem**. Zablokowany klucz da się
+zmienić tylko tym samym kodem; odznaczenie pola usuwa blokadę. Blokada jest
+opcjonalna.
 
 ## 3. Opcje rejestracji
 

@@ -113,6 +113,28 @@ selected key does not match the profile, and the enrollment does not start. In
     is still decided by the identity provider: in Entra ID, for example, by the AAGUID
     restriction of the passkey policy.
 
+## Configuration lock code { #configuration-lock-code }
+
+!!! info "Since version 0.9.0"
+
+Optional. A profile can have a lock code, used in [Manage key](enroll.md#manage-key)
+to lock which applications are enabled on a key, so that its user cannot change them.
+
+| Button | What it does |
+|---|---|
+| **Generate** | Creates a random code and shows it once more, to copy into a password manager. |
+| **Enter…** | Uses a code you already have (32 hexadecimal characters), for example on a second computer. |
+| **Copy** | Copies the stored code. |
+| **Remove** | Forgets the code on this computer. |
+
+The code is kept in the operating system's credential store, never in the
+configuration file, and it is not part of an [exported configuration](instances.md#moving-the-configuration):
+on another computer, enter it with **Enter…**.
+
+!!! warning "Keep a copy"
+    A key locked with a code can only be changed with that code. If it is lost,
+    the applications of those keys can no longer be changed.
+
 ## What the key has to support
 
 | Option | Requirement |

@@ -37,6 +37,15 @@ class FakeAuthenticator(CtapDevice):
         self._wipe()
         self.fresh = False  # True right after "power-up": reset is allowed
         self.rk_supported = True
+        # YubiKey management (fido/management.py): applications and lock.
+        self.management = True
+        self.version = (5, 7, 4)
+        self.usb_supported = 0x23B  # OTP U2F OPENPGP PIV OATH FIDO2
+        self.usb_enabled = 0x23B
+        self.nfc_supported = 0x23B
+        self.nfc_enabled = 0x23B
+        self.lock_code: bytes | None = None
+        self.config_writes: list[bytes] = []
         # Commands whose next call fails as if another program disturbed the
         # HID connection.
         self.connection_drops: list[str] = []
@@ -68,6 +77,8 @@ class FakeAuthenticator(CtapDevice):
         self.closed += 1
 
     def call(self, cmd, data=b"", event=None, on_keepalive=None):
+        if cmd in (0x42, 0x43) and self.management:
+            return self._read_config() if cmd == 0x42 else self._write_config(bytes(data))
         if cmd != CTAPHID.CBOR:
             raise CtapError(ERR.INVALID_COMMAND)
         command = data[0]
@@ -91,6 +102,41 @@ class FakeAuthenticator(CtapDevice):
         except _Fail as e:
             return bytes([e.code])
         return b"\x00" + (cbor.encode(result) if result is not None else b"")
+
+    # -- YubiKey management ----------------------------------------------------
+
+    def _read_config(self) -> bytes:
+        def tlv(tag, value):
+            return bytes([tag, len(value)]) + value
+
+        body = (
+            tlv(0x01, self.usb_supported.to_bytes(2, "big"))
+            + tlv(0x02, (getattr(self, "serial", None) or 0).to_bytes(4, "big"))
+            + tlv(0x03, self.usb_enabled.to_bytes(2, "big"))
+            + tlv(0x05, bytes(self.version))
+            + tlv(0x0A, b"\x01" if self.lock_code else b"\x00")
+            + tlv(0x0D, self.nfc_supported.to_bytes(2, "big"))
+            + tlv(0x0E, self.nfc_enabled.to_bytes(2, "big"))
+        )
+        return bytes([len(body)]) + body
+
+    def _write_config(self, data: bytes) -> bytes:
+        self.config_writes.append(data)
+        assert data[0] == len(data) - 1, "length prefix"
+        tlvs, i = {}, 1
+        while i < len(data):
+            tag, length = data[i], data[i + 1]
+            tlvs[tag] = data[i + 2 : i + 2 + length]
+            i += 2 + length
+        if self.lock_code and tlvs.get(0x0B) != self.lock_code:
+            raise CtapError(ERR.PIN_INVALID)  # what a wrong code gets is a guess
+        if 0x03 in tlvs:
+            self.usb_enabled = int.from_bytes(tlvs[0x03], "big")
+        if 0x0E in tlvs:
+            self.nfc_enabled = int.from_bytes(tlvs[0x0E], "big")
+        if 0x0A in tlvs:
+            self.lock_code = None if tlvs[0x0A] == bytes(16) else tlvs[0x0A]
+        return b""
 
     # -- commands ----------------------------------------------------------
 

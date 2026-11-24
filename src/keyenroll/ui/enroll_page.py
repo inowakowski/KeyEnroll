@@ -32,6 +32,7 @@ from ..providers.base import serial_in_name
 from .common import AppContext, UserPicker, error_text, run_task
 from .dialogs import ResultDialog, check_key_apps
 from .key_owners import KeyOwners, OwnerBanner, owner_text
+from .manage_key import ManageKeyDialog
 from .profile_form import ProfileForm
 from .theme import Card
 from .user_dialog import UserProfileDialog
@@ -96,6 +97,12 @@ class EnrollPage(QWidget):
         key_row = QHBoxLayout()
         key_row.addWidget(self.key_combo, 1)
         key_row.addWidget(self.key_refresh)
+        self.key_manage = QPushButton(tr("Manage key…"))
+        self.key_manage.setToolTip(
+            tr("Optional: choose which applications the key offers, such as PIV or OTP.")
+        )
+        self.key_manage.clicked.connect(self._manage_key)
+        key_row.addWidget(self.key_manage)
         self.key_serial = QLabel()
         self.key_serial.setObjectName("value")
         self.key_firmware = QLabel()
@@ -257,6 +264,7 @@ class EnrollPage(QWidget):
         # Another page (bulk enrollment) owns the security key while busy.
         if self._worker is None:
             self.start.setEnabled(not busy)
+            self.key_manage.setEnabled(not busy)
 
     # -- profiles ----------------------------------------------------------
 
@@ -281,6 +289,18 @@ class EnrollPage(QWidget):
         self._show_key_info()
 
     # -- existing keys of the user -----------------------------------------
+
+    def _manage_key(self) -> None:
+        key = self._selected_key()
+        if key is None:
+            QMessageBox.information(
+                self, tr("No security key"), tr("No security key detected. Insert a key and try again.")
+            )
+            return
+        dialog = ManageKeyDialog(self.ctx, key, self)
+        dialog.exec()
+        if dialog.applied:
+            self.refresh_keys()
 
     def _show_profile(self, user) -> None:
         UserProfileDialog(self.ctx, user, self).exec()
@@ -529,7 +549,8 @@ class EnrollPage(QWidget):
         self.cancel.setVisible(running)
         self.cancel.setEnabled(True)
         self.progress.setVisible(running)
-        for widget in (self.picker, self.key_combo, self.key_refresh, self.profile_combo,
+        for widget in (self.picker, self.key_combo, self.key_refresh, self.key_manage,
+                       self.profile_combo,
                        self.form, self.display_name, self.append_serial):
             widget.setEnabled(not running)
         self.ctx.set_busy(running)
