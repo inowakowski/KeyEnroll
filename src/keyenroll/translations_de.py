@@ -321,6 +321,26 @@ DE = {
         "Programme, die den Schlüssel verwenden, etwa Yubico Authenticator, und versuchen Sie es "
         "erneut."
     ),
+    "Profile attribute for key serial numbers": "Profilattribut für Seriennummern der Schlüssel",
+    "Variable name of a string array attribute in the Okta user profile. KeyEnroll writes the "
+    "serial number of every key it enrolls into it, so that you can tell the keys of a user "
+    "apart and find who has a key. Empty: off.": (
+        "Variablenname eines String-Array-Attributs im Okta-Benutzerprofil. KeyEnroll trägt "
+        "darin die Seriennummer jedes registrierten Schlüssels ein, damit sich die Schlüssel "
+        "eines Benutzers unterscheiden lassen und sich feststellen lässt, wer einen Schlüssel "
+        "hat. Leer: aus."
+    ),
+    "Saving the serial number in the user profile…": (
+        "Seriennummer wird im Benutzerprofil gespeichert…"
+    ),
+    "The credential was registered, but the serial number could not be saved in the user "
+    "profile: {detail}": (
+        "Die Anmeldeinformationen wurden registriert, aber die Seriennummer konnte nicht im "
+        "Benutzerprofil gespeichert werden: {detail}"
+    ),
+    "Name, username, e-mail or key serial number": (
+        "Name, Benutzername, E-Mail oder Seriennummer des Schlüssels"
+    ),
     "Other security key programs are running": "Andere Sicherheitsschlüssel-Programme laufen",
     "These programs use the security key at the same time and can make the enrollment fail: "
     "{programs}. Close them before you continue.": (

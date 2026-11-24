@@ -16,6 +16,7 @@ employee returns it.
 | Column | Meaning |
 |---|---|
 | **Name** | The name the key was registered under. |
+| **Serial number** | With Okta, when the instance [keeps serial numbers](providers.md#key-serial-numbers). Empty otherwise. |
 | **Created** | When it was registered. |
 | **Details** | What the provider knows about the key, usually its model. |
 | **ID** | The provider's identifier of the credential. |

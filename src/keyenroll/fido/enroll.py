@@ -580,6 +580,21 @@ class Enroller:
                 except Exception:
                     logger.warning("Cleaning up the registration failed", exc_info=True)
                 raise
+            if getattr(self.provider, "records_keys", False):
+                self.ui.status(N_("Saving the serial number in the user profile…"))
+                try:
+                    self.provider.record_key(self.user, registration, result.key.serial)
+                except Exception as e:
+                    logger.warning("Recording the key failed", exc_info=True)
+                    result.warnings.append(
+                        (
+                            N_(
+                                "The credential was registered, but the serial number "
+                                "could not be saved in the user profile: {detail}"
+                            ),
+                            {"detail": str(e)},
+                        )
+                    )
 
             if p.force_pin_change:
                 self.ui.status(N_("Forcing a PIN change before first use…"))

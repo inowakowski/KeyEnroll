@@ -378,7 +378,6 @@ class UserPicker(QWidget):
         self._search_id = 0
 
         self.query = QLineEdit()
-        self.query.setPlaceholderText(tr("Name, username or e-mail"))
         self.query.setClearButtonEnabled(True)
         self.query.returnPressed.connect(self.search)
         self.button = QPushButton(tr("Search"))
@@ -404,6 +403,16 @@ class UserPicker(QWidget):
         layout.addWidget(self.hint)
 
         ctx.active_changed.connect(self.clear)
+        ctx.instances_changed.connect(self._update_placeholder)
+        self._update_placeholder()
+
+    def _update_placeholder(self) -> None:
+        provider = self.ctx.provider
+        if provider is not None and getattr(provider, "records_keys", False):
+            text = tr("Name, username, e-mail or key serial number")
+        else:
+            text = tr("Name, username or e-mail")
+        self.query.setPlaceholderText(text)
 
     def selected(self) -> DirectoryUser | None:
         return selected_data(self.table)
@@ -413,6 +422,7 @@ class UserPicker(QWidget):
         self.table.setRowCount(0)
         self.hint.setText("")
         self.button.setEnabled(True)
+        self._update_placeholder()
 
     def search(self) -> None:
         provider = self.ctx.provider

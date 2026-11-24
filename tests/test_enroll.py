@@ -681,3 +681,44 @@ def test_lost_connection_is_reported_in_plain_words():
         enroller.run()
     assert info.value.template == enroll.CONNECTION_LOST
     assert provider.events[-1] == "cancel"
+
+
+class RecordingProvider(FakeProvider):
+    records_keys = True
+
+    def __init__(self, fail=False):
+        super().__init__()
+        self.fail = fail
+        self.recorded = []
+
+    def record_key(self, user, registration, serial):
+        self.events.append("record")
+        if self.fail:
+            raise RuntimeError("Okta: HTTP 400 – Api validation failed: profile")
+        self.recorded.append((user.id, serial))
+
+
+def test_serial_number_is_recorded_after_the_registration():
+    key = FakeAuthenticator()
+    key.serial = 32445513
+    provider = RecordingProvider()
+    enroller, ui, _ = make(Profile(), key, provider=provider)
+
+    result = enroller.run()
+
+    assert provider.events[-2:] == ["complete", "record"]
+    assert provider.recorded == [("u1", 32445513)]
+    assert result.warnings == []
+
+
+def test_failing_to_record_the_serial_number_only_warns():
+    key = FakeAuthenticator()
+    provider = RecordingProvider(fail=True)
+    enroller, ui, _ = make(Profile(), key, provider=provider)
+
+    result = enroller.run()
+
+    assert provider.completed is not None and "cancel" not in provider.events
+    [(template, params)] = result.warnings
+    assert "could not be saved in the user profile" in template
+    assert "Api validation failed" in params["detail"]

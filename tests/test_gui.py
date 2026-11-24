@@ -51,7 +51,7 @@ class GuiProvider(FakeProvider):
         self.label = instance.kind
         self.instance = instance
         self.session = True
-        self.credentials = [Credential("c1", "Old key", "2026-01-01", "YubiKey 5")]
+        self.credentials = [Credential("c1", "Old key", "2026-01-01", "YubiKey 5", serial="32445513")]
 
     def has_session(self):
         return self.session
@@ -310,6 +310,7 @@ def test_credentials_page_lists_and_deletes(gui):
     page = window.pages.currentWidget()
     pick_user(page, "Alice")
     wait_until(lambda: page.table.rowCount() == 1)
+    assert page.table.item(0, 1).text() == "32445513"
     assert not page.delete.isEnabled()
     page.table.selectRow(0)
     assert page.delete.isEnabled()
@@ -318,7 +319,7 @@ def test_credentials_page_lists_and_deletes(gui):
     wait_until(lambda: page.table.rowCount() == 0)
 
     assert ctx.provider.credentials == []
-    assert "Old key" in shown["boxes"][-1]
+    assert "Old key (S/N 32445513)" in shown["boxes"][-1]
 
 
 def test_profiles_page_saves_and_enroll_page_follows(gui):
@@ -873,8 +874,8 @@ def test_credentials_list_is_sortable(gui):
     assert column(page.table, 0) == ["Spare key", "main key", "Backup"]
     page.table.sortItems(0, Qt.SortOrder.AscendingOrder)
     assert column(page.table, 0) == ["Backup", "main key", "Spare key"]
-    page.table.sortItems(1, Qt.SortOrder.DescendingOrder)  # newest first
-    assert column(page.table, 1) == ["2026-03-01", "2026-02-10", "2026-01-15"]
+    page.table.sortItems(2, Qt.SortOrder.DescendingOrder)  # newest first
+    assert column(page.table, 2) == ["2026-03-01", "2026-02-10", "2026-01-15"]
 
     page.table.selectRow(2)  # the oldest one, "main key"
     page.delete.click()

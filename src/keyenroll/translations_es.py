@@ -302,6 +302,27 @@ ES = {
         "Se interrumpió la conexión con la llave de seguridad. Cierre otros programas que usen "
         "la llave, como Yubico Authenticator, e inténtelo de nuevo."
     ),
+    "Profile attribute for key serial numbers": (
+        "Atributo del perfil para los números de serie de las llaves"
+    ),
+    "Variable name of a string array attribute in the Okta user profile. KeyEnroll writes the "
+    "serial number of every key it enrolls into it, so that you can tell the keys of a user "
+    "apart and find who has a key. Empty: off.": (
+        "Nombre de variable de un atributo de tipo string array en el perfil de usuario de Okta. "
+        "KeyEnroll escribe en él el número de serie de cada llave que registra, para distinguir "
+        "las llaves de un usuario y saber quién tiene una llave. Vacío: desactivado."
+    ),
+    "Saving the serial number in the user profile…": (
+        "Guardando el número de serie en el perfil del usuario…"
+    ),
+    "The credential was registered, but the serial number could not be saved in the user "
+    "profile: {detail}": (
+        "La credencial se registró, pero no se pudo guardar el número de serie en el perfil del "
+        "usuario: {detail}"
+    ),
+    "Name, username, e-mail or key serial number": (
+        "Nombre, usuario, correo o número de serie de la llave"
+    ),
     "Other security key programs are running": (
         "Hay otros programas de llaves de seguridad en ejecución"
     ),

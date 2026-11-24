@@ -37,7 +37,7 @@ class CredentialsPage(QWidget):
         user_card.body.addWidget(self.picker, 1)
 
         self.table = make_table(
-            [tr("Name"), tr("Created"), tr("Details"), tr("ID")], scrollable=True
+            [tr("Name"), tr("Serial number"), tr("Created"), tr("Details"), tr("ID")], scrollable=True
         )
         self.table.itemSelectionChanged.connect(self._update_buttons)
         self.notice = QLabel()
@@ -111,7 +111,7 @@ class CredentialsPage(QWidget):
             if load_id != self._load_id:
                 return
             for c in creds:
-                fill_row(self.table, [c.name, c.created, c.detail, c.id], c)
+                fill_row(self.table, [c.name, c.serial, c.created, c.detail, c.id], c)
             fit_columns(self.table)
             self._update_buttons()
 
@@ -134,7 +134,11 @@ class CredentialsPage(QWidget):
             tr(
                 "Delete credential '{name}' of {user}? The user will no longer be "
                 "able to sign in with this key.",
-                name=cred.name or cred.id,
+                name=(
+                    f"{cred.name or cred.id} (S/N {cred.serial})"
+                    if cred.serial
+                    else cred.name or cred.id
+                ),
                 user=user.display_name or user.username,
             )
         )

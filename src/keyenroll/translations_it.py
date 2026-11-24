@@ -305,6 +305,27 @@ IT = {
         "La connessione con la chiave di sicurezza si è interrotta. Chiudere gli altri programmi "
         "che usano la chiave, come Yubico Authenticator, e riprovare."
     ),
+    "Profile attribute for key serial numbers": (
+        "Attributo del profilo per i numeri di serie delle chiavi"
+    ),
+    "Variable name of a string array attribute in the Okta user profile. KeyEnroll writes the "
+    "serial number of every key it enrolls into it, so that you can tell the keys of a user "
+    "apart and find who has a key. Empty: off.": (
+        "Nome variabile di un attributo di tipo string array nel profilo utente Okta. KeyEnroll "
+        "vi scrive il numero di serie di ogni chiave registrata, per distinguere le chiavi di un "
+        "utente e sapere chi ha una chiave. Vuoto: disattivato."
+    ),
+    "Saving the serial number in the user profile…": (
+        "Salvataggio del numero di serie nel profilo utente…"
+    ),
+    "The credential was registered, but the serial number could not be saved in the user "
+    "profile: {detail}": (
+        "La credenziale è stata registrata, ma non è stato possibile salvare il numero di serie "
+        "nel profilo utente: {detail}"
+    ),
+    "Name, username, e-mail or key serial number": (
+        "Nome, nome utente, e-mail o numero di serie della chiave"
+    ),
     "Other security key programs are running": (
         "Sono in esecuzione altri programmi per chiavi di sicurezza"
     ),

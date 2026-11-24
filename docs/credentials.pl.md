@@ -16,6 +16,7 @@ pracownik go zwrócił.
 | Kolumna | Znaczenie |
 |---|---|
 | **Nazwa** | Nazwa, pod którą klucz został zarejestrowany. |
+| **Numer seryjny** | W Okcie, gdy instancja [zapisuje numery seryjne](providers.md#key-serial-numbers). W pozostałych przypadkach puste. |
 | **Utworzono** | Kiedy został zarejestrowany. |
 | **Szczegóły** | Co dostawca wie o kluczu, zwykle jego model. |
 | **ID** | Identyfikator poświadczenia u dostawcy. |

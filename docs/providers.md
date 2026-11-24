@@ -128,6 +128,7 @@ In *Entra ID → Authentication methods → Policies → Passkey (FIDO2)*:
 | **Okta domain** | For example `example.okta.com`, or your custom domain. |
 | **Client ID** | Of the application created for enrollment. |
 | **Redirect URI** | Default `http://localhost:8080/yubienroll-redirect`. |
+| **Profile attribute for key serial numbers** | Optional. See [serial numbers of the keys](#key-serial-numbers). |
 
 ### App integration
 
@@ -179,8 +180,46 @@ Administrator* role.
   the other way round. Enter the domain your users actually sign in to; if they use
   both, enroll through two instances.
 - Okta names the key itself, after its model. The *Key display name* field is ignored.
+  To tell several keys of one user apart, use the
+  [serial numbers](#key-serial-numbers).
 - Port 8080 has to be free on your computer during sign-in.
 - Source: [Yubico: Okta](https://docs.yubico.com/software/yubikey/tools/yubienroll/yubienroll-okta.html).
+
+### Serial numbers of the keys { #key-serial-numbers }
+
+Okta does not keep the serial number of a security key, and an administrator cannot
+name a user's key through the API. With several keys per user, the admin console
+cannot tell which one to revoke. KeyEnroll can keep the serial numbers in the user
+profile instead:
+
+1. In *Directory → Profile Editor → User (default)*, **Add attribute**: data type
+   **string array**, display name for example *Security keys*, variable name
+   `securityKeys`. Set *User permission* to **Read only** or **Hide**, so that users
+   cannot change it.
+2. Enter the variable name in the instance, field **Profile attribute for key serial
+   numbers**.
+
+From then on, every enrollment adds one entry per key, for example:
+
+```
+32445513 · 2026-11-24 10:41 UTC · fwf1k3xwer1B09yTH358
+```
+
+The serial number, when the key was enrolled, and Okta's ID of the key. Keys whose
+serial number cannot be read (NFC readers, keys of other vendors) are listed as
+`unknown`.
+
+- The [Credentials page](credentials.md) shows the serial number next to each key.
+  Deleting a key there also removes its entry.
+- A **number typed in the user search** is also looked up as a serial number: the
+  user who has that key is listed first. Handy for a lost key.
+- Entries of keys deleted in the admin console are cleaned up the next time
+  KeyEnroll enrolls or deletes a key of that user. Text that KeyEnroll did not
+  write is left alone.
+- No other permission is needed: `okta.users.manage` covers the profile. If the
+  attribute cannot be written (it does not exist, or users are mastered by Active
+  Directory and the attribute comes from there), the enrollment still succeeds and
+  ends with a warning.
 
 ## PingOne PingID
 

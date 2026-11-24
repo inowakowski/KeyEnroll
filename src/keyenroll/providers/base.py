@@ -81,6 +81,7 @@ class Credential:
     name: str = ""
     created: str = ""
     detail: str = ""
+    serial: str = ""  # serial number of the key, where the provider keeps it
 
 
 @dataclass
@@ -408,6 +409,17 @@ class Provider:
 
     def list_credentials(self, user: DirectoryUser) -> list[Credential]:
         raise NotImplementedError
+
+    @property
+    def records_keys(self) -> bool:
+        """Whether the provider keeps which security key (serial number) each
+        credential is on, as configured for this instance."""
+        return False
+
+    def record_key(
+        self, user: DirectoryUser, registration: Registration, serial: int | None
+    ) -> None:
+        """Records the key a just registered credential is on."""
 
     def search_groups(self, query: str) -> list[DirectoryGroup]:
         raise NotImplementedError
